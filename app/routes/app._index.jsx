@@ -29,43 +29,29 @@ export async function action({ request }) {
   const color = ["Red", "Orange", "Yellow", "Green"][
     Math.floor(Math.random() * 4)
   ];
+  //TODO: This is a hack because the shopify gql  client doesn't work
   const response = await admin.graphql(
     `#graphql
-      mutation populateProduct($input: ProductInput!) {
-        productCreate(input: $input) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-          }
-        }
-      }`,
-    {
-      variables: {
-        input: {
-          title: `${color} Snowboard`,
-          variants: [{ price: Math.random() * 100 }],
-        },
-      },
+      mutation {
+  webPixelCreate(webPixel: { settings: {accountID: "234"} }) {
+    userErrors {
+      code
+      field
+      message
     }
+    webPixel {
+      settings
+      id
+    }
+  }
+}
+`
   );
 
   const responseJson = await response.json();
 
-  return json({
-    product: responseJson.data.productCreate.product,
-  });
+  console.log(responseJson);
+  return null;
 }
 
 export default function Index() {
