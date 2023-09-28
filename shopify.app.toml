@@ -2,18 +2,18 @@
 
 name = "sales-agent"
 client_id = "601c1486133ec82b7b8965e2afcf84d6"
-application_url = "https://veterinary-muscle-container-adaptive.trycloudflare.com"
+application_url = "https://studying-ti-ran-beverages.trycloudflare.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_pixels,read_customer_events"
+scopes = "write_pixels,read_customer_events"
 
 [auth]
 redirect_urls = [
-  "https://veterinary-muscle-container-adaptive.trycloudflare.com/auth/callback",
-  "https://veterinary-muscle-container-adaptive.trycloudflare.com/auth/shopify/callback",
-  "https://veterinary-muscle-container-adaptive.trycloudflare.com/api/auth/callback"
+  "https://studying-ti-ran-beverages.trycloudflare.com/auth/callback",
+  "https://studying-ti-ran-beverages.trycloudflare.com/auth/shopify/callback",
+  "https://studying-ti-ran-beverages.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

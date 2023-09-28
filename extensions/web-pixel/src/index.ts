@@ -1,10 +1,16 @@
-import {register} from "@shopify/web-pixels-extension";
+import { register } from "@shopify/web-pixels-extension";
 
-register(({ configuration, analytics, browser }) => {
-    // Bootstrap and insert pixel script tag here
+register(async ({ analytics, browser, settings }) => {
+  // get/set your tracking cookies
+  const uid = await browser.cookie.get("your_visitor_cookie");
+  const pixelEndpoint = `https://example.com/pixel?id=${settings.accountID}&uid=${uid}`;
 
-    // Sample subscribe to page view
-    analytics.subscribe('page_viewed', (event) => {
-      console.log('Page viewed', event);
-    });
+  // subscribe to events
+  analytics.subscribe("all_events", (event) => {
+    // transform the event payload to fit your schema (optional)
+    console.log("web pixel event:", event);
+
+    // push customer event to your server for processing
+    browser.sendBeacon(pixelEndpoint, event);
+  });
 });
