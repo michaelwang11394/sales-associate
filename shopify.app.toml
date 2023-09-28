@@ -1,0 +1,27 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "sales-agent"
+client_id = "601c1486133ec82b7b8965e2afcf84d6"
+application_url = "https://veterinary-muscle-container-adaptive.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products,write_pixels,read_customer_events"
+
+[auth]
+redirect_urls = [
+  "https://veterinary-muscle-container-adaptive.trycloudflare.com/auth/callback",
+  "https://veterinary-muscle-container-adaptive.trycloudflare.com/auth/shopify/callback",
+  "https://veterinary-muscle-container-adaptive.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-91d3669c.myshopify.com"
