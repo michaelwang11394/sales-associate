@@ -2,7 +2,7 @@
 
 name = "sales-agent"
 client_id = "601c1486133ec82b7b8965e2afcf84d6"
-application_url = "https://tea-arise-major-attempt.trycloudflare.com"
+application_url = "https://recorder-cheers-xml-surgeon.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_pixels,read_customer_events"
 
 [auth]
 redirect_urls = [
-  "https://tea-arise-major-attempt.trycloudflare.com/auth/callback",
-  "https://tea-arise-major-attempt.trycloudflare.com/auth/shopify/callback",
-  "https://tea-arise-major-attempt.trycloudflare.com/api/auth/callback"
+  "https://recorder-cheers-xml-surgeon.trycloudflare.com/auth/callback",
+  "https://recorder-cheers-xml-surgeon.trycloudflare.com/auth/shopify/callback",
+  "https://recorder-cheers-xml-surgeon.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
