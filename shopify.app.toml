@@ -2,7 +2,7 @@
 
 name = "sales-agent"
 client_id = "601c1486133ec82b7b8965e2afcf84d6"
-application_url = "https://johnny-filled-indiana-hometown.trycloudflare.com"
+application_url = "https://bedroom-threshold-dream-attempting.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_pixels,read_customer_events"
 
 [auth]
 redirect_urls = [
-  "https://johnny-filled-indiana-hometown.trycloudflare.com/auth/callback",
-  "https://johnny-filled-indiana-hometown.trycloudflare.com/auth/shopify/callback",
-  "https://johnny-filled-indiana-hometown.trycloudflare.com/api/auth/callback"
+  "https://bedroom-threshold-dream-attempting.trycloudflare.com/auth/callback",
+  "https://bedroom-threshold-dream-attempting.trycloudflare.com/auth/shopify/callback",
+  "https://bedroom-threshold-dream-attempting.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
