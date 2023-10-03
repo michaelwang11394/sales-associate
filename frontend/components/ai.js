@@ -1,12 +1,9 @@
-import { ChatOpenAI, OpenAI } from "langchain/llms/openai";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   ChatPromptTemplate,
-  PromptTemplate,
   SystemMessagePromptTemplate,
-  AIMessagePromptTemplate,
   HumanMessagePromptTemplate,
 } from "langchain/prompts";
-import { AIMessage, HumanMessage, SystemMessage } from "langchain/schema";
 import { BufferWindowMemory } from "langchain/memory";
 import { LLMChain } from "langchain/chains";
 
@@ -53,6 +50,6 @@ const chain = new LLMChain({
 export const handleNewCustomerEvent = async (event) => {
   // TODO: Think about how we modify event.
 
-  const res = await chain.call({ message: "Hello" });
+  const res = await chain.call({ message: "I need to make a purchase" });
   console.log(res);
 };

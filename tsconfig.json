@@ -5,7 +5,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
-    "moduleResolution": "node16",
+    "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "target": "ES2019",
     "strict": true,
@@ -17,9 +17,7 @@
     "paths": {
       "~/*": ["./app/*"]
     },
-    "types": [
-      "@shopify/app-bridge-types"
-    ],
+    "types": ["@shopify/app-bridge-types"],
     "noEmit": true
   }
 }

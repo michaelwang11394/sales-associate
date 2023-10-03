@@ -14,7 +14,7 @@ export default function App({ home }) {
       .from("events")
       .select("*")
       .order("timestamp", { ascending: false })
-      .limit(3);
+      .limit(1);
 
     if (error) {
       console.log("Error", error);
