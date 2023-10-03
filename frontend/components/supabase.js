@@ -5,5 +5,40 @@ const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
 const supabase = createClient(supabaseUrl, supabaseKey);
+// Subscribe to all customer events
+export const subscribeToEvents = async () => {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .order("timestamp", { ascending: false })
+    .limit(1);
 
-export default supabase;
+  if (error) {
+    console.log("Error", error);
+    return;
+  }
+  console.log("Data", data);
+
+  // Return the data
+  return data;
+};
+
+// Check if the customer is new
+export const isNewCustomer = async (customerId) => {
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("clientId", customerId)
+    .gte("timestamp", oneWeekAgo.toISOString());
+
+  if (error) {
+    console.log("Error", error);
+    return;
+  }
+
+  // Return true if the customer is new. 1 means first time vistor.
+  return data.length <= 1;
+};
