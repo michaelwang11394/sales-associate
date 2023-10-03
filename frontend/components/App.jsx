@@ -12,7 +12,7 @@ export default function App({ home }) {
         handleNewCustomerEvent(event)
           .then((response) => {
             // Handle the response from the chatbot
-            console.log(response);
+            console.log(response.text);
           })
           .catch((err) => console.error(err));
       });

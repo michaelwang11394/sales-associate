@@ -40,5 +40,9 @@ export const isNewCustomer = async (customerId) => {
   }
 
   // Return true if the customer is new. 1 means first time vistor.
-  return data.length <= 1;
+  if (data.length <= 1) {
+    return "This is the first time the customer has visited the store.";
+  } else {
+    return "This customer has visited the store before.";
+  }
 };
