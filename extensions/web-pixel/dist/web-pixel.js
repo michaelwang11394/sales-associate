@@ -6876,21 +6876,22 @@
         analytics.subscribe("all_events", (event) => __async(exports, null, function* () {
           console.log("web pixel event:", event);
           const { clientId, context, id, name, timestamp } = event;
+          const detail = event.customData;
           try {
-            const { data, error } = yield supabase_default.from("events").insert([
+            const { error } = yield supabase_default.from("events").insert([
               {
                 id,
                 timestamp,
+                detail,
+                // convert data object to JSON string
                 clientId,
-                context: JSON.stringify(context),
+                context,
                 // convert context object to JSON string
                 name
               }
             ]);
             if (error) {
               console.error("Error during insert:", error);
-            } else {
-              console.log("web pixel event sent", data);
             }
           } catch (error) {
             console.error("Error during fetch:", error);
