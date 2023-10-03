@@ -6877,24 +6877,29 @@
           console.log("web pixel event:", event);
           const { clientId, context, id, name, timestamp } = event;
           const detail = event.customData;
-          try {
-            const { error } = yield supabase_default.from("events").insert([
-              {
-                id,
-                timestamp,
-                detail,
-                // convert data object to JSON string
-                clientId,
-                context,
-                // convert context object to JSON string
-                name
+          const pathname = context.document.location.pathname;
+          if (name == "page_viewed" && pathname !== "/") {
+            return;
+          } else {
+            try {
+              const { error } = yield supabase_default.from("events").insert([
+                {
+                  id,
+                  timestamp,
+                  detail,
+                  // convert data object to JSON string
+                  clientId,
+                  context,
+                  // convert context object to JSON string
+                  name
+                }
+              ]);
+              if (error) {
+                console.error("Error during insert:", error);
               }
-            ]);
-            if (error) {
-              console.error("Error during insert:", error);
+            } catch (error) {
+              console.error("Error during fetch:", error);
             }
-          } catch (error) {
-            console.error("Error during fetch:", error);
           }
         }));
       }));
