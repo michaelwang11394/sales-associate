@@ -11,20 +11,32 @@ import { isNewCustomer } from "./supabase";
 
 /* CALLING FUNCTION */
 export const handleNewCustomerEvent = async (event) => {
+  /* CUSTOMER INFORMATION CONTEXT */
+  let customerContext = [];
+
+  // Check if the customer is new
+  const newCustomer = await isNewCustomer(event.clientId);
+  customerContext.push(newCustomer);
+
   /* PROMPTS */
 
   const systemTemplate =
-    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly and helpful.";
+    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly and helpful. The below is relevent context for this customer: {context}";
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
+  const formattedSystemMessagePrompt = await systemMessagePrompt.format({
+    context: customerContext,
+  });
 
   const humanTemplate = "{message}";
   const humanMessagePrompt =
     HumanMessagePromptTemplate.fromTemplate(humanTemplate);
 
+  console.log(formattedSystemMessagePrompt);
+
   const chatPrompt = ChatPromptTemplate.fromMessages([
-    systemMessagePrompt,
+    formattedSystemMessagePrompt,
     humanMessagePrompt,
   ]);
 
@@ -52,19 +64,13 @@ export const handleNewCustomerEvent = async (event) => {
 
   /* 
   EVENT PARSING 
-  For now, we convert the message to a human message. However, it's worth exploring whether we should just add it as a System message directly.
+
 */
   const parseEvent = async (event) => {
     switch (event) {
       //
       case "page_viewed":
-        const newCustomer = await isNewCustomer(event.clientId);
-        if (newCustomer) {
-          return "Hi! This is my first time at this store.";
-        } else {
-          // TODO: Check for their product history.
-          return "Hi! It's good to see you again.";
-        }
+        return "Hi!";
       case "product_viewed":
     }
   };
