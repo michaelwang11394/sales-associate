@@ -6876,7 +6876,8 @@
         analytics.subscribe("all_events", (event) => __async(exports, null, function* () {
           console.log("web pixel event:", event);
           const { clientId, context, id, name, timestamp } = event;
-          const detail = event.customData;
+          const detail = event.data;
+          console.log("detail:", detail);
           const pathname = context.document.location.pathname;
           if (name == "page_viewed" && pathname !== "/") {
             return;

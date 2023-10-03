@@ -7,7 +7,9 @@ register(async ({ analytics, browser, settings }) => {
     console.log("web pixel event:", event);
 
     const { clientId, context, id, name, timestamp } = event;
-    const detail = (event as any).customData;
+    const detail = (event as any).data;
+
+    console.log("detail:", detail);
 
     const pathname = context.document.location.pathname;
     // Only log the home page for now
