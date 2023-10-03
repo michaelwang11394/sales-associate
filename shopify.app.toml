@@ -2,7 +2,7 @@
 
 name = "sales-agent"
 client_id = "601c1486133ec82b7b8965e2afcf84d6"
-application_url = "https://linking-david-puts-pac.trycloudflare.com"
+application_url = "https://caused-collected-statutory-frankfurt.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_pixels,read_customer_events"
 
 [auth]
 redirect_urls = [
-  "https://linking-david-puts-pac.trycloudflare.com/auth/callback",
-  "https://linking-david-puts-pac.trycloudflare.com/auth/shopify/callback",
-  "https://linking-david-puts-pac.trycloudflare.com/api/auth/callback"
+  "https://caused-collected-statutory-frankfurt.trycloudflare.com/auth/callback",
+  "https://caused-collected-statutory-frankfurt.trycloudflare.com/auth/shopify/callback",
+  "https://caused-collected-statutory-frankfurt.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
