@@ -18,26 +18,27 @@ export const handleNewCustomerEvent = async (event) => {
   const newCustomer = await isNewCustomer(event.clientId);
   customerContext.push(newCustomer[1]);
 
-  // If customer is not new, check their cart history and product_viewed history
+  // If customer is not new, check their cart history and product_viewed history. Add relevent links
   if (newCustomer[0] === false) {
-    // Check if the customer has items in their cart
     const itemsInCart = await hasItemsInCart(event.clientId);
     const productsViewed = await hasViewedProducts(event.clientId);
 
     if (itemsInCart[0] === true) {
       customerContext.push(itemsInCart[1]);
+      customerContext.push(itemsInCart[2]);
     }
 
     // Check if the customer has viewed any products
     if (productsViewed[0] === true) {
       customerContext.push(productsViewed[1]);
+      customerContext.push(productsViewed[2]);
     }
   }
 
   /* PROMPTS */
 
   const systemTemplate =
-    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly and helpful. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase.\nIf the customer has viewed a product multiple times, encourage them to revisit the product";
+    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link.";
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
@@ -84,7 +85,7 @@ export const handleNewCustomerEvent = async (event) => {
 */
   const parseEvent = async (event) => {
     switch (event) {
-      //
+      // Welcome Intent
       case "page_viewed":
         return "Hi!";
     }

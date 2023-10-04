@@ -67,19 +67,23 @@ export const hasItemsInCart = async (customerId) => {
     const cartProductTitles = data[0].detail.cart.lines.map(
       (line) => line.merchandise.product.title
     );
+
+    const cartURL = data[0].context.document.location.href;
+
     return [
       true,
       `This customer has the following items in their cart: ${cartProductTitles.join(
         ", "
       )}`,
+      `The customer can go to their cart by clicking this link: ${cartURL}`,
     ];
   } else {
     return [false, "This customer does not have items in their cart."];
   }
 };
 
-// Check if the customer has viewed any products in the past 1 week
-// TODO: Merge together duplicate objects
+// Check if the customer has viewed any products in the past 1 week and return them
+// TODO: Filter to show only products that have been visited multiple times
 export const hasViewedProducts = async (customerId) => {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -102,9 +106,13 @@ export const hasViewedProducts = async (customerId) => {
     const productTitles = data.map(
       (item) => item.detail.productVariant.product.title
     );
+    const productURLs = data.map((item) => item.context.document.location.href);
     return [
       true,
       `This customer has viewed the following products: ${productTitles.join(
+        ", "
+      )}`,
+      `The customer can revisit these products by clicking these links: ${productURLs.join(
         ", "
       )}`,
     ];
