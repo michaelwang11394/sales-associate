@@ -102,7 +102,6 @@ export const hasViewedProducts = async (customerId) => {
 
   // Return true if the customer has viewed products
   if (data.length > 0) {
-    console.log("product data object", data);
     const productTitles = data.map(
       (item) => item.detail.productVariant.product.title
     );
@@ -118,5 +117,30 @@ export const hasViewedProducts = async (customerId) => {
     ];
   } else {
     return [false, "This customer has not viewed any products."];
+  }
+};
+
+// Check if the customer keeps checking their cart or not. If yes, offer them a coupon after they check the cart for the 3rd time in past 30 minutes
+export const offerCoupon = async (customerId) => {
+  const thirtyMinutesAgo = new Date();
+  thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
+
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("clientId", customerId)
+    .eq("name", "cart_viewed")
+    .gte("timestamp", thirtyMinutesAgo.toISOString());
+
+  if (error) {
+    console.log("Error", error);
+    return [false, "Error checking if customer has viewed products."];
+  }
+
+  // Return true if the customer has viewed products
+  if (data.length > 2) {
+    return true;
+  } else {
+    return false;
   }
 };
