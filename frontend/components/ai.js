@@ -2,12 +2,16 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   ChatPromptTemplate,
   SystemMessagePromptTemplate,
-  HumanMessagePromptTemplate,
 } from "langchain/prompts";
 import { BufferWindowMemory } from "langchain/memory";
 import { LLMChain } from "langchain/chains";
 
-import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase";
+import {
+  hasItemsInCart,
+  hasViewedProducts,
+  isNewCustomer,
+  offerCoupon,
+} from "./supabase";
 
 /* CALLING FUNCTION */
 export const handleNewCustomerEvent = async (event) => {
@@ -22,7 +26,7 @@ export const handleNewCustomerEvent = async (event) => {
   if (newCustomer[0] === false) {
     const itemsInCart = await hasItemsInCart(event.clientId);
     const productsViewed = await hasViewedProducts(event.clientId);
-
+    // Check if the customer has items in their cart
     if (itemsInCart[0] === true) {
       customerContext.push(itemsInCart[1]);
       customerContext.push(itemsInCart[2]);
@@ -35,10 +39,12 @@ export const handleNewCustomerEvent = async (event) => {
     }
   }
 
+  const isOfferCoupon = await offerCoupon(event.clientId);
+
   /* PROMPTS */
 
   const systemTemplate =
-    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link.";
+    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link.\nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com.";
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
@@ -47,14 +53,10 @@ export const handleNewCustomerEvent = async (event) => {
   });
 
   const humanTemplate = "{message}";
-  const humanMessagePrompt =
-    HumanMessagePromptTemplate.fromTemplate(humanTemplate);
-
-  console.log(formattedSystemMessagePrompt);
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
     formattedSystemMessagePrompt,
-    humanMessagePrompt,
+    humanTemplate,
   ]);
 
   /* CHATS 
@@ -67,8 +69,8 @@ export const handleNewCustomerEvent = async (event) => {
   });
 
   /* MEMORY 
-//TODO: Look into entity memory. 
-*/
+  // TODO: Because memory is loaded on render, that means, it will also be cleaned out upon navigation to a different page
+  */
 
   const memory = new BufferWindowMemory({ k: 3 });
 
@@ -81,17 +83,32 @@ export const handleNewCustomerEvent = async (event) => {
 
   /* 
   EVENT PARSING 
+  Our current setup is imperfect in that we're mapping events to messages from the customer POV that they aren't typing, but we still need to send a message to the AI to get a response. In the ideal scenario, the AI would chat with the customer without any human input. Perhaps, we create another character that oversees the observations between an AI and customer and can coordinate between the two. 
 
-*/
-  const parseEvent = async (event) => {
-    switch (event) {
+  */
+  const parseEvent = (event) => {
+    switch (event.name) {
       // Welcome Intent
       case "page_viewed":
-        return "Hi!";
+        if (newCustomer[0] === true) {
+          return "Hi, this is my first time visiting this store.";
+        } else {
+          return "Hi, welcome me back to the store and ask for any help I may need.";
+        }
+      // Cart Intent
+      case "cart_viewed":
+        if (isOfferCoupon === true) {
+          return "I am back at my cart again. I will consider purchasing if you give me a coupon.";
+        } else {
+          return "Encourage me to checkout.";
+        }
+      default:
+        return "Hello.";
     }
   };
 
   const message = parseEvent(event);
+
   const res = await chain.call({ message: message });
   return res;
 };
