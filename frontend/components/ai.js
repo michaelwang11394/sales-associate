@@ -53,6 +53,10 @@ export const handleNewCustomerEvent = async (event) => {
 
   */
   const parseEvent = (event) => {
+    // A user input is a string; whereas, shopify events are all objects
+    if (typeof event == "string") {
+      return event;
+    }
     switch (event.name) {
       // Welcome Intent
       case "page_viewed":
