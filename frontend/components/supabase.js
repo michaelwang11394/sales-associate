@@ -144,3 +144,17 @@ export const offerCoupon = async (customerId) => {
     return false;
   }
 };
+
+// Get Product Catalog
+export async function fetchTableData() {
+  const { data, error } = await supabase
+    .from("catalog")
+    .select("Title, Tags, Variant_Price");
+
+  if (error) {
+    console.error("Error fetching data:", error);
+    return;
+  }
+
+  return data;
+}

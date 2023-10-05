@@ -2,18 +2,18 @@
 
 name = "sales-agent"
 client_id = "601c1486133ec82b7b8965e2afcf84d6"
-application_url = "https://carefully-pupils-extending-automation.trycloudflare.com"
+application_url = "https://expanding-africa-identical-homeless.trycloudflare.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_pixels,read_customer_events"
+scopes = "write_pixels,read_customer_events, read_products"
 
 [auth]
 redirect_urls = [
-  "https://carefully-pupils-extending-automation.trycloudflare.com/auth/callback",
-  "https://carefully-pupils-extending-automation.trycloudflare.com/auth/shopify/callback",
-  "https://carefully-pupils-extending-automation.trycloudflare.com/api/auth/callback"
+  "https://expanding-africa-identical-homeless.trycloudflare.com/auth/callback",
+  "https://expanding-africa-identical-homeless.trycloudflare.com/auth/shopify/callback",
+  "https://expanding-africa-identical-homeless.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
