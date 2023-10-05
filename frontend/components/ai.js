@@ -7,6 +7,7 @@ import { BufferWindowMemory } from "langchain/memory";
 import { LLMChain } from "langchain/chains";
 
 import {
+  fetchTableData,
   hasItemsInCart,
   hasViewedProducts,
   isNewCustomer,
@@ -39,7 +40,13 @@ export const handleNewCustomerEvent = async (event) => {
     }
   }
 
+  // Check if the customer has viewed their cart multiple times in the past 30 minutes
   const isOfferCoupon = await offerCoupon(event.clientId);
+
+  // Get Product Catalog
+  //TODO: Replace with Supabase when we get more sophiscated
+  const catalog = await fetchTableData();
+  console.log("catalog", catalog);
 
   /* PROMPTS */
 

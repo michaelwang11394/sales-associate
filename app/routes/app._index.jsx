@@ -54,6 +54,44 @@ export async function action({ request }) {
   return null;
 }
 
+/* Query to get product catalog*/
+
+// {
+//   products(first: 250) {
+//     edges {
+//       node {
+//         id
+//         title
+//         description
+//         productType
+//         vendor
+//         createdAt
+//         updatedAt
+//         variants(first: 250) {
+//           edges {
+//             node {
+//               id
+//               title
+//               price
+//               sku
+//               inventoryQuantity
+//             }
+//           }
+//         }
+//         images(first: 250) {
+//           edges {
+//             node {
+//               id
+//               src
+//               altText
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+
 export default function Index() {
   const nav = useNavigation();
   const actionData = useActionData();
