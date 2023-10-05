@@ -72,6 +72,10 @@ export const handleNewCustomerEvent = async (event) => {
       case "product_viewed":
         const product = event.detail.productVariant.product.title;
         return `I am looking at ${product}. Suggest for me another product in your catalog for me to look at. `;
+      // Search Intent
+      case "search_submitted":
+        const searchQuery = event.detail.query;
+        return `I am searching for ${searchQuery}. Ask me if I found what I was looking for.`;
       default:
         return "Hello.";
     }
@@ -80,7 +84,7 @@ export const handleNewCustomerEvent = async (event) => {
   /* PROMPTS */
 
   const systemTemplate =
-    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link.\nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com.\nIf the customer is viewing a product, recommend a similar product they may also enjoy. Here's the whole product catalog:\n{catalog}";
+    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link.\nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com\nIf the customer asks you how their search experience was, ask them if they found what they're looking for and offer to help refine search.\nIf the customer is viewing a product, recommend a similar product they may also enjoy. Here's the whole product catalog:\n{catalog}";
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
