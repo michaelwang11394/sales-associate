@@ -23,6 +23,10 @@ export const handleNewCustomerEvent = async (event) => {
   const newCustomer = await isNewCustomer(event.clientId);
   customerContext.push(newCustomer[1]);
 
+  // Get Product Catalog
+  //TODO: Replace with Supabase when we get more sophiscated
+  const catalog = await fetchTableData();
+
   // If customer is not new, check their cart history and product_viewed history. Add relevent links
   if (newCustomer[0] === false) {
     const itemsInCart = await hasItemsInCart(event.clientId);
@@ -42,51 +46,6 @@ export const handleNewCustomerEvent = async (event) => {
 
   // Check if the customer has viewed their cart multiple times in the past 30 minutes
   const isOfferCoupon = await offerCoupon(event.clientId);
-
-  // Get Product Catalog
-  //TODO: Replace with Supabase when we get more sophiscated
-  const catalog = await fetchTableData();
-  console.log("catalog", catalog);
-
-  /* PROMPTS */
-
-  const systemTemplate =
-    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link.\nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com.";
-
-  const systemMessagePrompt =
-    SystemMessagePromptTemplate.fromTemplate(systemTemplate);
-  const formattedSystemMessagePrompt = await systemMessagePrompt.format({
-    context: customerContext,
-  });
-
-  const humanTemplate = "{message}";
-
-  const chatPrompt = ChatPromptTemplate.fromMessages([
-    formattedSystemMessagePrompt,
-    humanTemplate,
-  ]);
-
-  /* CHATS 
-// HACK: Replace key after migration to nextjs
-*/
-  const chat = new ChatOpenAI({
-    openAIApiKey: "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",
-    temperature: 0.7,
-    streaming: true,
-  });
-
-  /* MEMORY 
-  // TODO: Because memory is loaded on render, that means, it will also be cleaned out upon navigation to a different page
-  */
-
-  const memory = new BufferWindowMemory({ k: 3 });
-
-  /* CHAIN */
-  const chain = new LLMChain({
-    llm: chat,
-    prompt: chatPrompt,
-    memory: memory,
-  });
 
   /* 
   EVENT PARSING 
@@ -109,10 +68,54 @@ export const handleNewCustomerEvent = async (event) => {
         } else {
           return "Encourage me to checkout.";
         }
+      // Product Intent
+      case "product_viewed":
+        const product = event.detail.productVariant.product.title;
+        return `I am looking at ${product}. Suggest for me another product in your catalog for me to look at. `;
       default:
         return "Hello.";
     }
   };
+
+  /* PROMPTS */
+
+  const systemTemplate =
+    "You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it's by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevent context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link.\nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com.\nIf the customer is viewing a product, recommend a similar product they may also enjoy. Here's the whole product catalog:\n{catalog}";
+
+  const systemMessagePrompt =
+    SystemMessagePromptTemplate.fromTemplate(systemTemplate);
+  const formattedSystemMessagePrompt = await systemMessagePrompt.format({
+    context: customerContext,
+    catalog: catalog,
+  });
+
+  const humanTemplate = "{message}";
+
+  const chatPrompt = ChatPromptTemplate.fromMessages([
+    formattedSystemMessagePrompt,
+    humanTemplate,
+  ]);
+
+  /* CHATS 
+// HACK: Replace key after migration to nextjs
+*/
+  const chat = new ChatOpenAI({
+    openAIApiKey: "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",
+    temperature: 0.7,
+    streaming: true,
+  });
+
+  /* MEMORY 
+  // TODO: Because memory is loaded on render, that means, it will also be cleaned out upon navigation to a different page
+  */
+  const memory = new BufferWindowMemory({ k: 3 });
+
+  /* CHAIN */
+  const chain = new LLMChain({
+    llm: chat,
+    prompt: chatPrompt,
+    memory: memory,
+  });
 
   const message = parseEvent(event);
 
