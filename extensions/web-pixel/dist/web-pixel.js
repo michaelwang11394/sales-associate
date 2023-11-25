@@ -11,6 +11,10 @@
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
       for (let key of __getOwnPropNames(from))
@@ -80,10 +84,19 @@
   });
 
   // node_modules/@supabase/node-fetch/browser.js
-  var require_browser = __commonJS({
-    "node_modules/@supabase/node-fetch/browser.js"(exports, module) {
+  var browser_exports = {};
+  __export(browser_exports, {
+    Headers: () => Headers2,
+    Request: () => Request,
+    Response: () => Response2,
+    default: () => browser_default,
+    fetch: () => fetch2
+  });
+  var getGlobal, globalObject, fetch2, browser_default, Headers2, Request, Response2;
+  var init_browser = __esm({
+    "node_modules/@supabase/node-fetch/browser.js"() {
       "use strict";
-      var getGlobal = function() {
+      getGlobal = function() {
         if (typeof self !== "undefined") {
           return self;
         }
@@ -95,14 +108,12 @@
         }
         throw new Error("unable to locate global object");
       };
-      var globalObject = getGlobal();
-      module.exports = exports = globalObject.fetch;
-      if (globalObject.fetch) {
-        exports.default = globalObject.fetch.bind(globalObject);
-      }
-      exports.Headers = globalObject.Headers;
-      exports.Request = globalObject.Request;
-      exports.Response = globalObject.Response;
+      globalObject = getGlobal();
+      fetch2 = globalObject.fetch;
+      browser_default = globalObject.fetch.bind(globalObject);
+      Headers2 = globalObject.Headers;
+      Request = globalObject.Request;
+      Response2 = globalObject.Response;
     }
   });
 
@@ -115,7 +126,7 @@
         if (customFetch) {
           _fetch = customFetch;
         } else if (typeof fetch === "undefined") {
-          _fetch = (...args) => Promise.resolve().then(() => __toESM(require_browser())).then(({ default: fetch2 }) => fetch2(...args));
+          _fetch = (...args) => Promise.resolve().then(() => (init_browser(), browser_exports)).then(({ default: fetch3 }) => fetch3(...args));
         } else {
           _fetch = fetch;
         }
@@ -272,10 +283,10 @@
   });
 
   // node_modules/@supabase/postgrest-js/dist/module/PostgrestBuilder.js
-  var import_node_fetch, PostgrestBuilder;
+  var PostgrestBuilder;
   var init_PostgrestBuilder = __esm({
     "node_modules/@supabase/postgrest-js/dist/module/PostgrestBuilder.js"() {
-      import_node_fetch = __toESM(require_browser());
+      init_browser();
       PostgrestBuilder = class {
         constructor(builder) {
           this.shouldThrowOnError = false;
@@ -290,7 +301,7 @@
           if (builder.fetch) {
             this.fetch = builder.fetch;
           } else if (typeof fetch === "undefined") {
-            this.fetch = import_node_fetch.default;
+            this.fetch = browser_default;
           } else {
             this.fetch = fetch;
           }
@@ -384,7 +395,7 @@
                   };
                 }
               }
-              if (error && this.isMaybeSingle && ((_c = error === null || error === void 0 ? void 0 : error.details) === null || _c === void 0 ? void 0 : _c.includes("Results contain 0 rows"))) {
+              if (error && this.isMaybeSingle && ((_c = error === null || error === void 0 ? void 0 : error.details) === null || _c === void 0 ? void 0 : _c.includes("0 rows"))) {
                 error = null;
                 status = 200;
                 statusText = "OK";
@@ -463,19 +474,21 @@
          *
          * You can call this method multiple times to order by multiple columns.
          *
-         * You can order foreign tables, but it doesn't affect the ordering of the
-         * current table.
+         * You can order referenced tables, but it only affects the ordering of the
+         * parent table if you use `!inner` in the query.
          *
          * @param column - The column to order by
          * @param options - Named parameters
          * @param options.ascending - If `true`, the result will be in ascending order
          * @param options.nullsFirst - If `true`, `null`s appear first. If `false`,
          * `null`s appear last.
-         * @param options.foreignTable - Set this to order a foreign table by foreign
-         * columns
+         * @param options.referencedTable - Set this to order a referenced table by
+         * its columns
+         * @param options.foreignTable - Deprecated, use `options.referencedTable`
+         * instead
          */
-        order(column, { ascending = true, nullsFirst, foreignTable } = {}) {
-          const key = foreignTable ? `${foreignTable}.order` : "order";
+        order(column, { ascending = true, nullsFirst, foreignTable, referencedTable = foreignTable } = {}) {
+          const key = referencedTable ? `${referencedTable}.order` : "order";
           const existingOrder = this.url.searchParams.get(key);
           this.url.searchParams.set(key, `${existingOrder ? `${existingOrder},` : ""}${column}.${ascending ? "asc" : "desc"}${nullsFirst === void 0 ? "" : nullsFirst ? ".nullsfirst" : ".nullslast"}`);
           return this;
@@ -485,11 +498,13 @@
          *
          * @param count - The maximum number of rows to return
          * @param options - Named parameters
-         * @param options.foreignTable - Set this to limit rows of foreign tables
-         * instead of the current table
+         * @param options.referencedTable - Set this to limit rows of referenced
+         * tables instead of the parent table
+         * @param options.foreignTable - Deprecated, use `options.referencedTable`
+         * instead
          */
-        limit(count, { foreignTable } = {}) {
-          const key = typeof foreignTable === "undefined" ? "limit" : `${foreignTable}.limit`;
+        limit(count, { foreignTable, referencedTable = foreignTable } = {}) {
+          const key = typeof referencedTable === "undefined" ? "limit" : `${referencedTable}.limit`;
           this.url.searchParams.set(key, `${count}`);
           return this;
         }
@@ -503,12 +518,14 @@
          * @param from - The starting index from which to limit the result
          * @param to - The last index to which to limit the result
          * @param options - Named parameters
-         * @param options.foreignTable - Set this to limit rows of foreign tables
-         * instead of the current table
+         * @param options.referencedTable - Set this to limit rows of referenced
+         * tables instead of the parent table
+         * @param options.foreignTable - Deprecated, use `options.referencedTable`
+         * instead
          */
-        range(from, to, { foreignTable } = {}) {
-          const keyOffset = typeof foreignTable === "undefined" ? "offset" : `${foreignTable}.offset`;
-          const keyLimit = typeof foreignTable === "undefined" ? "limit" : `${foreignTable}.limit`;
+        range(from, to, { foreignTable, referencedTable = foreignTable } = {}) {
+          const keyOffset = typeof referencedTable === "undefined" ? "offset" : `${referencedTable}.offset`;
+          const keyLimit = typeof referencedTable === "undefined" ? "limit" : `${referencedTable}.limit`;
           this.url.searchParams.set(keyOffset, `${from}`);
           this.url.searchParams.set(keyLimit, `${to - from + 1}`);
           return this;
@@ -583,6 +600,7 @@
          * or `"json"`
          */
         explain({ analyze = false, verbose = false, settings = false, buffers = false, wal = false, format = "text" } = {}) {
+          var _a;
           const options = [
             analyze ? "analyze" : null,
             verbose ? "verbose" : null,
@@ -590,7 +608,7 @@
             buffers ? "buffers" : null,
             wal ? "wal" : null
           ].filter(Boolean).join("|");
-          const forMediatype = this.headers["Accept"];
+          const forMediatype = (_a = this.headers["Accept"]) !== null && _a !== void 0 ? _a : "application/json";
           this.headers["Accept"] = `application/vnd.pgrst.plan+${format}; for="${forMediatype}"; options=${options};`;
           if (format === "json")
             return this;
@@ -953,11 +971,13 @@
          * It's currently not possible to do an `.or()` filter across multiple tables.
          *
          * @param filters - The filters to use, following PostgREST syntax
-         * @param foreignTable - Set this to filter on foreign tables instead of the
-         * current table
+         * @param options - Named parameters
+         * @param options.referencedTable - Set this to filter on referenced tables
+         * instead of the parent table
+         * @param options.foreignTable - Deprecated, use `referencedTable` instead
          */
-        or(filters, { foreignTable } = {}) {
-          const key = foreignTable ? `${foreignTable}.or` : "or";
+        or(filters, { foreignTable, referencedTable = foreignTable } = {}) {
+          const key = referencedTable ? `${referencedTable}.or` : "or";
           this.url.searchParams.append(key, `(${filters})`);
           return this;
         }
@@ -988,11 +1008,11 @@
     "node_modules/@supabase/postgrest-js/dist/module/PostgrestQueryBuilder.js"() {
       init_PostgrestFilterBuilder();
       PostgrestQueryBuilder = class {
-        constructor(url, { headers = {}, schema, fetch: fetch2 }) {
+        constructor(url, { headers = {}, schema, fetch: fetch3 }) {
           this.url = url;
           this.headers = headers;
           this.schema = schema;
-          this.fetch = fetch2;
+          this.fetch = fetch3;
         }
         /**
          * Perform a SELECT query on the table or view.
@@ -1253,7 +1273,7 @@
   var version;
   var init_version = __esm({
     "node_modules/@supabase/postgrest-js/dist/module/version.js"() {
-      version = "1.8.4";
+      version = "1.9.0";
     }
   });
 
@@ -1284,11 +1304,11 @@
          * @param options.schema - Postgres schema to switch to
          * @param options.fetch - Custom fetch
          */
-        constructor(url, { headers = {}, schema, fetch: fetch2 } = {}) {
+        constructor(url, { headers = {}, schema, fetch: fetch3 } = {}) {
           this.url = url;
           this.headers = Object.assign(Object.assign({}, DEFAULT_HEADERS), headers);
           this.schemaName = schema;
-          this.fetch = fetch2;
+          this.fetch = fetch3;
         }
         /**
          * Perform a query on a table or a view.
@@ -1488,7 +1508,7 @@
   });
 
   // node_modules/websocket/lib/browser.js
-  var require_browser2 = __commonJS({
+  var require_browser = __commonJS({
     "node_modules/websocket/lib/browser.js"(exports, module) {
       var _globalThis;
       if (typeof globalThis === "object") {
@@ -1537,7 +1557,7 @@
   var version2;
   var init_version2 = __esm({
     "node_modules/@supabase/realtime-js/dist/module/lib/version.js"() {
-      version2 = "2.8.0";
+      version2 = "2.8.4";
     }
   });
 
@@ -1674,7 +1694,6 @@
           this.receivedResp = null;
           this.recHooks = [];
           this.refEvent = null;
-          this.rateLimited = false;
         }
         resend(timeout) {
           this.timeout = timeout;
@@ -1691,16 +1710,13 @@
           }
           this.startTimeout();
           this.sent = true;
-          const status = this.channel.socket.push({
+          this.channel.socket.push({
             topic: this.channel.topic,
             event: this.event,
             payload: this.payload,
             ref: this.ref,
             join_ref: this.channel._joinRef()
           });
-          if (status === "rate limited") {
-            this.rateLimited = true;
-          }
         }
         updatePayload(payload) {
           this.payload = Object.assign(Object.assign({}, this.payload), payload);
@@ -2292,11 +2308,20 @@
         on(type, filter, callback) {
           return this._on(type, filter, callback);
         }
+        /**
+         * Sends a message into the channel.
+         *
+         * @param args Arguments to send to channel
+         * @param args.type The type of event to send
+         * @param args.event The name of the event being sent
+         * @param args.payload Payload to be sent
+         * @param opts Options to be used during the send process
+         */
         send(_0) {
-          return __async(this, arguments, function* (payload, opts = {}) {
+          return __async(this, arguments, function* (args, opts = {}) {
             var _a, _b;
-            if (!this._canPush() && payload.type === "broadcast") {
-              const { event, payload: endpoint_payload } = payload;
+            if (!this._canPush() && args.type === "broadcast") {
+              const { event, payload: endpoint_payload } = args;
               const options = {
                 method: "POST",
                 headers: {
@@ -2326,11 +2351,8 @@
             } else {
               return new Promise((resolve) => {
                 var _a2, _b2, _c;
-                const push = this._push(payload.type, payload, opts.timeout || this.timeout);
-                if (push.rateLimited) {
-                  resolve("rate limited");
-                }
-                if (payload.type === "broadcast" && !((_c = (_b2 = (_a2 = this.params) === null || _a2 === void 0 ? void 0 : _a2.config) === null || _b2 === void 0 ? void 0 : _b2.broadcast) === null || _c === void 0 ? void 0 : _c.ack)) {
+                const push = this._push(args.type, args, opts.timeout || this.timeout);
+                if (args.type === "broadcast" && !((_c = (_b2 = (_a2 = this.params) === null || _a2 === void 0 ? void 0 : _a2.config) === null || _b2 === void 0 ? void 0 : _b2.broadcast) === null || _c === void 0 ? void 0 : _c.ack)) {
                   resolve("ok");
                 }
                 push.receive("ok", () => resolve("ok"));
@@ -2595,7 +2617,7 @@
   var import_websocket, noop2, RealtimeClient;
   var init_RealtimeClient = __esm({
     "node_modules/@supabase/realtime-js/dist/module/RealtimeClient.js"() {
-      import_websocket = __toESM(require_browser2());
+      import_websocket = __toESM(require_browser());
       init_constants2();
       init_timer();
       init_serializer();
@@ -2618,7 +2640,7 @@
          * @param options.reconnectAfterMs he optional function that returns the millsec reconnect interval. Defaults to stepped backoff off.
          */
         constructor(endPoint, options) {
-          var _a, _b;
+          var _a;
           this.accessToken = null;
           this.channels = [];
           this.endPoint = "";
@@ -2640,14 +2662,12 @@
             error: [],
             message: []
           };
-          this.eventsPerSecondLimitMs = 100;
-          this.inThrottle = false;
           this._resolveFetch = (customFetch) => {
             let _fetch;
             if (customFetch) {
               _fetch = customFetch;
             } else if (typeof fetch === "undefined") {
-              _fetch = (...args) => Promise.resolve().then(() => __toESM(require_browser())).then(({ default: fetch2 }) => fetch2(...args));
+              _fetch = (...args) => Promise.resolve().then(() => (init_browser(), browser_exports)).then(({ default: fetch3 }) => fetch3(...args));
             } else {
               _fetch = fetch;
             }
@@ -2666,10 +2686,7 @@
             this.transport = options.transport;
           if (options === null || options === void 0 ? void 0 : options.heartbeatIntervalMs)
             this.heartbeatIntervalMs = options.heartbeatIntervalMs;
-          const eventsPerSecond = (_a = options === null || options === void 0 ? void 0 : options.params) === null || _a === void 0 ? void 0 : _a.eventsPerSecond;
-          if (eventsPerSecond)
-            this.eventsPerSecondLimitMs = Math.floor(1e3 / eventsPerSecond);
-          const accessToken = (_b = options === null || options === void 0 ? void 0 : options.params) === null || _b === void 0 ? void 0 : _b.apikey;
+          const accessToken = (_a = options === null || options === void 0 ? void 0 : options.params) === null || _a === void 0 ? void 0 : _a.apikey;
           if (accessToken)
             this.accessToken = accessToken;
           this.reconnectAfterMs = (options === null || options === void 0 ? void 0 : options.reconnectAfterMs) ? options.reconnectAfterMs : (tries) => {
@@ -2791,7 +2808,7 @@
          */
         push(data) {
           const { topic, event, payload, ref } = data;
-          let callback = () => {
+          const callback = () => {
             this.encode(data, (result) => {
               var _a;
               (_a = this.conn) === null || _a === void 0 ? void 0 : _a.send(result);
@@ -2799,14 +2816,7 @@
           };
           this.log("push", `${topic} ${event} (${ref})`, payload);
           if (this.isConnected()) {
-            if (["broadcast", "presence", "postgres_changes"].includes(event)) {
-              const isThrottled = this._throttle(callback)();
-              if (isThrottled) {
-                return "rate limited";
-              }
-            } else {
-              callback();
-            }
+            callback();
           } else {
             this.sendBuffer.push(callback);
           }
@@ -2945,21 +2955,6 @@
           });
           this.setAuth(this.accessToken);
         }
-        /** @internal */
-        _throttle(callback, eventsPerSecondLimitMs = this.eventsPerSecondLimitMs) {
-          return () => {
-            if (this.inThrottle)
-              return true;
-            callback();
-            if (eventsPerSecondLimitMs > 0) {
-              this.inThrottle = true;
-              setTimeout(() => {
-                this.inThrottle = false;
-              }, eventsPerSecondLimitMs);
-            }
-            return false;
-          };
-        }
       };
     }
   });
@@ -3047,7 +3042,7 @@
         if (customFetch) {
           _fetch = customFetch;
         } else if (typeof fetch === "undefined") {
-          _fetch = (...args) => Promise.resolve().then(() => __toESM(require_browser())).then(({ default: fetch2 }) => fetch2(...args));
+          _fetch = (...args) => Promise.resolve().then(() => (init_browser(), browser_exports)).then(({ default: fetch3 }) => fetch3(...args));
         } else {
           _fetch = fetch;
         }
@@ -3055,7 +3050,7 @@
       };
       resolveResponse = () => __awaiter2(void 0, void 0, void 0, function* () {
         if (typeof Response === "undefined") {
-          return (yield Promise.resolve().then(() => __toESM(require_browser()))).Response;
+          return (yield Promise.resolve().then(() => (init_browser(), browser_exports))).Response;
         }
         return Response;
       });
@@ -3201,11 +3196,11 @@
         upsert: false
       };
       StorageFileApi = class {
-        constructor(url, headers = {}, bucketId, fetch2) {
+        constructor(url, headers = {}, bucketId, fetch3) {
           this.url = url;
           this.headers = headers;
           this.bucketId = bucketId;
-          this.fetch = resolveFetch2(fetch2);
+          this.fetch = resolveFetch2(fetch3);
         }
         /**
          * Uploads a file to an existing bucket or replaces an existing file at the specified path with a new one.
@@ -3670,10 +3665,10 @@
         });
       };
       StorageBucketApi = class {
-        constructor(url, headers = {}, fetch2) {
+        constructor(url, headers = {}, fetch3) {
           this.url = url;
           this.headers = Object.assign(Object.assign({}, DEFAULT_HEADERS3), headers);
-          this.fetch = resolveFetch2(fetch2);
+          this.fetch = resolveFetch2(fetch3);
         }
         /**
          * Retrieves the details of all Storage buckets within an existing project.
@@ -3822,8 +3817,8 @@
       init_StorageFileApi();
       init_StorageBucketApi();
       StorageClient = class extends StorageBucketApi {
-        constructor(url, headers = {}, fetch2) {
-          super(url, headers, fetch2);
+        constructor(url, headers = {}, fetch3) {
+          super(url, headers, fetch3);
         }
         /**
          * Perform file operation in a bucket.
@@ -3856,7 +3851,7 @@
   var version4;
   var init_version4 = __esm({
     "node_modules/@supabase/supabase-js/dist/module/lib/version.js"() {
-      version4 = "2.37.0";
+      version4 = "2.38.5";
     }
   });
 
@@ -3880,10 +3875,10 @@
   });
 
   // node_modules/@supabase/supabase-js/dist/module/lib/fetch.js
-  var import_node_fetch2, __awaiter6, resolveFetch3, resolveHeadersConstructor, fetchWithAuth;
+  var __awaiter6, resolveFetch3, resolveHeadersConstructor, fetchWithAuth;
   var init_fetch2 = __esm({
     "node_modules/@supabase/supabase-js/dist/module/lib/fetch.js"() {
-      import_node_fetch2 = __toESM(require_browser());
+      init_browser();
       __awaiter6 = function(thisArg, _arguments, P, generator) {
         function adopt(value) {
           return value instanceof P ? value : new P(function(resolve) {
@@ -3916,7 +3911,7 @@
         if (customFetch) {
           _fetch = customFetch;
         } else if (typeof fetch === "undefined") {
-          _fetch = import_node_fetch2.default;
+          _fetch = browser_default;
         } else {
           _fetch = fetch;
         }
@@ -3924,12 +3919,12 @@
       };
       resolveHeadersConstructor = () => {
         if (typeof Headers === "undefined") {
-          return import_node_fetch2.Headers;
+          return Headers2;
         }
         return Headers;
       };
       fetchWithAuth = (supabaseKey2, getAccessToken, customFetch) => {
-        const fetch2 = resolveFetch3(customFetch);
+        const fetch3 = resolveFetch3(customFetch);
         const HeadersConstructor = resolveHeadersConstructor();
         return (input, init) => __awaiter6(void 0, void 0, void 0, function* () {
           var _a;
@@ -3941,7 +3936,7 @@
           if (!headers.has("Authorization")) {
             headers.set("Authorization", `Bearer ${accessToken}`);
           }
-          return fetch2(input, Object.assign(Object.assign({}, init), { headers }));
+          return fetch3(input, Object.assign(Object.assign({}, init), { headers }));
         });
       };
     }
@@ -4092,7 +4087,8 @@
   }
   function generatePKCEChallenge(verifier) {
     return __async(this, null, function* () {
-      if (typeof crypto === "undefined") {
+      const hasCryptoSupport = typeof crypto !== "undefined" && typeof crypto.subtle !== "undefined" && typeof TextEncoder !== "undefined";
+      if (!hasCryptoSupport) {
         console.warn("WebCrypto API is not supported. Code challenge method will default to use plain instead of sha256.");
         return verifier;
       }
@@ -4139,7 +4135,7 @@
         if (customFetch) {
           _fetch = customFetch;
         } else if (typeof fetch === "undefined") {
-          _fetch = (...args) => Promise.resolve().then(() => __toESM(require_browser())).then(({ default: fetch2 }) => fetch2(...args));
+          _fetch = (...args) => Promise.resolve().then(() => (init_browser(), browser_exports)).then(({ default: fetch3 }) => fetch3(...args));
         } else {
           _fetch = fetch;
         }
@@ -4440,10 +4436,10 @@
         return t;
       };
       GoTrueAdminApi = class {
-        constructor({ url = "", headers = {}, fetch: fetch2 }) {
+        constructor({ url = "", headers = {}, fetch: fetch3 }) {
           this.url = url;
           this.headers = headers;
-          this.fetch = resolveFetch4(fetch2);
+          this.fetch = resolveFetch4(fetch3);
           this.mfa = {
             listFactors: this._listFactors.bind(this),
             deleteFactor: this._deleteFactor.bind(this)
@@ -4705,7 +4701,7 @@
   var version5;
   var init_version5 = __esm({
     "node_modules/@supabase/gotrue-js/dist/module/lib/version.js"() {
-      version5 = "2.54.0";
+      version5 = "2.57.0";
     }
   });
 
@@ -5339,8 +5335,16 @@
             var _a, _b, _c;
             try {
               yield this._removeSession();
+              let codeChallenge = null;
+              let codeChallengeMethod = null;
+              if (this.flowType === "pkce") {
+                const codeVerifier = generatePKCEVerifier();
+                yield setItemAsync(this.storage, `${this.storageKey}-code-verifier`, codeVerifier);
+                codeChallenge = yield generatePKCEChallenge(codeVerifier);
+                codeChallengeMethod = codeVerifier === codeChallenge ? "plain" : "s256";
+              }
               return yield _request(this.fetch, "POST", `${this.url}/sso`, {
-                body: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, "providerId" in params ? { provider_id: params.providerId } : null), "domain" in params ? { domain: params.domain } : null), { redirect_to: (_b = (_a = params.options) === null || _a === void 0 ? void 0 : _a.redirectTo) !== null && _b !== void 0 ? _b : void 0 }), ((_c = params === null || params === void 0 ? void 0 : params.options) === null || _c === void 0 ? void 0 : _c.captchaToken) ? { gotrue_meta_security: { captcha_token: params.options.captchaToken } } : null), { skip_http_redirect: true }),
+                body: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, "providerId" in params ? { provider_id: params.providerId } : null), "domain" in params ? { domain: params.domain } : null), { redirect_to: (_b = (_a = params.options) === null || _a === void 0 ? void 0 : _a.redirectTo) !== null && _b !== void 0 ? _b : void 0 }), ((_c = params === null || params === void 0 ? void 0 : params.options) === null || _c === void 0 ? void 0 : _c.captchaToken) ? { gotrue_meta_security: { captcha_token: params.options.captchaToken } } : null), { skip_http_redirect: true, code_challenge: codeChallenge, code_challenge_method: codeChallengeMethod }),
                 headers: this.headers,
                 xform: _ssoResponse
               });
@@ -6798,7 +6802,7 @@
             return (_b = (_a = data.session) === null || _a === void 0 ? void 0 : _a.access_token) !== null && _b !== void 0 ? _b : null;
           });
         }
-        _initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, storageKey, flowType, debug }, headers, fetch2) {
+        _initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, storageKey, flowType, debug }, headers, fetch3) {
           const authHeaders = {
             Authorization: `Bearer ${this.supabaseKey}`,
             apikey: `${this.supabaseKey}`
@@ -6813,7 +6817,7 @@
             storage,
             flowType,
             debug,
-            fetch: fetch2
+            fetch: fetch3
           });
         }
         _initRealtimeClient(options) {
@@ -6859,8 +6863,8 @@
     "extensions/web-pixel/helpers/supabase.ts"() {
       "use strict";
       init_module6();
-      supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
-      supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
+      supabaseUrl = process.env.SUPABASE_URL || "";
+      supabaseKey = process.env.SUPABASE_ANON_KEY || "";
       supabase = createClient(supabaseUrl, supabaseKey);
       supabase_default = supabase;
     }
