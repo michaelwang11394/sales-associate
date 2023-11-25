@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "sales-agent"
-client_id = "601c1486133ec82b7b8965e2afcf84d6"
-application_url = "https://laptops-guam-brook-travelling.trycloudflare.com"
+client_id = "137fe263d29e97e62c6d535ab9c23f95"
+application_url = "https://daughters-spotlight-pregnant-land.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_pixels,read_customer_events, read_products"
 
 [auth]
 redirect_urls = [
-  "https://laptops-guam-brook-travelling.trycloudflare.com/auth/callback",
-  "https://laptops-guam-brook-travelling.trycloudflare.com/auth/shopify/callback",
-  "https://laptops-guam-brook-travelling.trycloudflare.com/api/auth/callback"
+  "https://daughters-spotlight-pregnant-land.trycloudflare.com/auth/callback",
+  "https://daughters-spotlight-pregnant-land.trycloudflare.com/auth/shopify/callback",
+  "https://daughters-spotlight-pregnant-land.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
@@ -24,4 +24,4 @@ embedded = false
 
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "quickstart-91d3669c.myshopify.com"
+dev_store_url = "quickstart-c57f5b6f.myshopify.com"
