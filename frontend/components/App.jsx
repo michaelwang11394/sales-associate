@@ -4,20 +4,34 @@ import { handleNewCustomerEvent } from "./ai.js";
 export default function App({ home }) {
   const [userInput, setUserInput] = useState("");
 
-  console.log("Home", home);
+  // Effect for getting customer events and sending to AI
+  // useEffect(() => {
+  //   // Call subscribeToEvents and handle the returned data
+  //   subscribeToEvents().then((data) => {
+  //     // Call handleNewCustomerEvent with each event
+  //     data?.forEach((event) => {
+  //       handleNewCustomerEvent(event)
+  //         .then((response) => {
+  //           // Handle the response from the chatbot
+  //           console.log(response.text);
+  //         })
+  //         .catch((err) => console.error(err));
+  //     });
+  //   });
+  // }, []);
+
+  // Effect for loading shopify predictive search
   useEffect(() => {
-    // Call subscribeToEvents and handle the returned data
-    subscribeToEvents().then((data) => {
-      // Call handleNewCustomerEvent with each event
-      data?.forEach((event) => {
-        handleNewCustomerEvent(event)
-          .then((response) => {
-            // Handle the response from the chatbot
-            console.log(response.text);
-          })
-          .catch((err) => console.error(err));
+    const query = "snowboard"; // TODO: Replace this with value from search bar
+    console.log("Loading test search");
+    fetch(`/search/suggest.json?q=${query}&resources[type]=product`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
-    });
   }, []);
 
   const handleInputChange = (event) => {
