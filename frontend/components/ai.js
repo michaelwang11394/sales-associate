@@ -24,7 +24,7 @@ export const handleNewCustomerEvent = async (event) => {
   customerContext.push(newCustomer[1]);
 
   // Get Product Catalog
-  //TODO: Replace with Supabase when we get more sophiscated
+  //TODO: Use RAG later to get the product catalog
   const catalog = await fetchTableData();
 
   // If customer is not new, check their cart history and product_viewed history. Add relevent links
@@ -79,6 +79,7 @@ export const handleNewCustomerEvent = async (event) => {
       // Search Intent
       case "search_submitted":
         const searchQuery = event.detail.query;
+        q;
         return `I am searching for ${searchQuery}. Ask me if I found what I was looking for.`;
       default:
         return "Hello.";

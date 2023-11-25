@@ -4,20 +4,34 @@ import { handleNewCustomerEvent } from "./ai.js";
 export default function App({ home }) {
   const [userInput, setUserInput] = useState("");
 
-  console.log("Home", home);
+  // Effect for getting customer events and sending to AI
+  // useEffect(() => {
+  //   // Call subscribeToEvents and handle the returned data
+  //   subscribeToEvents().then((data) => {
+  //     // Call handleNewCustomerEvent with each event
+  //     data?.forEach((event) => {
+  //       handleNewCustomerEvent(event)
+  //         .then((response) => {
+  //           // Handle the response from the chatbot
+  //           console.log(response.text);
+  //         })
+  //         .catch((err) => console.error(err));
+  //     });
+  //   });
+  // }, []);
+
+  // Effect for loading shopify predictive search
   useEffect(() => {
-    // Call subscribeToEvents and handle the returned data
-    subscribeToEvents().then((data) => {
-      // Call handleNewCustomerEvent with each event
-      data?.forEach((event) => {
-        handleNewCustomerEvent(event)
-          .then((response) => {
-            // Handle the response from the chatbot
-            console.log(response.text);
-          })
-          .catch((err) => console.error(err));
+    const query = "snowboard"; // TODO: Replace this with value from search bar
+    console.log("Loading test search");
+    fetch(`/search/suggest.json?q=${query}&resources[type]=product`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
-    });
   }, []);
 
   const handleInputChange = (event) => {
@@ -35,18 +49,15 @@ export default function App({ home }) {
 
   return (
     <div className="mt-4">
-      <input
-        type="text"
-        value={userInput}
-        onChange={handleInputChange}
-        className="border-2 border-black bg-white h-10 px-5 pr-16 rounded-lg text-sm "
-      />
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="1em"
+        viewBox="0 0 512 512"
+        onClick={() => console.log("Icon clicked!!!")}
+        style={{ cursor: "pointer", fill: "#ff0a0a" }}
       >
-        Submit
-      </button>
+        <path d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z" />
+      </svg>
     </div>
   );
 }
