@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { subscribeToEvents } from "./supabase.js";
 import { handleNewCustomerEvent } from "./ai.js";
+import { getSuggestions } from "./shopify.js";
 
 export default function App({ home }) {
   const [userInput, setUserInput] = useState("");
@@ -20,18 +21,21 @@ export default function App({ home }) {
       console.log("Icon Height:", iconHeight);
       console.log("Icon OffsetTop:", iconOffsetTop);
       console.log("Icon OffsetLeft:", iconOffsetLeft);
+      console.log(home)
 
       // Perform any other logic with the icon's dimensions or position
     }
   }, []);
 
-  const handleInputChange = (event) => {
+  const handleInputChange = async (event) => {
     setUserInput(event.target.value);
-  };
-
-  const handleSuggestions = () => {
-    // Mocking suggestions for demonstration purposes. Call ajax API for predictive search
-    setSuggestions(["Suggestion 1", "Suggestion 2", "Suggestion 3"]);
+    console.log(event.target.value)
+    if (event.target.value != "") {
+      const suggestions = await getSuggestions(event.target.value)
+      setSuggestions(suggestions)
+    } else {
+      setSuggestions([])
+    }
   };
 
   const handleEnterPress = () => {
@@ -49,11 +53,6 @@ export default function App({ home }) {
 
   const handleIconClick = () => {
     setShowSearchBar(!showSearchBar);
-
-    // Fetch suggestions when search bar is opened
-    if (!showSearchBar) {
-      handleSuggestions();
-    }
   };
 
   const handleDropdownItemClick = (item) => {
@@ -117,34 +116,56 @@ export default function App({ home }) {
             }}
           >
             {/* Suggestions Container */}
-            <div
-              style={{
-                display: "flex",
-                width: "30%",
-                justifyContent: "flex-start",
-                flexDirection: "column",
-                color: "white",
-                overflowY: "auto", // Make it scrollable
-                maxHeight: "30vh", // Set maximum height
-              }}
-            >
-              {/* Suggestions */}
-              {suggestions.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleDropdownItemClick(item)}
-                  style={{
-                    padding: "8px",
-                    borderBottom: "1px solid #ccc",
-                    boxSizing: "border-box",
-                    textAlign: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
+{/* Suggestions Container */}
+<div
+  style={{
+    display: "flex",
+    width: "30%",
+    justifyContent: "flex-start",
+    flexDirection: "column",
+    color: "white",
+    overflowY: "auto", // Make it scrollable
+    maxHeight: "30vh", // Set maximum height
+  }}
+>
+  {/* Suggestions */}
+  {suggestions && suggestions.map((product, index) => (
+    <a
+      key={index}
+      href={product.url}
+      onClick={() => handleDropdownItemClick(product)}
+      style={{
+        textDecoration: "none",
+        color: "inherit",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          padding: "8px",
+          borderBottom: "1px solid #ccc",
+          boxSizing: "border-box",
+          cursor: "pointer",
+        }}
+      >
+        {/* Product Image */}
+        <img
+          src={product.featured_image.url}
+          alt={product.featured_image.alt}
+          style={{ width: "50px", marginRight: "8px" }}
+        />
+
+        {/* Product Name */}
+        <div style={{ textAlign: "center" }}>
+          {product.title}
+        </div>
+      </div>
+    </a>
+  ))}
+</div>
+
+
 
             {/* Chat thread Container */}
             <div
