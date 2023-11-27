@@ -23,6 +23,9 @@ import {
 import { authenticate } from "../shopify.server";
 import { ConstitutionalPrinciple } from "langchain/chains";
 
+import fs from "fs";
+import path from "path";
+
 export const loader = async ({ request }) => {
   const { admin, session } = await authenticate.admin(request);
 
@@ -51,18 +54,27 @@ export const loader = async ({ request }) => {
   // const dawnSearch = await response;
   // console.log(dawnSearch);
 
-  // Relace Asset
-  const asset = new admin.rest.resources.Asset({
-    session: session,
-  });
+  // Replace Asset
+  const filePath = path.resolve(
+    __dirname,
+    "salesagent/app/search/predictive-search.liquid"
+  );
 
-  asset.theme_id = 160622444829;
-  asset.key = "sections/main-search.liquid";
-  asset.value =
-    "<p>We are busy updating the store for you and will be back within the hour.</p>";
-  await asset.save({
-    update: true,
-  });
+  if (fs.existsSync(filePath)) {
+    const liquidCodeString = fs.readFileSync(filePath, "utf8");
+    const asset = new admin.rest.resources.Asset({
+      session: session,
+    });
+
+    asset.theme_id = 160622444829;
+    asset.key = "sections/predictive-search.liquid";
+    asset.value = liquidCodeString;
+    await asset.save({
+      update: true,
+    });
+  } else {
+    console.error(`File does not exist: ${filePath}`);
+  }
 
   return null;
 };
