@@ -9,6 +9,14 @@ export default function App({ home }) {
   const [suggestions, setSuggestions] = useState([]);
   const [chatThread, setChatThread] = useState([]);
   const iconRef = useRef(null);
+  const chatThreadRef = useRef(null);
+
+  useEffect(() => {
+    // Scroll to the bottom of the chat thread when it updates
+    if (chatThreadRef.current) {
+      chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight;
+    }
+  }, [chatThread]);
 
   useEffect(() => {
     if (iconRef.current) {
@@ -41,13 +49,10 @@ export default function App({ home }) {
   const handleEnterPress = () => {
     if (userInput.trim() !== "") {
       // Update chat thread with the new message
-      setChatThread((prevChatThread) => [
-        ...prevChatThread,
-        { user: "You", message: userInput },
-      ]);
+    setChatThread((prevChatThread) =>
+      prevChatThread.concat({ user: "You", message: userInput })
+    );
 
-      // Reset the search box text
-      setUserInput("");
     }
   };
 
@@ -169,24 +174,44 @@ export default function App({ home }) {
 
             {/* Chat thread Container */}
             <div
+              ref={chatThreadRef}
               style={{
                 background: "black",
                 display: "flex",
                 width: "70%",
+                justifyContent: "end",
                 flexDirection: "column",
                 alignItems: "center",
                 overflowY: "auto",
                 padding: "8px",
                 color: "white",
+                height: "30vh",
                 maxHeight: "30vh", // Set maximum height
               }}
             >
-              {/* Chat thread */}
-              {chatThread.map((message, index) => (
-                <div key={index} style={{ marginBottom: "8px" }}>
-                  <strong>{message.user}:</strong> {message.message}
-                </div>
-              ))}
+ {/* Chat thread */}
+        {chatThread.map((message, index) => (
+          <div
+            key={index}
+            style={{
+              marginBottom: "8px",
+              textAlign: message.user === "You" ? "right" : "left",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-block",
+                padding: "8px",
+                borderRadius: "8px",
+                background: message.user === "You" ? "#007bff" : "#28a745",
+                color: "white",
+              }}
+            >
+              {message.message}
+            </div>
+          </div>
+        ))}
+
             </div>
           </div>
         </div>
