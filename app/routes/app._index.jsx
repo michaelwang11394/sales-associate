@@ -58,17 +58,19 @@ export const loader = async ({ request }) => {
   // TODO: 1) Upload multiple files, including the vite compiled assets. 2) Make asset action on button click only
   const filePath = path.resolve(
     __dirname,
-    "salesagent/app/search/blocks/predictive-search.liquid"
+    "/Users/michaelwang/shopify-agent/salesagent/app/search/assets/theme-e406f2b7.css"
   );
 
   if (fs.existsSync(filePath)) {
+    console.log("Starting file upload...", filePath);
     const liquidCodeString = fs.readFileSync(filePath, "utf8");
+    console.log("string code", liquidCodeString);
     const asset = new admin.rest.resources.Asset({
       session: session,
     });
 
     asset.theme_id = 160622444829;
-    asset.key = "sections/predictive-search.liquid";
+    asset.key = "assets/search-theme.css";
     asset.value = liquidCodeString;
     await asset.save({
       update: true,

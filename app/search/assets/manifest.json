@@ -1,0 +1,15 @@
+{
+  "frontend/entrypoints/theme.css": {
+    "file": "theme-e406f2b7.css",
+    "isEntry": true,
+    "src": "frontend/entrypoints/theme.css"
+  },
+  "frontend/entrypoints/theme.jsx": {
+    "css": [
+      "theme-e406f2b7.css"
+    ],
+    "file": "theme-fac4716c.js",
+    "isEntry": true,
+    "src": "frontend/entrypoints/theme.jsx"
+  }
+}
