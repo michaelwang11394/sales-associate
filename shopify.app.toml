@@ -2,7 +2,7 @@
 
 name = "sales-associate"
 client_id = "601c1486133ec82b7b8965e2afcf84d6"
-application_url = "https://contained-state-looked-advert.trycloudflare.com"
+application_url = "https://sunset-maui-controllers-competing.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_pixels,read_customer_events,read_products,read_themes,write_them
 
 [auth]
 redirect_urls = [
-  "https://contained-state-looked-advert.trycloudflare.com/auth/callback",
-  "https://contained-state-looked-advert.trycloudflare.com/auth/shopify/callback",
-  "https://contained-state-looked-advert.trycloudflare.com/api/auth/callback"
+  "https://sunset-maui-controllers-competing.trycloudflare.com/auth/callback",
+  "https://sunset-maui-controllers-competing.trycloudflare.com/auth/shopify/callback",
+  "https://sunset-maui-controllers-competing.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

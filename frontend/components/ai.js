@@ -16,6 +16,7 @@ import {
 
 /* CALLING FUNCTION */
 export const handleNewCustomerEvent = async (event) => {
+  console.log("Loading app...");
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext = [];
 

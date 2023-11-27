@@ -55,9 +55,10 @@ export const loader = async ({ request }) => {
   // console.log(dawnSearch);
 
   // Replace Asset
+  // TODO: 1) Upload multiple files, including the vite compiled assets. 2) Make asset action on button click only
   const filePath = path.resolve(
     __dirname,
-    "salesagent/app/search/predictive-search.liquid"
+    "salesagent/app/search/blocks/predictive-search.liquid"
   );
 
   if (fs.existsSync(filePath)) {
@@ -72,6 +73,7 @@ export const loader = async ({ request }) => {
     await asset.save({
       update: true,
     });
+    console.log("Replaced file successfully");
   } else {
     console.error(`File does not exist: ${filePath}`);
   }
