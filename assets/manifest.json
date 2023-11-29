@@ -1,0 +1,32 @@
+{
+  "_App-029aa8bc.js": {
+    "file": "App-029aa8bc.js"
+  },
+  "frontend/entrypoints/embed.jsx": {
+    "css": [
+      "theme-e406f2b7.css"
+    ],
+    "file": "embed-27bc98e3.js",
+    "imports": [
+      "_App-029aa8bc.js"
+    ],
+    "isEntry": true,
+    "src": "frontend/entrypoints/embed.jsx"
+  },
+  "frontend/entrypoints/theme.css": {
+    "file": "theme-e406f2b7.css",
+    "isEntry": true,
+    "src": "frontend/entrypoints/theme.css"
+  },
+  "frontend/entrypoints/theme.jsx": {
+    "css": [
+      "theme-e406f2b7.css"
+    ],
+    "file": "theme-1c5c6db7.js",
+    "imports": [
+      "_App-029aa8bc.js"
+    ],
+    "isEntry": true,
+    "src": "frontend/entrypoints/theme.jsx"
+  }
+}

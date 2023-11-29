@@ -1,43 +1,17 @@
-{% layout none %}
+<div
+  id="embed"
+  style="position: fixed; bottom: 50px; right: 50px; color: #fff; padding: 10px; border-radius: 5px;"
+>
+  {% liquid
+    # Relative to entrypointsDir
+    render 'vite-generator' with 'embed.css'
+    render 'vite-generator' with 'embed.jsx'
+  %}
+</div>
 
-{% comment %}
-  magic_key is a random unique string that allows you to split the json it is used as a delimiting char.
-  Liquid templating engine only allows array creation through splitting strings by a delimiter.
-{% endcomment %}
-<form action="{{ routes.search_url }}">
-  <input
-    type="text"
-    placeholder="Search"
-    name="q"
-    value="{{ search.terms | escape }}"
-  >
-  <input type="submit" value="Search">
-</form>
-
-{% assign magic_key = 'EVPuhvyqpYPohElOVr4G' %}
-
-{% capture results %}
-  {% for product in search.results %}
-
-    {{ magic_key }}
-    {
-    "id"     : {{ product.id | json }},
-    "title"  : {{ product.title | json }},
-    "desc"   : {{ product.description | json }}
-    "handle" : {{ product.handle | json }},
-    "price"  : {{ product.price | json }},
-    "image"  : {{ product.image | json }},
-    "url"    : {{ product.url | json }}
-    }
-
-  {% endfor %}
-{% endcapture %}
-
-{% assign results = results | remove_first: magic_key | strip | split: magic_key %}
-
-{ "suggestions": [
-{{ results | join: ',' }}
-] }
+<script>
+  const home = {{ request.path | json }}
+</script>
 
 {% schema %}
 {

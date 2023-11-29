@@ -1,11 +1,10 @@
 import "vite/modulepreload-polyfill";
-import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "@/components/App";
-import "./theme.css";
+import "./section.css";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+ReactDOM.createRoot(document.getElementById("section")).render(
   // <React.StrictMode>
-  <App home={home} />
+  <App props={{home: home, mountDiv: "section"}} />
   // </React.StrictMode>
 );
