@@ -57,7 +57,11 @@ export default function App({ props }) {
   };
 
   const handleIconClick = () => {
+    props.toggleOverlay()
+    /*
     setShowSearchBar(!showSearchBar);
+    */
+
   };
 
   const handleDropdownItemClick = (item) => {
