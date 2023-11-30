@@ -1,18 +1,20 @@
 import "vite/modulepreload-polyfill";
 import ReactDOM from "react-dom/client";
-import {ReactDOM as RE} from "react-dom";
-import App from "@/components/App";
+import Icon from "@/components/icon";
+import CommandPalette from "@/components/command";
 import "./section.css";
+import { AppProvider } from "@shopify/polaris";
 
 ReactDOM.createRoot(document.getElementById("section")).render(
   // <React.StrictMode>
-  <App props={{home: home, mountDiv: "section", toggleOverlay: toggleOverlay}} />
+  <Icon props={{home: home, mountDiv: "section", toggleOverlay: toggleOverlay}} />
   // </React.StrictMode>
 );
 
 // Create and append the overlay div
 const overlayDiv = document.createElement("div");
-overlayDiv.id = "overlay-test"
+const divId = "section-overlay"
+overlayDiv.id = divId
 overlayDiv.style.position = "fixed";
 overlayDiv.style.top = "0";
 overlayDiv.style.left = "0";
@@ -28,14 +30,8 @@ function toggleOverlay() {
   overlayDiv.style.display = overlayDiv.style.display === "none" ? "block" : "none";
 }
 
-// Define a new React component for the overlay content
-const OverlayContent = () => (
-  <div id="boiboiboi" style={{ color: "white", textAlign: "center", padding: "20px" }}>
-    <h1>This is the overlay content</h1>
-    <p>You can render any React component here!</p>
-  </div>
-);
-
-ReactDOM.createRoot(document.getElementById("overlay-test")).render(
-<OverlayContent/>
+ReactDOM.createRoot(document.getElementById(divId)).render(
+  <AppProvider>
+    <CommandPalette/>
+  </AppProvider>
 );
