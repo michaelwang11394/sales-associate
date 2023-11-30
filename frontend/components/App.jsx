@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { subscribeToEvents } from "./supabase.js";
 import { handleNewCustomerEvent } from "./ai.js";
 import { getSuggestions } from "./shopify.js";
+import CommandPalette from "./command.jsx";
 
 export default function App({ props }) {
   const [userInput, setUserInput] = useState("");
@@ -29,7 +30,7 @@ export default function App({ props }) {
       console.log("Icon Height:", iconHeight);
       console.log("Icon OffsetTop:", iconOffsetTop);
       console.log("Icon OffsetLeft:", iconOffsetLeft);
-      console.log(props)
+      console.log(props);
 
       // Perform any other logic with the icon's dimensions or position
     }
@@ -37,22 +38,21 @@ export default function App({ props }) {
 
   const handleInputChange = async (event) => {
     setUserInput(event.target.value);
-    console.log(event.target.value)
+    console.log(event.target.value);
     if (event.target.value != "") {
-      const suggestions = await getSuggestions(event.target.value)
-      setSuggestions(suggestions)
+      const suggestions = await getSuggestions(event.target.value);
+      setSuggestions(suggestions);
     } else {
-      setSuggestions([])
+      setSuggestions([]);
     }
   };
 
   const handleEnterPress = () => {
     if (userInput.trim() !== "") {
       // Update chat thread with the new message
-    setChatThread((prevChatThread) =>
-      prevChatThread.concat({ user: "You", message: userInput })
-    );
-
+      setChatThread((prevChatThread) =>
+        prevChatThread.concat({ user: "You", message: userInput })
+      );
     }
   };
 
@@ -66,7 +66,7 @@ export default function App({ props }) {
   };
 
   return (
-    <div className="mt-4" style={{ position: "relative" }}>
+    <div className="mt-4 relative">
       {/* Icon */}
       <div ref={iconRef} onClick={handleIconClick}>
         <svg
@@ -81,141 +81,107 @@ export default function App({ props }) {
 
       {/* Search bar and Dropdown Container */}
       {showSearchBar && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", zIndex: 2 }}>
+        //<div className="fixed top-16 left-0 w-full z-10"> Doesn't work for some reason
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            zIndex: 2,
+          }}
+        >
           {/* Search bar */}
-          <div
-            style={{
-              background: "black",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              flexDirection: "column",
-            }}
-          >
+
+          <CommandPalette />
+        </div>
+      )}
+    </div>
+  );
+}
+
+{
+  /* <div className="bg-black flex flex-col items-center justify-center">
             <input
               type="text"
               value={userInput}
               onChange={handleInputChange}
               onKeyDown={(e) => e.key === "Enter" && handleEnterPress()}
               placeholder="Type and press Enter..."
-              style={{
-                width: "80%",
-                padding: "8px",
-                fontSize: "1rem",
-                borderRadius: "4px",
-                color: "black",
-                marginBottom: "8px",
-              }}
+              className="bg-black flex flex-col items-center justify-center"
             />
           </div>
 
-          {/* Suggestions and Chat thread Container */}
-          <div
-            style={{
-              background: "black",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "start",
-              flexDirection: "row",
-              height: "30vh",
-            }}
-          >
-            {/* Suggestions Container */}
-{/* Suggestions Container */}
-<div
-  style={{
-    display: "flex",
-    width: "30%",
-    justifyContent: "flex-start",
-    flexDirection: "column",
-    color: "white",
-    overflowY: "auto", // Make it scrollable
-    maxHeight: "30vh", // Set maximum height
-  }}
->
-  {/* Suggestions */}
-  {suggestions && suggestions.map((product, index) => (
-    <a
-      key={index}
-      href={product.url}
-      onClick={() => handleDropdownItemClick(product)}
-      style={{
-        textDecoration: "none",
-        color: "inherit",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "8px",
-          borderBottom: "1px solid #ccc",
-          boxSizing: "border-box",
-          cursor: "pointer",
-        }}
-      >
-        {/* Product Image */}
-        <img
-          src={product.featured_image.url}
-          alt={product.featured_image.alt}
-          style={{ width: "50px", marginRight: "8px" }}
-        />
-
-        {/* Product Name */}
-        <div style={{ textAlign: "center" }}>
-          {product.title}
-        </div>
-      </div>
-    </a>
-  ))}
-</div>
-
-
-
-            {/* Chat thread Container */}
-            <div
-              ref={chatThreadRef}
-              style={{
-                background: "black",
-                display: "flex",
-                width: "70%",
-                justifyContent: "end",
-                flexDirection: "column",
-                alignItems: "center",
-                overflowY: "auto",
-                padding: "8px",
-                color: "white",
-                height: "30vh",
-                maxHeight: "30vh", // Set maximum height
-              }}
-            >
- {/* Chat thread */}
-        {chatThread.map((message, index) => (
-          <div
-            key={index}
-            style={{
-              marginBottom: "8px",
-              textAlign: message.user === "You" ? "right" : "left",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-block",
-                padding: "8px",
-                borderRadius: "8px",
-                background: message.user === "You" ? "#007bff" : "#28a745",
-                color: "white",
-              }}
-            >
-              {message.message}
-            </div>
-          </div>
-        ))}
-
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+          {/* Suggestions and Chat thread Container */
 }
+//   <div className="bg-black flex items-start justify-center h-1/3">
+//     {/* Suggestions Container */}
+//     {/* Suggestions Container */}
+//     <div className="flex flex-col justify-start items-start w-1/3 text-white overflow-y-auto h-1/3">
+//       {/* Suggestions */}
+//       {suggestions &&
+//         suggestions.map((product, index) => (
+//           <a
+//             key={index}
+//             href={product.url}
+//             onClick={() => handleDropdownItemClick(product)}
+//             style={{
+//               textDecoration: "none",
+//               color: "inherit",
+//             }}
+//           >
+//             <div
+//               style={{
+//                 display: "flex",
+//                 alignItems: "center",
+//                 padding: "8px",
+//                 borderBottom: "1px solid #ccc",
+//                 boxSizing: "border-box",
+//                 cursor: "pointer",
+//               }}
+//             >
+//               {/* Product Image */}
+//               <img
+//                 src={product.featured_image.url}
+//                 alt={product.featured_image.alt}
+//                 style={{ width: "50px", marginRight: "8px" }}
+//               />
+
+//               {/* Product Name */}
+//               <div style={{ textAlign: "center" }}>{product.title}</div>
+//             </div>
+//           </a>
+//         ))}
+//     </div>
+
+//     {/* Chat thread Container */}
+//     <div
+//       ref={chatThreadRef}
+//       className="bg-black flex flex-col justify-end items-center w-7/10 overflow-y-auto p-2 text-white h-1/3 max-h-1/3"
+//       />
+//       {/* Chat thread */}
+//       {chatThread.map((message, index) => (
+//         <div
+//           key={index}
+//           style={{
+//             marginBottom: "8px",
+//             textAlign: message.user === "You" ? "right" : "left",
+//           }}
+//         >
+//           <div
+//             style={{
+//               display: "inline-block",
+//               padding: "8px",
+//               borderRadius: "8px",
+//               background:
+//                 message.user === "You" ? "#007bff" : "#28a745",
+//               color: "white",
+//             }}
+//           >
+//             {message.message}
+//           </div>
+//         </div>
+//       ))}
+//     </div>
+//   </div>
+// </div> */}
