@@ -1,22 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
-import { subscribeToEvents } from "../helper/supabase.js";
-import { handleNewCustomerEvent } from "../helper/ai.js";
-import { getSuggestions } from "../helper/shopify.js";
-
+import { useEffect, useRef } from "react";
 export default function Icon({ props }) {
-  const [userInput, setUserInput] = useState("");
-  const [showSearchBar, setShowSearchBar] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
-  const [chatThread, setChatThread] = useState([]);
   const iconRef = useRef(null);
-  const chatThreadRef = useRef(null);
-
-  useEffect(() => {
-    // Scroll to the bottom of the chat thread when it updates
-    if (chatThreadRef.current) {
-      chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight;
-    }
-  }, [chatThread]);
 
   useEffect(() => {
     if (iconRef.current) {
@@ -29,29 +13,14 @@ export default function Icon({ props }) {
       console.log("Icon Height:", iconHeight);
       console.log("Icon OffsetTop:", iconOffsetTop);
       console.log("Icon OffsetLeft:", iconOffsetLeft);
-      console.log(props)
+      console.log(props);
 
       // Perform any other logic with the icon's dimensions or position
     }
   }, []);
 
-  const handleInputChange = async (event) => {
-    setUserInput(event.target.value);
-    console.log(event.target.value)
-    if (event.target.value != "") {
-      const suggestions = await getSuggestions(event.target.value)
-      setSuggestions(suggestions)
-    } else {
-      setSuggestions([])
-    }
-  };
-
   const handleIconClick = () => {
-    props.toggleOverlay()
-    /*
-    setShowSearchBar(!showSearchBar);
-    */
-
+    props.toggleOverlay();
   };
 
   return (

@@ -7,14 +7,16 @@ import { AppProvider } from "@shopify/polaris";
 
 ReactDOM.createRoot(document.getElementById("section")).render(
   // <React.StrictMode>
-  <Icon props={{home: home, mountDiv: "section", toggleOverlay: toggleOverlay}} />
+  <Icon
+    props={{ home: home, mountDiv: "section", toggleOverlay: toggleOverlay }}
+  />
   // </React.StrictMode>
 );
 
 // Create and append the overlay div
 const overlayDiv = document.createElement("div");
-const divId = "section-overlay"
-overlayDiv.id = divId
+const divId = "section-overlay";
+overlayDiv.id = divId;
 overlayDiv.style.position = "fixed";
 overlayDiv.style.top = "0";
 overlayDiv.style.left = "0";
@@ -27,11 +29,12 @@ document.body.appendChild(overlayDiv);
 
 // Function to show/hide the overlay
 function toggleOverlay() {
-  overlayDiv.style.display = overlayDiv.style.display === "none" ? "block" : "none";
+  overlayDiv.style.display =
+    overlayDiv.style.display === "none" ? "block" : "none";
 }
 
 ReactDOM.createRoot(document.getElementById(divId)).render(
   <AppProvider>
-    <CommandPalette/>
+    <CommandPalette />
   </AppProvider>
 );
