@@ -1,8 +1,8 @@
-export default function LargeModalExample(show) {
+export default function CommandPalette(show) {
 
   return (
     <div id="boi" style={{height: '500px'}}>
-      CODE HERE
+      CODE HEREEE
     </div>
   );
 }
