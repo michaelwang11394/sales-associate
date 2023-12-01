@@ -3,7 +3,9 @@ import "react-chat-elements/dist/main.css";
 import { MessageList } from "react-chat-elements";
 // @ts-ignore
 import { getSuggestions } from "@/helper/shopify";
+// @ts-ignore
 import { subscribeToEvents } from "@/helper/supabase";
+// @ts-ignore
 import { handleNewCustomerEvent } from "@/helper/ai";
 
 export default function CommandPalette() {
@@ -21,7 +23,9 @@ export default function CommandPalette() {
           .then((response) => {
             // Handle the response from the chatbot
             console.log(response.text);
-            formatMessage(response.text, "system");
+            const newAIMessage = formatMessage(response.text, "system");
+            // @ts-ignore
+            setMessages([...messages, newAIMessage]);
           })
           .catch((err) => console.error(err));
       });
@@ -30,16 +34,16 @@ export default function CommandPalette() {
 
   const formatMessage = (text, source) => {
     const title = source === "system" ? "Sales Associate" : "User"; // TODO: What should user actually be named?
-    const position = source === "system" ? "Sales Associate" : "User";
+    const position = source === "system" ? "left" : "right";
     const messageType = "text";
 
     const message = {
-      title: title,
       position: position,
-      messageType: messageType,
+      type: messageType,
+      title: title,
       text: text,
     };
-    setMessages([...messages, message]);
+    return message;
   };
 
   const handleInputChange = async (event) => {
@@ -53,10 +57,21 @@ export default function CommandPalette() {
     }
   };
 
-  const handleSubmit = () => {
-    handleNewCustomerEvent(userInput, "user")
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const newUserMessage = formatMessage(userInput, "user");
+    const newMessages = [...messages, newUserMessage];
+    // @ts-ignore
+    setMessages(newMessages);
+    console.log("message before", messages);
+
+    handleNewCustomerEvent(userInput)
       .then((response) => {
         console.log(response.text);
+        const newResponseMessage = formatMessage(response.text, "system");
+        // @ts-ignore
+        setMessages([...newMessages, newResponseMessage]);
+        console.log("message after openai", messages);
       })
       .catch((err) => console.error(err));
     setUserInput("");
@@ -100,46 +115,49 @@ export default function CommandPalette() {
             }}
           >
             <div style={{ position: "relative" }}>
-              <input
-                type="text"
-                onChange={handleInputChange}
-                onSubmit={handleSubmit}
-                style={{
-                  width: "100%",
-                  height: "3rem",
-                  paddingRight: "1rem",
-                  color: "black",
-                  border: "none",
-                  borderRadius: "0.625rem 0.625rem 0 0",
-                  paddingLeft: "2.75rem",
-                }}
-                placeholder="Ask me anything! I am not your typical search bar"
-                role="combobox"
-                aria-expanded="false"
-                aria-controls="options"
-              />
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  right: "10px",
-                  transform: "translateY(-50%)",
-                  height: "1.5rem",
-                  width: "1.5rem",
-                  color: "black",
-                }}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              <form onSubmit={handleSubmit}>
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={handleInputChange}
+                  onSubmit={handleSubmit}
+                  style={{
+                    width: "100%",
+                    height: "3rem",
+                    paddingRight: "1rem",
+                    color: "black",
+                    border: "none",
+                    borderRadius: "0.625rem 0.625rem 0 0",
+                    paddingLeft: "2.75rem",
+                  }}
+                  placeholder="Ask me anything! I am not your typical search bar"
+                  role="combobox"
+                  aria-expanded="false"
+                  aria-controls="options"
                 />
-              </svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    right: "10px",
+                    transform: "translateY(-50%)",
+                    height: "1.5rem",
+                    width: "1.5rem",
+                    color: "black",
+                  }}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </form>
             </div>
             {/* Dividing Line */}
             <div
@@ -213,7 +231,7 @@ export default function CommandPalette() {
                   maxHeight: "24rem",
                 }}
               >
-                {/* Chat Column */}
+                {/* Chat Column*/}
                 <MessageList
                   className="message-list"
                   lockable={true}
