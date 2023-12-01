@@ -20,7 +20,9 @@ export default function Icon({ props }) {
   }, []);
 
   const handleIconClick = () => {
-    props.toggleOverlay();
+    const overlayDiv = props.overlayDiv
+    overlayDiv.style.display =
+      overlayDiv.style.display === "none" ? "block" : "none";
   };
 
   return (
