@@ -26,7 +26,7 @@ export const handleNewCustomerEvent = async (event) => {
   // Get Product Catalog
   //TODO: Use RAG later to get the product catalog
   const catalog = await getProducts();
-  console.log("Catalog is ", catalog)
+  console.log("Catalog is ", catalog);
 
   // If customer is not new, check their cart history and product_viewed history. Add relevent links
   if (newCustomer[0] === false) {
@@ -129,6 +129,7 @@ export const handleNewCustomerEvent = async (event) => {
 
   const message = parseEvent(event);
 
-  const res = await chain.call({ message: message });
+  // const res = await chain.call({ message: message });
+  const res = { text: "Hi! This is a default developer response from our AI!" };
   return res;
 };
