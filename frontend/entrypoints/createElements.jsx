@@ -3,9 +3,8 @@ import ReactDOM from "react-dom/client";
 import Icon from "@/components/icon";
 import CommandPalette from "@/components/command";
 import "./section.css";
-import { AppProvider } from "@shopify/polaris";
 
-export function createIcon(home, mountDiv, overlayDiv, iconSize='1em') {
+export function createIcon(home, mountDiv, overlayDiv, iconSize=1) {
   ReactDOM.createRoot(document.getElementById(mountDiv)).render(
     <Icon
       props={{ home: home, mountDiv: mountDiv, overlayDiv: overlayDiv, iconSize: iconSize }}
@@ -30,9 +29,7 @@ export function createOverlayDiv() {
     overlayDiv.style.display = "none";
     document.body.appendChild(overlayDiv);
     ReactDOM.createRoot(document.getElementById(divId)).render(
-      <AppProvider>
-        <CommandPalette/>
-      </AppProvider>
+      <CommandPalette/>
     );
   }
 
