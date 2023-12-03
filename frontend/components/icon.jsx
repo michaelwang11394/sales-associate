@@ -21,13 +21,12 @@ export default function Icon({ props }) {
     // Add event listener to close overlay when clicking outside of it
     const handleClickOutside = (event) => {
       const overlayDiv = props.overlayDiv;
-      const specificDiv = document.getElementById("overlay");
 
       if (
-        !specificDiv.contains(event.target) &&
-        overlayDiv.style.display !== "none"
+        !overlayDiv.contains(event.target) &&
+        overlayDiv.classList.contains("visible")
       ) {
-        overlayDiv.style.display = "none";
+        toggleOverlayVisibility(overlayDiv)
       }
     };
 
@@ -37,11 +36,19 @@ export default function Icon({ props }) {
     };
   }, []);
 
+  const toggleOverlayVisibility = async (overlayDiv) => {
+      overlayDiv.classList.toggle('visible')
+      /*
+    setTimeout(() => {
+    }, 2000);
+    */
+  };
+
+
   const handleIconClick = (event) => {
     event.stopPropagation();
     const overlayDiv = props.overlayDiv;
-    overlayDiv.style.display =
-      overlayDiv.style.display === "none" ? "block" : "none";
+    toggleOverlayVisibility(overlayDiv)
   };
 
   return (
