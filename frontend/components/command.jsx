@@ -83,7 +83,7 @@ export default function CommandPalette() {
   };
 
   return (
-    <div id="boi" style={{ height: "500px" }}>
+    <div id="overlay" style={{ height: "30%" }}>
       <section
         style={{
           position: "relative",

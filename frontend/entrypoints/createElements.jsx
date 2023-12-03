@@ -4,16 +4,21 @@ import Icon from "@/components/icon";
 import CommandPalette from "@/components/command";
 import "./section.css";
 
-export function createIcon(home, mountDiv, overlayDiv, iconSize=1) {
+export function createIcon(home, mountDiv, overlayDiv, iconSize = 1) {
   ReactDOM.createRoot(document.getElementById(mountDiv)).render(
     <Icon
-      props={{ home: home, mountDiv: mountDiv, overlayDiv: overlayDiv, iconSize: iconSize }}
+      props={{
+        home: home,
+        mountDiv: mountDiv,
+        overlayDiv: overlayDiv,
+        iconSize: iconSize,
+      }}
     />
   );
 }
 
 export function createOverlayDiv() {
-  const divId = "overlay"
+  const divId = "overlay";
   let overlayDiv = document.getElementById(divId);
 
   if (!overlayDiv) {
@@ -23,16 +28,15 @@ export function createOverlayDiv() {
     overlayDiv.style.top = "0";
     overlayDiv.style.left = "0";
     overlayDiv.style.width = "100%";
-    overlayDiv.style.height = "100%";
+    overlayDiv.style.height = "30%";
     overlayDiv.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
     overlayDiv.style.zIndex = "1000";
     overlayDiv.style.display = "none";
     document.body.appendChild(overlayDiv);
     ReactDOM.createRoot(document.getElementById(divId)).render(
-      <CommandPalette/>
+      <CommandPalette />
     );
   }
-
 
   return overlayDiv;
 }
