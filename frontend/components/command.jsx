@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "react-chat-elements/dist/main.css";
 import { MessageList } from "react-chat-elements";
 // @ts-ignore
-import { getSuggestions } from "@/helper/shopify";
+import { getSuggestions, getGreeting } from "@/helper/shopify";
 // @ts-ignore
 import { subscribeToEvents } from "@/helper/supabase";
 // @ts-ignore
@@ -18,15 +18,20 @@ export default function CommandPalette() {
   // Effect for getting customer events and sending to AI
   useEffect(() => {
     // Call subscribeToEvents and handle the returned data
-    console.log()
+    const clientId = window.localStorage.getItem("webPixelShopifyClientId");
     createOpenai().then((res) => {
-      setOpenai(res)
-    })
-    subscribeToEvents().then((data) => {
+      setOpenai(res);
+    });
+    subscribeToEvents(clientId).then((data) => {
       // Call handleNewCustomerEvent with each event
-      data.data?.forEach((event) => {
+      data.data?.forEach(async (event) => {
+        //TODO: Change this if we change defaults
+        const greeting = await getGreeting(event);
+        setMessages([...messages, formatMessage(greeting, "system")]);
+        console.log("messages", messages);
         handleNewCustomerEvent(event)
           .then((res) => {
+            console.log("res", res);
             setOpenai(res);
           })
           .catch((err) => console.error(err));
@@ -64,11 +69,11 @@ export default function CommandPalette() {
     const newMessages = [...messages, newUserMessage];
     // @ts-ignore
     setMessages(newMessages);
-    console.log("message before", messages);
 
     // TODO: Turn off openai for now. Add dev mode as toggle
-    if (openai && false) {
-      await openai.call({message: userInput})
+    if (openai && true) {
+      await openai
+        .call({ message: userInput })
         .then((response) => {
           console.log(response.text);
           const newResponseMessage = formatMessage(response.text, "system");
@@ -79,8 +84,11 @@ export default function CommandPalette() {
         .catch((err) => console.error(err));
     } else {
       // @ts-ignore
-      setMessages([...newMessages, formatMessage("AI is not available, please try again", "system")])
-      console.error("openai not available")
+      setMessages([
+        ...newMessages,
+        formatMessage("AI is not available, please try again", "system"),
+      ]);
+      console.error("openai not available");
     }
     setUserInput("");
   };
