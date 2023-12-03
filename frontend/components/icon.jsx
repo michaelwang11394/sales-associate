@@ -2,40 +2,39 @@ import React, { useEffect, useRef, useState } from "react";
 import { subscribeToEvents } from "@/helper/supabase";
 import { handleNewCustomerEvent } from "@/helper/ai";
 import "@/styles/chat.css";
+import { getGreeting } from "@/helper/shopify";
 
 export default function Icon({ props }) {
-  const [greeting, setGreeting] = useState("");
+  const [greeting, setGreeting] = useState("Welcome to the store, click me to start chatting with your AI sales assistant!");
   const iconRef = useRef(null);
   const iconSize = props.iconSize;
 
   useEffect(() => {
-    subscribeToEvents().then((data) => {
-      data?.forEach((event) => {
-        handleNewCustomerEvent(event)
-          .then((response) => {
-            setGreeting(response.text);
-          })
-          .catch((err) => console.error(err));
+    const clientId = window.localStorage.getItem('webPixelShopifyClientId');
+    if (clientId) {
+      subscribeToEvents(clientId).then((data) => {
+        data.data?.forEach(async (event) => {
+          setGreeting(await getGreeting(event))
+        });
       });
+    }
+    // Add event listener to close overlay when clicking outside of it
+    const handleClickOutside = (event) => {
+      const overlayDiv = props.overlayDiv;
+      const specificDiv = document.getElementById("overlay");
 
-      // Add event listener to close overlay when clicking outside of it
-      const handleClickOutside = (event) => {
-        const overlayDiv = props.overlayDiv;
-        const specificDiv = document.getElementById("overlay");
+      if (
+        !specificDiv.contains(event.target) &&
+        overlayDiv.style.display !== "none"
+      ) {
+        overlayDiv.style.display = "none";
+      }
+    };
 
-        if (
-          !specificDiv.contains(event.target) &&
-          overlayDiv.style.display !== "none"
-        ) {
-          overlayDiv.style.display = "none";
-        }
-      };
-
-      document.addEventListener("click", handleClickOutside);
-      return () => {
-        document.removeEventListener("click", handleClickOutside);
-      };
-    });
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
   }, []);
 
   const handleIconClick = (event) => {

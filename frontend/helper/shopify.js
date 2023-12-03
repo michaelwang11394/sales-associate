@@ -1,3 +1,9 @@
+import {
+  hasItemsInCart,
+  hasViewedProducts,
+  isNewCustomer,
+  offerCoupon,
+} from "./supabase"; // Updated reference to refactored supabase functions
 const shopifyRestQuery = async (endpoint) => {
   try {
     return fetch(window.Shopify.routes.root + endpoint)
@@ -29,6 +35,39 @@ export const getProducts = async () => {
   console.log(json)
   return json?.products?.map(product => formatCatalogEntry(product)).join("\r\n")
 }
+
+export const getGreeting = async (event) => {
+  // Check if the customer has viewed their cart multiple times in the past 30 minutes
+  // Check if the customer is new
+  const newCustomer = await isNewCustomer(event.clientId);
+  // Add coupon logic once LLM can create rich outputs
+  // const isOfferCoupon = await offerCoupon(event.clientId);
+
+  switch (event.name) {
+    // Welcome Intent
+    case "page_viewed":
+      if (newCustomer.isNew === true) {
+        return "Hey there, welcome to the store! Click me to ask any questions.";
+      } else {
+        return "Welcome back to the store! Let me know if I can show you around.";
+      }
+    // Cart Intent
+    case "cart_viewed":
+      return "Let me know if I can answer any more questions about your cart items.";
+    // Product Intent
+    case "product_viewed":
+      const product = event.detail.productVariant.product.title;
+      return `Have any questions about ${product}? Feel free to ask me anything`;
+    // Search Intent
+    case "search_submitted":
+      const searchQuery = event.detail.query;
+      return `Let me know if I can help with your search for "${searchQuery}". Happy to help!`;
+    default:
+      return 'Click me for any questions, powered by AI';
+  }
+
+}
+
 
 // Example usage
 /*
