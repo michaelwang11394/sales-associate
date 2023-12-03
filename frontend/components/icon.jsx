@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { subscribeToEvents } from "@/helper/supabase";
 import { handleNewCustomerEvent } from "@/helper/ai";
-import '@/styles/chat.css';
+import "@/styles/chat.css";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState("");
@@ -17,17 +17,40 @@ export default function Icon({ props }) {
           })
           .catch((err) => console.error(err));
       });
+
+      // Add event listener to close overlay when clicking outside of it
+      const handleClickOutside = (event) => {
+        const overlayDiv = props.overlayDiv;
+        const specificDiv = document.getElementById("overlay");
+
+        if (
+          !specificDiv.contains(event.target) &&
+          overlayDiv.style.display !== "none"
+        ) {
+          overlayDiv.style.display = "none";
+        }
+      };
+
+      document.addEventListener("click", handleClickOutside);
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
     });
   }, []);
 
-  const handleIconClick = () => {
+  const handleIconClick = (event) => {
+    event.stopPropagation();
     const overlayDiv = props.overlayDiv;
     overlayDiv.style.display =
       overlayDiv.style.display === "none" ? "block" : "none";
   };
 
   return (
-    <div className="mt-4" style={{ position: "relative"}} onClick={handleIconClick}>
+    <div
+      className="mt-4"
+      style={{ position: "relative" }}
+      onClick={handleIconClick}
+    >
       {/* Icon */}
       <div ref={iconRef}>
         <svg
@@ -41,18 +64,21 @@ export default function Icon({ props }) {
       </div>
 
       {/* Overlay Bubble */}
-      {props.mountDiv === 'embed' && iconRef.current && (
-        <div className="talk-bubble tri-right round border btm-right-in" style={{
-          position: "absolute",
-          bottom: iconRef.current.offsetTop + iconSize / 4 + "em",
-          right: iconRef.current.offsetLeft - iconSize + "em",
-          height: "auto",
-          width: "500px",
-          background: 'white',
-          color: 'black'
-        }}>
+      {props.mountDiv === "embed" && iconRef.current && (
+        <div
+          className="talk-bubble tri-right round border btm-right-in"
+          style={{
+            position: "absolute",
+            bottom: iconRef.current.offsetTop + iconSize / 4 + "em",
+            right: iconRef.current.offsetLeft - iconSize + "em",
+            height: "auto",
+            width: "500px",
+            background: "white",
+            color: "black",
+          }}
+        >
           <div className="talktext">
-            <p style={{ overflow: 'hidden', margin: 0 }}>{greeting}</p>
+            <p style={{ overflow: "hidden", margin: 0 }}>{greeting}</p>
           </div>
         </div>
       )}
