@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import Icon from "@/components/icon";
 import CommandPalette from "@/components/command";
 import "./section.css";
+import '@/styles/chat.css'
 
 export function createIcon(home, mountDiv, overlayDiv, iconSize = 1) {
   ReactDOM.createRoot(document.getElementById(mountDiv)).render(
@@ -18,7 +19,7 @@ export function createIcon(home, mountDiv, overlayDiv, iconSize = 1) {
 }
 
 export function createOverlayDiv() {
-  const divId = "overlay";
+  const divId = "full-overlay";
   let overlayDiv = document.getElementById(divId);
 
   if (!overlayDiv) {
@@ -31,7 +32,8 @@ export function createOverlayDiv() {
     overlayDiv.style.height = "30%";
     overlayDiv.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
     overlayDiv.style.zIndex = "1000";
-    overlayDiv.style.display = "none";
+    overlayDiv.style.display = "block"
+    overlayDiv.className = 'overlay';
     document.body.appendChild(overlayDiv);
     ReactDOM.createRoot(document.getElementById(divId)).render(
       <CommandPalette />

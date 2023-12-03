@@ -256,3 +256,15 @@ body{
   -webkit-margin-before: 0em;
   -webkit-margin-after: 0em;
 }
+
+.overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 200ms ease, visibility 0s ease 0s;
+}
+
+.overlay {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease, visibility 0s ease 200ms;
+}
