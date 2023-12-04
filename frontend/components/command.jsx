@@ -10,8 +10,11 @@ import { createOpenaiWithHistory } from "@/helper/ai";
 import { subscribeToMessages } from "@/helper/supabase";
 import { insertMessage } from "@/helper/supabase";
 import { getMessages } from "@/helper/supabase";
+import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
+import { toggleOverlayVisibility } from "@/helper/animations";
+import { addToCart } from "@/helper/shopify";
 
-export default function CommandPalette() {
+export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -30,7 +33,7 @@ export default function CommandPalette() {
           await handleNewMessage(clientId, formatMessage(greeting, "system"));
         });
       });
-      getMessages(clientId, 5).then((data) => {
+      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
@@ -52,10 +55,9 @@ export default function CommandPalette() {
     }
   }, []);
 
-  const toggleOverlayVisibility = async () => {
-    //TODO: We need to figure out better way of managing overlay state. Currently, it's all managed in the icon state and difficult to pass down the state to command.
-    console.log("Exit button clicked");
-  };
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, suggestions])
 
   const formatMessage = (text, source) => {
     const title = source !== "user" ? "Sales Associate" : "";
@@ -80,6 +82,13 @@ export default function CommandPalette() {
       source: source,
     };
     return message;
+  };
+
+  const scrollToBottom = () => {
+    const chatColumn = document.getElementById("chat-column");
+    if (chatColumn) {
+      chatColumn.scrollTop = chatColumn.scrollHeight;
+    }
   };
 
   const handleNewMessage = async (clientId, newUserMessage) => {
@@ -242,7 +251,7 @@ export default function CommandPalette() {
                     fontSize: "2rem",
                     cursor: "pointer",
                   }}
-                  onClick={toggleOverlayVisibility}
+                  onClick={() => toggleOverlayVisibility(props.overlayDiv)}
                 >
                   &times;
                 </button>
@@ -297,6 +306,7 @@ export default function CommandPalette() {
                             style={{
                               width: "80%",
                               height: "50%",
+                              maxHeight: "150px",
                               objectFit: "contain",
                               marginBottom: "8px",
                             }}
@@ -318,21 +328,26 @@ export default function CommandPalette() {
                             }
                           </div>
                           {/* Add to Cart Button */}
-                          <button
-                            style={{
-                              marginTop: "10px",
-                              padding: "0.5rem 1rem",
-                              fontSize: "1rem",
-                              fontFamily: "Verdana",
-                              color: "#000",
-                              background: "#fff",
-                              border: "1px solid #000",
-                              borderRadius: "0.25rem",
-                              cursor: "pointer",
-                            }}
-                          >
-                            Add to Cart
-                          </button>
+                          {product.variants.length > 0 && <button
+                              style={{
+                                marginTop: "10px",
+                                padding: "0.5rem 1rem",
+                                fontSize: "1rem",
+                                fontFamily: "Verdana",
+                                color: "#000",
+                                background: "#fff",
+                                border: "1px solid #000",
+                                borderRadius: "0.25rem",
+                                cursor: "pointer",
+                              }}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                addToCart(product.variants[0].id, 1).then(response => alert(product.title + ' has been added to cart'))
+                              }}
+                            >
+                              Add to Cart
+                            </button>
+                          }
                         </a>
                       </div>
                     ))
@@ -342,7 +357,7 @@ export default function CommandPalette() {
                     </div>
                   )}
                 </div>
-                <div
+                {userInput.length > 0 && <div
                   style={{
                     display: "flex",
                     justifyContent: "center",
@@ -360,10 +375,11 @@ export default function CommandPalette() {
                       cursor: "pointer",
                       fontFamily: "Verdana",
                     }}
+                    onClick={() => window.location.href = `/search?q=${userInput}`}
                   >
                     View all Items
                   </button>
-                </div>
+                </div>}
               </div>
               <div
                 style={{
@@ -371,23 +387,25 @@ export default function CommandPalette() {
                   backgroundColor: "black",
                 }}
               />
+              {/* Chat Column*/}
               <div
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: "10px",
+                  textAlign: "center",
+                }}
+              >
+                Conversation
+              </div>
+              <div
+                id="chat-column"
                 style={{
                   flex: "1",
                   minWidth: "0",
                   padding: "1.5rem",
+                  overflowY: "auto",
                 }}
               >
-                {/* Chat Column*/}
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    textAlign: "center",
-                  }}
-                >
-                  Conversation
-                </div>
 
                 {messages.map((message, index) => (
                   <MessageBox

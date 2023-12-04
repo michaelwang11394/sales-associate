@@ -8,6 +8,7 @@ import { LLMChain } from "langchain/chains";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
+import { LANGCHAIN_MEMORY_BUFFER_SIZE } from "@/constants/constants";
 
 /* CHATS 
 // HACK: Replace key after migration to nextjs
@@ -87,7 +88,7 @@ const createOpenai = async (context, history = []) => {
   */
   const memory = new BufferWindowMemory({
     chatHistory: new ChatMessageHistory(history),
-    k: 3,
+    k: LANGCHAIN_MEMORY_BUFFER_SIZE,
   });
 
   /* CHAIN */
