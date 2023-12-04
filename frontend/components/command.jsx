@@ -30,30 +30,34 @@ export default function CommandPalette({ props }) {
         data.data?.forEach(async (event) => {
           //TODO: Change this if we change defaults
           const greeting = await getGreeting(event);
-          await handleNewMessage(clientId, formatMessage(greeting, 'system'))
+          await handleNewMessage(clientId, formatMessage(greeting, "system"));
         });
       });
       getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
         if (!data) {
-          console.error("Message history could not be fetched")
+          console.error("Message history could not be fetched");
         } else {
-          const messages = data.data.map((messageRow) => formatMessage(messageRow.message, messageRow.sender)).reverse()
+          const messages = data.data
+            .map((messageRow) =>
+              formatMessage(messageRow.message, messageRow.sender)
+            )
+            .reverse();
           // @ts-ignore
           setMessages((prevMessages) => messages.concat(prevMessages));
           createOpenaiWithHistory(clientId, messages).then((res) => {
             setOpenai(res);
           });
         }
-      })
+      });
       subscribeToMessages(clientId, (message) => {
-        console.log("message inserted", JSON.stringify(message))
+        console.log("message inserted", JSON.stringify(message));
       });
     }
   }, []);
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, suggestions])
+    scrollToBottom();
+  }, [messages, suggestions]);
 
   const formatMessage = (text, source) => {
     const title = source !== "user" ? "Sales Associate" : "";
@@ -71,7 +75,7 @@ export default function CommandPalette({ props }) {
       title: title,
       text: text,
       avatar: avatar,
-      source: source
+      source: source,
     };
     return message;
   };
@@ -84,13 +88,17 @@ export default function CommandPalette({ props }) {
   };
 
   const handleNewMessage = async (clientId, newUserMessage) => {
-    const success = await insertMessage(clientId, newUserMessage.source, newUserMessage.text)
+    const success = await insertMessage(
+      clientId,
+      newUserMessage.source,
+      newUserMessage.text
+    );
     if (!success) {
-      console.error('Messages update failed for supabase table messages')
+      console.error("Messages update failed for supabase table messages");
     }
     // @ts-ignore
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
-  }
+  };
 
   const handleInputChange = async (event) => {
     setUserInput(event.target.value);
@@ -108,7 +116,7 @@ export default function CommandPalette({ props }) {
     await handleNewMessage(clientId, newUserMessage);
 
     // TODO: Turn off openai for now. Add dev mode as toggle
-    if (openai && false) {
+    if (openai && true) {
       await openai
         .call({ message: userInput })
         .then((response) => {
@@ -119,7 +127,10 @@ export default function CommandPalette({ props }) {
         })
         .catch((err) => console.error(err));
     } else {
-      await handleNewMessage(clientId, formatMessage("AI is not available, please try again", 'system'));
+      await handleNewMessage(
+        clientId,
+        formatMessage("AI is not available, please try again", "system")
+      );
       console.error("openai not available");
     }
     setUserInput("");
@@ -313,7 +324,8 @@ export default function CommandPalette({ props }) {
                             }
                           </div>
                           {/* Add to Cart Button */}
-                          {product.variants.length > 0 && <button
+                          {product.variants.length > 0 && (
+                            <button
                               style={{
                                 marginTop: "10px",
                                 padding: "0.5rem 1rem",
@@ -326,13 +338,18 @@ export default function CommandPalette({ props }) {
                                 cursor: "pointer",
                               }}
                               onClick={(e) => {
-                                e.preventDefault()
-                                addToCart(product.variants[0].id, 1).then(response => alert(product.title + ' has been added to cart'))
+                                e.preventDefault();
+                                addToCart(product.variants[0].id, 1).then(
+                                  (response) =>
+                                    alert(
+                                      product.title + " has been added to cart"
+                                    )
+                                );
                               }}
                             >
                               Add to Cart
                             </button>
-                          }
+                          )}
                         </a>
                       </div>
                     ))
@@ -342,29 +359,33 @@ export default function CommandPalette({ props }) {
                     </div>
                   )}
                 </div>
-                {userInput.length > 0 && <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    marginTop: "1rem",
-                  }}
-                >
-                  <button
+                {userInput.length > 0 && (
+                  <div
                     style={{
-                      padding: "0.5rem 1rem",
-                      fontSize: "1.5rem",
-                      color: "#fff",
-                      background: "#0e0e0e",
-                      border: "none",
-                      borderRadius: "0.25rem",
-                      cursor: "pointer",
-                      fontFamily: "Verdana",
+                      display: "flex",
+                      justifyContent: "center",
+                      marginTop: "1rem",
                     }}
-                    onClick={() => window.location.href = `/search?q=${userInput}`}
                   >
-                    View all Items
-                  </button>
-                </div>}
+                    <button
+                      style={{
+                        padding: "0.5rem 1rem",
+                        fontSize: "1.5rem",
+                        color: "#fff",
+                        background: "#0e0e0e",
+                        border: "none",
+                        borderRadius: "0.25rem",
+                        cursor: "pointer",
+                        fontFamily: "Verdana",
+                      }}
+                      onClick={() =>
+                        (window.location.href = `/search?q=${userInput}`)
+                      }
+                    >
+                      View all Items
+                    </button>
+                  </div>
+                )}
               </div>
               <div
                 style={{
@@ -391,13 +412,18 @@ export default function CommandPalette({ props }) {
                   overflowY: "auto",
                 }}
               >
-
                 {messages.map((message, index) => (
                   <MessageBox
                     key={index}
                     position={message.position}
                     type={message.type}
-                    text={message.text}
+                    text={
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: `${message.text}`,
+                        }}
+                      />
+                    }
                     avatar={message.avatar}
                     title={message.title}
                   />
