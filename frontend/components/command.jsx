@@ -279,6 +279,7 @@ export default function CommandPalette({ props }) {
                             style={{
                               width: "80%",
                               height: "50%",
+                              maxHeight: "150px",
                               objectFit: "contain",
                               marginBottom: "8px",
                             }}
