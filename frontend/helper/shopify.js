@@ -26,31 +26,6 @@ const formatCatalogEntry = (product) => {
   return JSON.stringify({ title, description, id });
 };
 
-export const addToCart = async (id, quantity) => {
-  try {
-    return fetch(window.Shopify.routes.root + 'cart/add.js', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        id: id,
-        quantity: 1
-      })
-    }).then((response) => response.json())
-      .then((json) => {
-        return json;
-      });
-  } catch (error) {
-    console.error(
-      `Error adding to cart`,
-      error.message
-    );
-    return null;
-  }
-}
-
 // Function to retrieve suggestions based on a search query
 export const getSuggestions = async (query) => {
   const json = await shopifyRestQuery(
