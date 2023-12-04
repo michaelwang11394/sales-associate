@@ -5,7 +5,7 @@ import CommandPalette from "@/components/command";
 import "./section.css";
 import "@/styles/chat.css";
 
-export function createIcon(home, mountDiv, overlayDiv, iconSize = 1) {
+export function createIcon(home, mountDiv, overlayDiv, iconSize = 2) {
   ReactDOM.createRoot(document.getElementById(mountDiv)).render(
     <Icon
       props={{
@@ -35,7 +35,7 @@ export function createOverlayDiv() {
     overlayDiv.className = "overlay";
     document.body.appendChild(overlayDiv);
     ReactDOM.createRoot(document.getElementById(divId)).render(
-      <CommandPalette />
+      <CommandPalette props={{overlayDiv: overlayDiv}} />
     );
   }
 
