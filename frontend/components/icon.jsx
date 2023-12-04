@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { subscribeToEvents } from "@/helper/supabase";
-import { handleNewCustomerEvent } from "@/helper/ai";
+import { getLastPixelEvent } from "@/helper/supabase";
 import "@/styles/chat.css";
 import { getGreeting } from "@/helper/shopify";
 
@@ -12,7 +11,7 @@ export default function Icon({ props }) {
   useEffect(() => {
     const clientId = window.localStorage.getItem('webPixelShopifyClientId');
     if (clientId) {
-      subscribeToEvents(clientId).then((data) => {
+      getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           setGreeting(await getGreeting(event))
         });

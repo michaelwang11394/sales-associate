@@ -4,10 +4,9 @@ import { MessageList, Avatar, MessageBox } from "react-chat-elements";
 // @ts-ignore
 import { getSuggestions, getGreeting } from "@/helper/shopify";
 // @ts-ignore
-import { subscribeToEvents } from "@/helper/supabase";
+import { getLastPixelEvent } from "@/helper/supabase";
 // @ts-ignore
-import { handleNewCustomerEvent } from "@/helper/ai";
-import { createOpenai } from "@/helper/ai";
+import { createOpenaiWithHistory } from "@/helper/ai";
 import { subscribeToMessages } from "@/helper/supabase";
 import { insertMessage } from "@/helper/supabase";
 import { getMessages } from "@/helper/supabase";
@@ -20,20 +19,15 @@ export default function CommandPalette() {
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
-    createOpenai().then((res) => {
+    createOpenaiWithHistory(clientId).then((res) => {
       setOpenai(res);
     });
     if (clientId) {
-      subscribeToEvents(clientId).then((data) => {
+      getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           //TODO: Change this if we change defaults
           const greeting = await getGreeting(event);
           await handleNewMessage(clientId, formatMessage(greeting, 'system'))
-          await handleNewCustomerEvent(event)
-            .then((res) => {
-              setOpenai(res);
-            })
-            .catch((err) => console.error(err));
         });
       });
       getMessages(clientId, 5).then((data) => {
@@ -43,6 +37,9 @@ export default function CommandPalette() {
           const messages = data.data.map((messageRow) => formatMessage(messageRow.message, messageRow.sender)).reverse()
           // @ts-ignore
           setMessages((prevMessages) => messages.concat(prevMessages));
+          createOpenaiWithHistory(clientId, messages).then((res) => {
+            setOpenai(res);
+          });
         }
       })
       subscribeToMessages(clientId, (message) => {
