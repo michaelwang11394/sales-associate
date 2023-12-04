@@ -414,9 +414,3 @@ export default function CommandPalette() {
     </div>
   );
 }
-
-/* 
-                      <div style={{ color: "blue" }}>
-                        This <a href="http://example.com">link</a>
-                      </div>
-*/
