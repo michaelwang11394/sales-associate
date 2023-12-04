@@ -27,6 +27,58 @@ export const subscribeToEvents = async (clientId) => {
   }
 };
 
+export const getMessages = async (clientId, limit) => {
+  try {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .eq("clientId", clientId)
+      .neq("sender", "system")
+      .limit(limit);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting messages." };
+    }
+
+    console.log("Data", data);
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
+// TODO
+export const subscribeToMessages = (clientId, handleInserts) => {
+  try {
+    supabase
+      .channel('messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, handleInserts)
+      .subscribe()
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const insertMessage = async (clientId, sender, message) => {
+  const { error } = await supabase.from("messages").insert([
+    {
+      clientId: clientId,
+      sender: sender,
+      message: message,
+    },
+  ]);
+
+  if (error) {
+    console.error("Error during insert:", error);
+    return false
+  }
+  return true
+}
+
 export const isNewCustomer = async (customerId) => {
   try {
     const oneWeekAgo = new Date();
