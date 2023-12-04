@@ -88,7 +88,7 @@ const createOpenai = async (context, history = []) => {
   */
   const memory = new BufferWindowMemory({
     chatHistory: new ChatMessageHistory(history),
-    k: 3,
+    k: LANGCHAIN_MEMORY_BUFFER_SIZE,
   });
 
   /* CHAIN */
