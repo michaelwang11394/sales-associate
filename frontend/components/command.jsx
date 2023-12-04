@@ -56,8 +56,8 @@ export default function CommandPalette({ props }) {
   }, []);
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, suggestions])
+    scrollToBottom();
+  }, [messages, suggestions]);
 
   const formatMessage = (text, source) => {
     const title = source !== "user" ? "Sales Associate" : "";
@@ -67,10 +67,6 @@ export default function CommandPalette({ props }) {
       source !== "user"
         ? "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         : "";
-
-    // const formattedText = `{
-    //   <div dangerouslySetInnerHTML={{__html: ${text} </div>'}} />
-    // }
 
     //TODO: Download photo locally
     const message = {
@@ -328,7 +324,8 @@ export default function CommandPalette({ props }) {
                             }
                           </div>
                           {/* Add to Cart Button */}
-                          {product.variants.length > 0 && <button
+                          {product.variants.length > 0 && (
+                            <button
                               style={{
                                 marginTop: "10px",
                                 padding: "0.5rem 1rem",
@@ -341,13 +338,18 @@ export default function CommandPalette({ props }) {
                                 cursor: "pointer",
                               }}
                               onClick={(e) => {
-                                e.preventDefault()
-                                addToCart(product.variants[0].id, 1).then(response => alert(product.title + ' has been added to cart'))
+                                e.preventDefault();
+                                addToCart(product.variants[0].id, 1).then(
+                                  (response) =>
+                                    alert(
+                                      product.title + " has been added to cart"
+                                    )
+                                );
                               }}
                             >
                               Add to Cart
                             </button>
-                          }
+                          )}
                         </a>
                       </div>
                     ))
@@ -357,29 +359,33 @@ export default function CommandPalette({ props }) {
                     </div>
                   )}
                 </div>
-                {userInput.length > 0 && <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    marginTop: "1rem",
-                  }}
-                >
-                  <button
+                {userInput.length > 0 && (
+                  <div
                     style={{
-                      padding: "0.5rem 1rem",
-                      fontSize: "1.5rem",
-                      color: "#fff",
-                      background: "#0e0e0e",
-                      border: "none",
-                      borderRadius: "0.25rem",
-                      cursor: "pointer",
-                      fontFamily: "Verdana",
+                      display: "flex",
+                      justifyContent: "center",
+                      marginTop: "1rem",
                     }}
-                    onClick={() => window.location.href = `/search?q=${userInput}`}
                   >
-                    View all Items
-                  </button>
-                </div>}
+                    <button
+                      style={{
+                        padding: "0.5rem 1rem",
+                        fontSize: "1.5rem",
+                        color: "#fff",
+                        background: "#0e0e0e",
+                        border: "none",
+                        borderRadius: "0.25rem",
+                        cursor: "pointer",
+                        fontFamily: "Verdana",
+                      }}
+                      onClick={() =>
+                        (window.location.href = `/search?q=${userInput}`)
+                      }
+                    >
+                      View all Items
+                    </button>
+                  </div>
+                )}
               </div>
               <div
                 style={{
@@ -406,13 +412,11 @@ export default function CommandPalette({ props }) {
                   overflowY: "auto",
                 }}
               >
-
                 {messages.map((message, index) => (
                   <MessageBox
                     key={index}
                     position={message.position}
                     type={message.type}
-                    // text={<div>message.text</div>}
                     text={
                       <div
                         dangerouslySetInnerHTML={{
@@ -432,9 +436,3 @@ export default function CommandPalette({ props }) {
     </div>
   );
 }
-
-/* 
-                      <div style={{ color: "blue" }}>
-                        This <a href="http://example.com">link</a>
-                      </div>
-*/
