@@ -10,6 +10,7 @@ import { createOpenaiWithHistory } from "@/helper/ai";
 import { subscribeToMessages } from "@/helper/supabase";
 import { insertMessage } from "@/helper/supabase";
 import { getMessages } from "@/helper/supabase";
+import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { addToCart } from "@/helper/shopify";
 
@@ -32,7 +33,7 @@ export default function CommandPalette({ props }) {
           await handleNewMessage(clientId, formatMessage(greeting, 'system'))
         });
       });
-      getMessages(clientId, 5).then((data) => {
+      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
         if (!data) {
           console.error("Message history could not be fetched")
         } else {
@@ -49,6 +50,10 @@ export default function CommandPalette({ props }) {
       });
     }
   }, []);
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, suggestions])
 
   const formatMessage = (text, source) => {
     const title = source !== "user" ? "Sales Associate" : "";
@@ -69,6 +74,13 @@ export default function CommandPalette({ props }) {
       source: source
     };
     return message;
+  };
+
+  const scrollToBottom = () => {
+    const chatColumn = document.getElementById("chat-column");
+    if (chatColumn) {
+      chatColumn.scrollTop = chatColumn.scrollHeight;
+    }
   };
 
   const handleNewMessage = async (clientId, newUserMessage) => {
@@ -360,23 +372,25 @@ export default function CommandPalette({ props }) {
                   backgroundColor: "black",
                 }}
               />
+              {/* Chat Column*/}
               <div
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: "10px",
+                  textAlign: "center",
+                }}
+              >
+                Conversation
+              </div>
+              <div
+                id="chat-column"
                 style={{
                   flex: "1",
                   minWidth: "0",
                   padding: "1.5rem",
+                  overflowY: "auto",
                 }}
               >
-                {/* Chat Column*/}
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    textAlign: "center",
-                  }}
-                >
-                  Conversation
-                </div>
 
                 {messages.map((message, index) => (
                   <MessageBox

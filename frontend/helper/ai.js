@@ -12,6 +12,7 @@ import {
   isNewCustomer,
 } from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
+import { LANGCHAIN_MEMORY_BUFFER_SIZE } from "@/constants/constants";
 
 /* CHATS 
 // HACK: Replace key after migration to nextjs
@@ -79,7 +80,7 @@ const createOpenai = async (context, history=[]) => {
   /* MEMORY 
   // TODO: Because memory is loaded on render, that means, it will also be cleaned out upon navigation to a different page
   */
-  const memory = new BufferWindowMemory({ chatHistory: new ChatMessageHistory(history), k: 3 });
+  const memory = new BufferWindowMemory({ chatHistory: new ChatMessageHistory(history), k: LANGCHAIN_MEMORY_BUFFER_SIZE });
 
   /* CHAIN */
   const chain = new LLMChain({
