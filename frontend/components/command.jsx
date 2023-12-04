@@ -10,6 +10,7 @@ import { createOpenaiWithHistory } from "@/helper/ai";
 import { subscribeToMessages } from "@/helper/supabase";
 import { insertMessage } from "@/helper/supabase";
 import { getMessages } from "@/helper/supabase";
+import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
 
 export default function CommandPalette() {
   const [userInput, setUserInput] = useState("");
@@ -30,7 +31,7 @@ export default function CommandPalette() {
           await handleNewMessage(clientId, formatMessage(greeting, 'system'))
         });
       });
-      getMessages(clientId, 5).then((data) => {
+      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
         if (!data) {
           console.error("Message history could not be fetched")
         } else {
@@ -47,6 +48,10 @@ export default function CommandPalette() {
       });
     }
   }, []);
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, suggestions])
 
   const toggleOverlayVisibility = async () => {
     //TODO: We need to figure out better way of managing overlay state. Currently, it's all managed in the icon state and difficult to pass down the state to command.
@@ -72,6 +77,13 @@ export default function CommandPalette() {
       source: source
     };
     return message;
+  };
+
+  const scrollToBottom = () => {
+    const chatColumn = document.getElementById("chat-column");
+    if (chatColumn) {
+      chatColumn.scrollTop = chatColumn.scrollHeight;
+    }
   };
 
   const handleNewMessage = async (clientId, newUserMessage) => {
@@ -356,23 +368,25 @@ export default function CommandPalette() {
                   backgroundColor: "black",
                 }}
               />
+              {/* Chat Column*/}
               <div
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: "10px",
+                  textAlign: "center",
+                }}
+              >
+                Conversation
+              </div>
+              <div
+                id="chat-column"
                 style={{
                   flex: "1",
                   minWidth: "0",
                   padding: "1.5rem",
+                  overflowY: "auto",
                 }}
               >
-                {/* Chat Column*/}
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    textAlign: "center",
-                  }}
-                >
-                  Conversation
-                </div>
 
                 {messages.map((message, index) => (
                   <MessageBox
