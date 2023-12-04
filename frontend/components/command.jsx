@@ -27,23 +27,27 @@ export default function CommandPalette() {
         data.data?.forEach(async (event) => {
           //TODO: Change this if we change defaults
           const greeting = await getGreeting(event);
-          await handleNewMessage(clientId, formatMessage(greeting, 'system'))
+          await handleNewMessage(clientId, formatMessage(greeting, "system"));
         });
       });
       getMessages(clientId, 5).then((data) => {
         if (!data) {
-          console.error("Message history could not be fetched")
+          console.error("Message history could not be fetched");
         } else {
-          const messages = data.data.map((messageRow) => formatMessage(messageRow.message, messageRow.sender)).reverse()
+          const messages = data.data
+            .map((messageRow) =>
+              formatMessage(messageRow.message, messageRow.sender)
+            )
+            .reverse();
           // @ts-ignore
           setMessages((prevMessages) => messages.concat(prevMessages));
           createOpenaiWithHistory(clientId, messages).then((res) => {
             setOpenai(res);
           });
         }
-      })
+      });
       subscribeToMessages(clientId, (message) => {
-        console.log("message inserted", JSON.stringify(message))
+        console.log("message inserted", JSON.stringify(message));
       });
     }
   }, []);
@@ -62,6 +66,10 @@ export default function CommandPalette() {
         ? "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         : "";
 
+    // const formattedText = `{
+    //   <div dangerouslySetInnerHTML={{__html: ${text} </div>'}} />
+    // }
+
     //TODO: Download photo locally
     const message = {
       position: position,
@@ -69,19 +77,23 @@ export default function CommandPalette() {
       title: title,
       text: text,
       avatar: avatar,
-      source: source
+      source: source,
     };
     return message;
   };
 
   const handleNewMessage = async (clientId, newUserMessage) => {
-    const success = await insertMessage(clientId, newUserMessage.source, newUserMessage.text)
+    const success = await insertMessage(
+      clientId,
+      newUserMessage.source,
+      newUserMessage.text
+    );
     if (!success) {
-      console.error('Messages update failed for supabase table messages')
+      console.error("Messages update failed for supabase table messages");
     }
     // @ts-ignore
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
-  }
+  };
 
   const handleInputChange = async (event) => {
     setUserInput(event.target.value);
@@ -99,7 +111,7 @@ export default function CommandPalette() {
     await handleNewMessage(clientId, newUserMessage);
 
     // TODO: Turn off openai for now. Add dev mode as toggle
-    if (openai && false) {
+    if (openai && true) {
       await openai
         .call({ message: userInput })
         .then((response) => {
@@ -110,7 +122,10 @@ export default function CommandPalette() {
         })
         .catch((err) => console.error(err));
     } else {
-      await handleNewMessage(clientId, formatMessage("AI is not available, please try again", 'system'));
+      await handleNewMessage(
+        clientId,
+        formatMessage("AI is not available, please try again", "system")
+      );
       console.error("openai not available");
     }
     setUserInput("");
@@ -379,7 +394,14 @@ export default function CommandPalette() {
                     key={index}
                     position={message.position}
                     type={message.type}
-                    text={message.text}
+                    // text={<div>message.text</div>}
+                    text={
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: `${message.text}`,
+                        }}
+                      />
+                    }
                     avatar={message.avatar}
                     title={message.title}
                   />
@@ -392,3 +414,9 @@ export default function CommandPalette() {
     </div>
   );
 }
+
+/* 
+                      <div style={{ color: "blue" }}>
+                        This <a href="http://example.com">link</a>
+                      </div>
+*/
