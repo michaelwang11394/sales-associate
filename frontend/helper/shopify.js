@@ -9,32 +9,39 @@ const shopifyRestQuery = async (endpoint) => {
     return fetch(window.Shopify.routes.root + endpoint)
       .then((response) => response.json())
       .then((json) => {
-        return json
+        return json;
       });
   } catch (error) {
-    console.error(`Error fetching endpoint ${endpoint}: with message %s`, error.message);
+    console.error(
+      `Error fetching endpoint ${endpoint}: with message %s`,
+      error.message
+    );
     return null;
   }
-}
+};
 
 const formatCatalogEntry = (product) => {
   // Fields we care about
   const { title, body_html: description, id } = product;
-  return JSON.stringify({ title, description, id })
-}
+  return JSON.stringify({ title, description, id });
+};
 
 // Function to retrieve suggestions based on a search query
 export const getSuggestions = async (query) => {
-  const json = await shopifyRestQuery(`search/suggest.json?q=${query}&resources[type]=product&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`)
-  return json?.resources?.results?.products
+  const json = await shopifyRestQuery(
+    `search/suggest.json?q=${query}&resources[type]=product&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`
+  );
+  return json?.resources?.results?.products;
 };
 
 export const getProducts = async () => {
   // TODO: paginate for larger stores
-  const json = await shopifyRestQuery('products.json?limit=250&status=active')
-  console.log(json)
-  return json?.products?.map(product => formatCatalogEntry(product)).join("\r\n")
-}
+  const json = await shopifyRestQuery("products.json?limit=250&status=active");
+  console.log(json);
+  return json?.products
+    ?.map((product) => formatCatalogEntry(product))
+    .join("\r\n");
+};
 
 export const getGreeting = async (event) => {
   // Check if the customer has viewed their cart multiple times in the past 30 minutes
@@ -49,7 +56,7 @@ export const getGreeting = async (event) => {
       if (newCustomer.isNew === true) {
         return "Hey there, welcome to the store! Click me to ask any questions.";
       } else {
-        return "Welcome back to the store! Let me know if I can show you around.";
+        return "Welcome back to the store! Please ask me any questions you may have.";
       }
     // Cart Intent
     case "cart_viewed":
@@ -63,11 +70,9 @@ export const getGreeting = async (event) => {
       const searchQuery = event.detail.query;
       return `Let me know if I can help with your search for "${searchQuery}". Happy to help!`;
     default:
-      return 'Click me for any questions, powered by AI';
+      return "Click me for any questions, powered by AI";
   }
-
-}
-
+};
 
 // Example usage
 /*
