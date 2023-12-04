@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { getLastPixelEvent } from "@/helper/supabase";
 import "@/styles/chat.css";
 import { getGreeting } from "@/helper/shopify";
+import { toggleOverlayVisibility } from "@/helper/animations";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
@@ -37,14 +38,6 @@ export default function Icon({ props }) {
     };
   }, []);
 
-  const toggleOverlayVisibility = async (overlayDiv) => {
-    overlayDiv.classList.toggle("visible");
-    /*
-    setTimeout(() => {
-    }, 2000);
-    */
-  };
-
   const handleIconClick = (event) => {
     event.stopPropagation();
     const overlayDiv = props.overlayDiv;
@@ -62,10 +55,10 @@ export default function Icon({ props }) {
         <svg
           xmlns="http://www.w3.org/2000/svg"
           height={iconSize + "em"}
-          viewBox="0 0 512 512"
+          viewBox="0 0 256 256"
           style={{ fill: "black" }}
         >
-          <path d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z" />
+          <path d="M197.00781,132.74023l-52.16015-19.21777a3.99186,3.99186,0,0,1-2.3711-2.37012L123.25977,58.99219a11.99948,11.99948,0,0,0-22.51954,0L81.52246,111.15234a3.99186,3.99186,0,0,1-2.37012,2.3711L26.99219,132.74023a11.99948,11.99948,0,0,0,0,22.51954l52.16015,19.21777a3.99186,3.99186,0,0,1,2.3711,2.37012l19.21679,52.16015a11.99948,11.99948,0,0,0,22.51954,0l19.21679-52.16015h.001a3.99186,3.99186,0,0,1,2.37012-2.3711l52.16015-19.21679a11.99948,11.99948,0,0,0,0-22.51954Zm-2.76562,15.01368L142.082,166.96973a11.98076,11.98076,0,0,0-7.11133,7.1123l-19.21679,52.16016a4.00076,4.00076,0,0,1-7.50782,0L89.03027,174.082a11.98076,11.98076,0,0,0-7.1123-7.11133L29.75781,147.75391a4.00076,4.00076,0,0,1,0-7.50782L81.918,121.03027a11.98076,11.98076,0,0,0,7.11133-7.1123l19.21679-52.16016a4.00076,4.00076,0,0,1,7.50782,0L134.96973,113.918a11.98076,11.98076,0,0,0,7.1123,7.11133l52.16016,19.21679a4.00076,4.00076,0,0,1,0,7.50782ZM148,40a4.0002,4.0002,0,0,1,4-4h20V16a4,4,0,0,1,8,0V36h20a4,4,0,0,1,0,8H180V64a4,4,0,0,1-8,0V44H152A4.0002,4.0002,0,0,1,148,40Zm96,48a4.0002,4.0002,0,0,1-4,4H228v12a4,4,0,0,1-8,0V92H208a4,4,0,0,1,0-8h12V72a4,4,0,0,1,8,0V84h12A4.0002,4.0002,0,0,1,244,88Z"/>
         </svg>
       </div>
 
@@ -75,8 +68,8 @@ export default function Icon({ props }) {
           className="talk-bubble tri-right round border btm-right-in"
           style={{
             position: "absolute",
-            bottom: iconRef.current.offsetTop + iconSize / 4 + "em",
-            right: iconRef.current.offsetLeft - iconSize + "em",
+            bottom: iconRef.current.offsetTop + iconSize / 2  + "em",
+            right: iconRef.current.offsetLeft - iconSize / 4 + "em",
             height: "auto",
             width: "500px",
             background: "white",
