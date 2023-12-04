@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "react-chat-elements/dist/main.css";
-import { MessageList } from "react-chat-elements";
+import { MessageList, Avatar, MessageBox } from "react-chat-elements";
 // @ts-ignore
 import { getSuggestions, getGreeting } from "@/helper/shopify";
 // @ts-ignore
@@ -40,15 +40,21 @@ export default function CommandPalette() {
   }, []);
 
   const formatMessage = (text, source) => {
-    const title = source === "system" ? "Sales Associate" : "User"; // TODO: What should user actually be named?
+    const title = source === "system" ? "Sales Associate" : "";
     const position = source === "system" ? "left" : "right";
     const messageType = "text";
+    const avatar =
+      source === "system"
+        ? "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        : "";
 
+    //TODO: Download photo locally
     const message = {
       position: position,
       type: messageType,
       title: title,
       text: text,
+      avatar: avatar,
     };
     return message;
   };
@@ -71,7 +77,7 @@ export default function CommandPalette() {
     setMessages(newMessages);
 
     // TODO: Turn off openai for now. Add dev mode as toggle
-    if (openai && true) {
+    if (openai && false) {
       await openai
         .call({ message: userInput })
         .then((response) => {
@@ -99,12 +105,11 @@ export default function CommandPalette() {
   };
 
   return (
-    <div id="overlay" style={{ height: "30%" }}>
+    <div id="overlay" style={{ height: "70%" }}>
       <section
         style={{
           position: "relative",
           overflow: "hidden",
-          backgroundColor: "black",
           backgroundSize: "cover",
         }}
       >
@@ -128,6 +133,7 @@ export default function CommandPalette() {
               backgroundColor: "white",
               backdropFilter: "blur(10px)",
               borderRadius: "1rem",
+              borderWidth: "thin",
             }}
           >
             <div style={{ position: "relative" }}>
@@ -139,14 +145,14 @@ export default function CommandPalette() {
                   onSubmit={handleSubmit}
                   style={{
                     width: "100%",
-                    height: "3rem",
+                    height: "4rem",
                     paddingRight: "1rem",
                     color: "black",
                     border: "none",
                     borderRadius: "0.625rem 0.625rem 0 0",
                     paddingLeft: "2.75rem",
                   }}
-                  placeholder="Ask me anything! I am not your typical search bar"
+                  placeholder="Ask me anything! I am not your typical search bar."
                   role="combobox"
                   aria-expanded="false"
                   aria-controls="options"
@@ -176,11 +182,14 @@ export default function CommandPalette() {
               </form>
             </div>
             {/* Dividing Line */}
+            {/* TODO: 1) Add add to cart button for each product. 2) Add button that will show rest of search results.*/}
             <div
               style={{
                 display: "flex",
                 borderTop: "1px solid rgba(17, 16, 16, 0.2)",
-                flexDirection: "row",
+                flexDirection: "column",
+                overflowY: "auto",
+                maxHeight: "60rem",
               }}
             >
               <div
@@ -188,72 +197,116 @@ export default function CommandPalette() {
                   flex: "1",
                   minWidth: "0",
                   padding: "1.5rem",
-                  overflowY: "auto",
-                  maxHeight: "24rem",
                 }}
               >
-                {/* 
-                Suggestions column
-                //TODO: Add Description and Price
-                */}
-                {suggestions &&
-                  suggestions.map((product, index) => (
-                    <a
-                      key={index}
-                      // @ts-ignore
-                      href={product.url}
-                      onClick={() => handleDropdownItemClick(product)}
-                      style={{
-                        textDecoration: "none",
-                        color: "inherit",
-                      }}
-                    >
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                    textAlign: "center",
+                  }}
+                >
+                  Product Suggestions
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "space-around",
+                  }}
+                >
+                  {suggestions && suggestions.length > 0 ? (
+                    suggestions.slice(0, 4).map((product, index) => (
                       <div
+                        key={index}
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          padding: "8px",
-                          borderBottom: "1px solid #ccc",
-                          boxSizing: "border-box",
-                          cursor: "pointer",
+                          flex: "1 0 21%",
+                          margin: "1%",
+                          textAlign: "center",
                         }}
                       >
-                        {/* Product Image */}
-                        <img
+                        <a
                           // @ts-ignore
-                          src={product.featured_image.url}
-                          // @ts-ignore
-                          alt={product.featured_image.alt}
-                          style={{ width: "50px", marginRight: "8px" }}
-                        />
-
-                        {/* Product Name */}
-                        <div style={{ textAlign: "center" }}>
-                          {
+                          href={product.url}
+                          onClick={() => handleDropdownItemClick(product)}
+                          style={{
+                            textDecoration: "none",
+                            color: "inherit",
+                          }}
+                        >
+                          {/* Product Image */}
+                          <img
                             // @ts-ignore
-                            product.title
-                          }
-                        </div>
+                            src={product.featured_image.url}
+                            // @ts-ignore
+                            alt={product.featured_image.alt}
+                            style={{
+                              width: "80%",
+                              height: "50%",
+                              objectFit: "contain",
+                              marginBottom: "8px",
+                            }}
+                          />
+
+                          {/* Product Name */}
+                          <div style={{ marginBottom: "8px" }}>
+                            {
+                              // @ts-ignore
+                              product.title
+                            }
+                          </div>
+
+                          {/* Product Price */}
+                          <div>
+                            {
+                              // @ts-ignore
+                              product.price
+                            }
+                          </div>
+                        </a>
                       </div>
-                    </a>
-                  ))}
+                    ))
+                  ) : (
+                    <div style={{ textAlign: "center", fontStyle: "italic" }}>
+                      Type in the search box to see suggestions
+                    </div>
+                  )}
+                </div>
               </div>
+              <div
+                style={{
+                  height: "2px",
+                  backgroundColor: "black",
+                }}
+              />
               <div
                 style={{
                   flex: "1",
                   minWidth: "0",
                   padding: "1.5rem",
-                  overflowY: "auto",
-                  maxHeight: "24rem",
                 }}
               >
                 {/* Chat Column*/}
-                <MessageList
-                  className="message-list"
-                  lockable={true}
-                  toBottomHeight={"100%"}
-                  dataSource={messages}
-                />
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                    textAlign: "center",
+                  }}
+                >
+                  Conversation
+                </div>
+
+                {messages.map((message, index) => (
+                  <MessageBox
+                    key={index}
+                    position={message.position}
+                    type={message.type}
+                    text={message.text}
+                    avatar={message.avatar}
+                    title={message.title}
+                  />
+                ))}
               </div>
             </div>
           </div>
