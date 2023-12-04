@@ -31,6 +31,11 @@ export const getSuggestions = async (query) => {
   const json = await shopifyRestQuery(
     `search/suggest.json?q=${query}&resources[type]=product&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`
   );
+  // TODO: Get Search link page
+  // const fullTest = await shopifyRestQuery(
+  //   `search/suggest.json?q=${query}&resources[page]`
+  // );
+  // console.log("seearch json", test);
   return json?.resources?.results?.products;
 };
 

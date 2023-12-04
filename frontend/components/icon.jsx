@@ -5,16 +5,18 @@ import "@/styles/chat.css";
 import { getGreeting } from "@/helper/shopify";
 
 export default function Icon({ props }) {
-  const [greeting, setGreeting] = useState("Welcome to the store, click me to start chatting with your AI sales assistant!");
+  const [greeting, setGreeting] = useState(
+    "Welcome to the store, click me to start chatting with your AI sales assistant!"
+  );
   const iconRef = useRef(null);
   const iconSize = props.iconSize;
 
   useEffect(() => {
-    const clientId = window.localStorage.getItem('webPixelShopifyClientId');
+    const clientId = window.localStorage.getItem("webPixelShopifyClientId");
     if (clientId) {
       subscribeToEvents(clientId).then((data) => {
         data.data?.forEach(async (event) => {
-          setGreeting(await getGreeting(event))
+          setGreeting(await getGreeting(event));
         });
       });
     }
@@ -26,7 +28,7 @@ export default function Icon({ props }) {
         !overlayDiv.contains(event.target) &&
         overlayDiv.classList.contains("visible")
       ) {
-        toggleOverlayVisibility(overlayDiv)
+        toggleOverlayVisibility(overlayDiv);
       }
     };
 
@@ -37,18 +39,17 @@ export default function Icon({ props }) {
   }, []);
 
   const toggleOverlayVisibility = async (overlayDiv) => {
-      overlayDiv.classList.toggle('visible')
-      /*
+    overlayDiv.classList.toggle("visible");
+    /*
     setTimeout(() => {
     }, 2000);
     */
   };
 
-
   const handleIconClick = (event) => {
     event.stopPropagation();
     const overlayDiv = props.overlayDiv;
-    toggleOverlayVisibility(overlayDiv)
+    toggleOverlayVisibility(overlayDiv);
   };
 
   return (

@@ -39,6 +39,11 @@ export default function CommandPalette() {
     });
   }, []);
 
+  const toggleOverlayVisibility = async () => {
+    //TODO: We need to figure out better way of managing overlay state. Currently, it's all managed in the icon state and difficult to pass down the state to command.
+    console.log("Exit button clicked");
+  };
+
   const formatMessage = (text, source) => {
     const title = source === "system" ? "Sales Associate" : "";
     const position = source === "system" ? "left" : "right";
@@ -197,8 +202,23 @@ export default function CommandPalette() {
                   flex: "1",
                   minWidth: "0",
                   padding: "1.5rem",
+                  position: "relative", // Add this line
                 }}
               >
+                <button
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    background: "none",
+                    border: "none",
+                    fontSize: "2rem",
+                    cursor: "pointer",
+                  }}
+                  onClick={toggleOverlayVisibility}
+                >
+                  &times;
+                </button>
                 <div
                   style={{
                     fontWeight: "bold",
@@ -221,8 +241,10 @@ export default function CommandPalette() {
                         key={index}
                         style={{
                           flex: "1 0 21%",
-                          margin: "1%",
+
                           textAlign: "center",
+                          padding: "0.2em",
+                          margin: "0.2em",
                         }}
                       >
                         <a
@@ -232,6 +254,11 @@ export default function CommandPalette() {
                           style={{
                             textDecoration: "none",
                             color: "inherit",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "space-between", // Distribute space between elements
+                            minHeight: "150px", // Ensure a minimum height
                           }}
                         >
                           {/* Product Image */}
@@ -249,7 +276,7 @@ export default function CommandPalette() {
                           />
 
                           {/* Product Name */}
-                          <div style={{ marginBottom: "8px" }}>
+                          <div style={{ marginBottom: "8px", height: "40px" }}>
                             {
                               // @ts-ignore
                               product.title
@@ -263,6 +290,22 @@ export default function CommandPalette() {
                               product.price
                             }
                           </div>
+                          {/* Add to Cart Button */}
+                          <button
+                            style={{
+                              marginTop: "10px",
+                              padding: "0.5rem 1rem",
+                              fontSize: "1rem",
+                              fontFamily: "Verdana",
+                              color: "#000",
+                              background: "#fff",
+                              border: "1px solid #000",
+                              borderRadius: "0.25rem",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Add to Cart
+                          </button>
                         </a>
                       </div>
                     ))
@@ -271,6 +314,28 @@ export default function CommandPalette() {
                       Type in the search box to see suggestions
                     </div>
                   )}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: "1rem",
+                  }}
+                >
+                  <button
+                    style={{
+                      padding: "0.5rem 1rem",
+                      fontSize: "1.5rem",
+                      color: "#fff",
+                      background: "#0e0e0e",
+                      border: "none",
+                      borderRadius: "0.25rem",
+                      cursor: "pointer",
+                      fontFamily: "Verdana",
+                    }}
+                  >
+                    View all Items
+                  </button>
                 </div>
               </div>
               <div
