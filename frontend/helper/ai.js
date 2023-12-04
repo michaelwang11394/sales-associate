@@ -3,9 +3,9 @@ import {
   ChatPromptTemplate,
   SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { BufferWindowMemory } from "langchain/memory";
+import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
 import { LLMChain } from "langchain/chains";
-
+import { HumanMessage, AIMessage } from "langchain/schema";
 import {
   hasItemsInCart,
   hasViewedProducts,
@@ -23,18 +23,18 @@ const chat = new ChatOpenAI({
 });
 
 /* CALLING FUNCTION */
-export const handleNewCustomerEvent = async (event) => {
+export const createOpenaiWithHistory = async (clientId, messages=[]) => {
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext = [];
 
   // Check if the customer is new
-  const newCustomer = await isNewCustomer(event.clientId);
+  const newCustomer = await isNewCustomer(clientId);
   customerContext.push(newCustomer.message);
 
   // If customer is not new, check their cart history and product_viewed history. Add relevant links
   if (newCustomer.isNew === false) {
-    const itemsInCart = await hasItemsInCart(event.clientId);
-    const productsViewed = await hasViewedProducts(event.clientId);
+    const itemsInCart = await hasItemsInCart(clientId);
+    const productsViewed = await hasViewedProducts(clientId);
 
     // Check if the customer has items in their cart
     if (itemsInCart.hasItems === true) {
@@ -48,10 +48,13 @@ export const handleNewCustomerEvent = async (event) => {
       customerContext.push(productsViewed.productURLs);
     }
   }
-  return await createOpenai(customerContext)
+
+  const history = messages.map(m => m.source === 'user' ? new HumanMessage(m.text) : new AIMessage(m.text))
+
+  return await createOpenai(customerContext, history)
 };
 
-export const createOpenai = async (context=[]) => {
+const createOpenai = async (context, history=[]) => {
   // Get Product Catalog
   const catalog = await getProducts();
 
@@ -76,7 +79,7 @@ export const createOpenai = async (context=[]) => {
   /* MEMORY 
   // TODO: Because memory is loaded on render, that means, it will also be cleaned out upon navigation to a different page
   */
-  const memory = new BufferWindowMemory({ k: 3 });
+  const memory = new BufferWindowMemory({ chatHistory: new ChatMessageHistory(history), k: 3 });
 
   /* CHAIN */
   const chain = new LLMChain({

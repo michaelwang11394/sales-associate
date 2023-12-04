@@ -4,39 +4,48 @@ import { MessageList, Avatar, MessageBox } from "react-chat-elements";
 // @ts-ignore
 import { getSuggestions, getGreeting } from "@/helper/shopify";
 // @ts-ignore
-import { subscribeToEvents } from "@/helper/supabase";
+import { getLastPixelEvent } from "@/helper/supabase";
 // @ts-ignore
-import { handleNewCustomerEvent } from "@/helper/ai";
-import { createOpenai } from "@/helper/ai";
+import { createOpenaiWithHistory } from "@/helper/ai";
+import { subscribeToMessages } from "@/helper/supabase";
+import { insertMessage } from "@/helper/supabase";
+import { getMessages } from "@/helper/supabase";
 
 export default function CommandPalette() {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [messages, setMessages] = useState([]);
   const [openai, setOpenai] = useState();
+  const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
-  // Effect for getting customer events and sending to AI
   useEffect(() => {
-    // Call subscribeToEvents and handle the returned data
-    const clientId = window.localStorage.getItem("webPixelShopifyClientId");
-    createOpenai().then((res) => {
+    createOpenaiWithHistory(clientId).then((res) => {
       setOpenai(res);
     });
-    subscribeToEvents(clientId).then((data) => {
-      // Call handleNewCustomerEvent with each event
-      data.data?.forEach(async (event) => {
-        //TODO: Change this if we change defaults
-        const greeting = await getGreeting(event);
-        setMessages([...messages, formatMessage(greeting, "system")]);
-        console.log("messages", messages);
-        handleNewCustomerEvent(event)
-          .then((res) => {
-            console.log("res", res);
-            setOpenai(res);
-          })
-          .catch((err) => console.error(err));
+    if (clientId) {
+      getLastPixelEvent(clientId).then((data) => {
+        data.data?.forEach(async (event) => {
+          //TODO: Change this if we change defaults
+          const greeting = await getGreeting(event);
+          await handleNewMessage(clientId, formatMessage(greeting, 'system'))
+        });
       });
-    });
+      getMessages(clientId, 5).then((data) => {
+        if (!data) {
+          console.error("Message history could not be fetched")
+        } else {
+          const messages = data.data.map((messageRow) => formatMessage(messageRow.message, messageRow.sender)).reverse()
+          // @ts-ignore
+          setMessages((prevMessages) => messages.concat(prevMessages));
+          createOpenaiWithHistory(clientId, messages).then((res) => {
+            setOpenai(res);
+          });
+        }
+      })
+      subscribeToMessages(clientId, (message) => {
+        console.log("message inserted", JSON.stringify(message))
+      });
+    }
   }, []);
 
   const toggleOverlayVisibility = async () => {
@@ -45,11 +54,11 @@ export default function CommandPalette() {
   };
 
   const formatMessage = (text, source) => {
-    const title = source === "system" ? "Sales Associate" : "";
-    const position = source === "system" ? "left" : "right";
+    const title = source !== "user" ? "Sales Associate" : "";
+    const position = source !== "user" ? "left" : "right";
     const messageType = "text";
     const avatar =
-      source === "system"
+      source !== "user"
         ? "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         : "";
 
@@ -60,9 +69,19 @@ export default function CommandPalette() {
       title: title,
       text: text,
       avatar: avatar,
+      source: source
     };
     return message;
   };
+
+  const handleNewMessage = async (clientId, newUserMessage) => {
+    const success = await insertMessage(clientId, newUserMessage.source, newUserMessage.text)
+    if (!success) {
+      console.error('Messages update failed for supabase table messages')
+    }
+    // @ts-ignore
+    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+  }
 
   const handleInputChange = async (event) => {
     setUserInput(event.target.value);
@@ -77,9 +96,7 @@ export default function CommandPalette() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const newUserMessage = formatMessage(userInput, "user");
-    const newMessages = [...messages, newUserMessage];
-    // @ts-ignore
-    setMessages(newMessages);
+    await handleNewMessage(clientId, newUserMessage);
 
     // TODO: Turn off openai for now. Add dev mode as toggle
     if (openai && false) {
@@ -87,18 +104,13 @@ export default function CommandPalette() {
         .call({ message: userInput })
         .then((response) => {
           console.log(response.text);
-          const newResponseMessage = formatMessage(response.text, "system");
-          // @ts-ignore
-          setMessages([...newMessages, newResponseMessage]);
+          const newResponseMessage = formatMessage(response.text, "ai");
+          handleNewMessage(clientId, newResponseMessage);
           console.log("message after openai", messages);
         })
         .catch((err) => console.error(err));
     } else {
-      // @ts-ignore
-      setMessages([
-        ...newMessages,
-        formatMessage("AI is not available, please try again", "system"),
-      ]);
+      await handleNewMessage(clientId, formatMessage("AI is not available, please try again", 'system'));
       console.error("openai not available");
     }
     setUserInput("");
