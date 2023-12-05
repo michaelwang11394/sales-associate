@@ -73,36 +73,41 @@ export const getProducts = async () => {
     .join("\r\n");
 };
 
-export const getGreeting = async (event) => {
+export const getGreetingMessage = async (event) => {
   // Check if the customer has viewed their cart multiple times in the past 30 minutes
   // Check if the customer is new
   const newCustomer = await isNewCustomer(event.clientId);
-  // Add coupon logic once LLM can create rich outputs
-  // const isOfferCoupon = await offerCoupon(event.clientId);
+  const isOfferCoupon = await offerCoupon(event.clientId);
 
   switch (event.name) {
     // Welcome Intent
     case "page_viewed":
-      if (newCustomer.isNew === true) {
-        return "Hey there, welcome to the store! Click me to ask any questions.";
+      if (newCustomer[0] === true) {
+        return "Hi, this is my first time visiting this store.";
       } else {
-        return "Welcome back to the store! Please ask me any questions you may have.";
+        return "Hi, welcome me back to the store and ask for any help I may need.";
       }
     // Cart Intent
     case "cart_viewed":
-      return "Let me know if I can answer any more questions about your cart items.";
+      if (isOfferCoupon.offerCoupon === true) {
+        return "I am back at my cart again. I will consider purchasing if you give me a coupon.";
+      } else {
+        return "Encourage me to checkout.";
+      }
     // Product Intent
     case "product_viewed":
       const product = event.detail.productVariant.product.title;
-      return `Have any questions about ${product}? Feel free to ask me anything`;
+      return `I am looking at ${product}. Suggest for me another product in your catalog for me to look at. `;
     // Search Intent
     case "search_submitted":
       const searchQuery = event.detail.query;
-      return `Let me know if I can help with your search for "${searchQuery}". Happy to help!`;
+      return `I am searching for ${searchQuery}. Ask me if I found what I was looking for.`;
     default:
-      return "Click me for any questions, powered by AI";
+      return "Hello.";
   }
 };
+
+
 
 // Example usage
 /*

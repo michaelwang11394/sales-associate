@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "react-chat-elements/dist/main.css";
 import { MessageList, Avatar, MessageBox } from "react-chat-elements";
 // @ts-ignore
-import { getSuggestions, getGreeting } from "@/helper/shopify";
+import { getSuggestions, getGreetingMessage } from "@/helper/shopify";
 // @ts-ignore
 import { getLastPixelEvent } from "@/helper/supabase";
 // @ts-ignore
@@ -13,6 +13,7 @@ import { getMessages } from "@/helper/supabase";
 import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { addToCart } from "@/helper/shopify";
+import { formatMessage } from "@/helper/ai";
 
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
@@ -22,17 +23,7 @@ export default function CommandPalette({ props }) {
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
-    createOpenaiWithHistory(clientId).then((res) => {
-      setOpenai(res);
-    });
     if (clientId) {
-      getLastPixelEvent(clientId).then((data) => {
-        data.data?.forEach(async (event) => {
-          //TODO: Change this if we change defaults
-          const greeting = await getGreeting(event);
-          await handleNewMessage(clientId, formatMessage(greeting, "system"));
-        });
-      });
       getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
         if (!data) {
           console.error("Message history could not be fetched");
@@ -56,29 +47,25 @@ export default function CommandPalette({ props }) {
   }, []);
 
   useEffect(() => {
+    if (clientId && openai) {
+      getLastPixelEvent(clientId).then((data) => {
+        data.data?.forEach(async (event) => {
+          const greetingPrompt = await getGreetingMessage(event);
+          await openai
+            .call({ message: greetingPrompt })
+            .then((response) => {
+              const newResponseMessage = formatMessage(response.text, "system");
+              handleNewMessage(clientId, newResponseMessage);
+            })
+            .catch((err) => console.error(err));
+        });
+      });
+    }
+  }, [openai])
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages, suggestions]);
-
-  const formatMessage = (text, source) => {
-    const title = source !== "user" ? "Sales Associate" : "";
-    const position = source !== "user" ? "left" : "right";
-    const messageType = "text";
-    const avatar =
-      source !== "user"
-        ? "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        : "";
-
-    //TODO: Download photo locally
-    const message = {
-      position: position,
-      type: messageType,
-      title: title,
-      text: text,
-      avatar: avatar,
-      source: source,
-    };
-    return message;
-  };
 
   const scrollToBottom = () => {
     const chatColumn = document.getElementById("chat-column");

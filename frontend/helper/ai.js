@@ -19,6 +19,27 @@ const chat = new ChatOpenAI({
   streaming: true,
 });
 
+export const formatMessage = (text, source) => {
+  const title = source !== "user" ? "Sales Associate" : "";
+  const position = source !== "user" ? "left" : "right";
+  const messageType = "text";
+  const avatar =
+    source !== "user"
+      ? "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+      : "";
+
+  //TODO: Download photo locally
+  const message = {
+    position: position,
+    type: messageType,
+    title: title,
+    text: text,
+    avatar: avatar,
+    source: source,
+  };
+  return message;
+};
+
 /* CALLING FUNCTION */
 export const createOpenaiWithHistory = async (clientId, messages = []) => {
   /* CUSTOMER INFORMATION CONTEXT */

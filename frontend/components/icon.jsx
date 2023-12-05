@@ -1,23 +1,35 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getLastPixelEvent } from "@/helper/supabase";
+import { getLastPixelEvent, getMessages } from "@/helper/supabase";
 import "@/styles/chat.css";
-import { getGreeting } from "@/helper/shopify";
+import { getGreetingMessage } from "@/helper/shopify";
 import { toggleOverlayVisibility } from "@/helper/animations";
+import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
+import { formatMessage, createOpenaiWithHistory } from "@/helper/ai";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
     "Welcome to the store, click me to start chatting with your AI sales assistant!"
   );
+  const [openai, setOpenai] = useState();
   const iconRef = useRef(null);
   const iconSize = props.iconSize;
+  const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
-    const clientId = window.localStorage.getItem("webPixelShopifyClientId");
     if (clientId) {
-      getLastPixelEvent(clientId).then((data) => {
-        data.data?.forEach(async (event) => {
-          setGreeting(await getGreeting(event));
-        });
+      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
+        if (!data) {
+          console.error("Message history could not be fetched");
+        } else {
+          const messages = data.data
+            .map((messageRow) =>
+              formatMessage(messageRow.message, messageRow.sender)
+            )
+            .reverse();
+          createOpenaiWithHistory(clientId, messages).then((res) => {
+            setOpenai(res);
+          });
+        }
       });
     }
     // Add event listener to close overlay when clicking outside of it
@@ -38,6 +50,22 @@ export default function Icon({ props }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (clientId && openai) {
+      getLastPixelEvent(clientId).then((data) => {
+        data.data?.forEach(async (event) => {
+          const greetingPrompt = await getGreetingMessage(event);
+          await openai
+            .call({ message: greetingPrompt })
+            .then((response) => {
+              setGreeting(response.text)
+            })
+            .catch((err) => console.error(err));
+        });
+      });
+    }
+  }, [openai])
+
   const handleIconClick = (event) => {
     event.stopPropagation();
     const overlayDiv = props.overlayDiv;
@@ -47,7 +75,7 @@ export default function Icon({ props }) {
   return (
     <div
       className="mt-4"
-      style={{ position: "relative" }}
+      style={{ position: "relative", cursor: "pointer" }}
       onClick={handleIconClick}
     >
       {/* Icon */}
