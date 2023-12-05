@@ -112,6 +112,9 @@ export default function CommandPalette({ props }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (userInput === '') {
+      return
+    }
     const newUserMessage = formatMessage(userInput, "user");
     await handleNewMessage(clientId, newUserMessage);
 
