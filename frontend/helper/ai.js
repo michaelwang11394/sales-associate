@@ -17,6 +17,7 @@ const chat = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
   streaming: true,
+  modelName: 'gpt-3.5-turbo'
 });
 
 export const formatMessage = (text, source) => {
@@ -50,7 +51,7 @@ export const createOpenaiWithHistory = async (clientId, messages = []) => {
   customerContext.push(newCustomer.message);
 
   // If customer is not new, check their cart history and product_viewed history. Add relevant links
-  if (newCustomer.isNew === false) {
+  if (false && newCustomer.isNew === false) {
     const itemsInCart = await hasItemsInCart(clientId);
     const productsViewed = await hasViewedProducts(clientId);
 
@@ -88,13 +89,12 @@ const createOpenai = async (context, history = []) => {
   //   .join("\n");
 
   const systemTemplate =
-    'You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it\'s by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevant context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link. \nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com\nIf the customer asks you how their search experience was, ask them if they found what they\'re looking for and offer to help refine the search.\nIf the customer is viewing a product, recommend a similar product they may also enjoy.\n When giving product links, remember to make sure it is a hyperlink that\'s clickable, bold, and in blue color font. For example, outputing https://openai.com would look like this:<a href="https://openai.com" style="color: blue; font-weight: bold;">https://openai.com/</a>. Another example would be: <a href="https://google.com" style="color: blue; font-weight: bold;">https://google.com/</a>. It is very important that you always follow this format when outputting links. \n Here\'s the whole product catalog, where each line is a JSON object containing the title, description, and id:\n{catalog}';
+    'You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it\'s by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevant context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart but am not on the cart page, encourage them to go to their cart and complete the purchase. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link. \nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com\nIf the customer asks you how their search experience was, ask them if they found what they\'re looking for and offer to help refine the search.\nIf the customer is viewing a product, recommend a similar product they may also enjoy.\n The three products this store has are "The Collection Snowboard: Hydrogen", "The Multi-managed Snowboard", and "The Multi-location Snowboard". If you are asked for "recs for beginner boards", recommend these three products: "The Collection Snowboard: Hydrogen", "The Multi-managed Snowboard", and "The Multi-location Snowboard". The respective prices are 600.00USD, 629.95USD, and 729.95USD. When providing a link for the hydrogen model, return the following string `<a href="https://quickstart-c57f5b6f.myshopify.com/products/the-collection-snowboard-hydrogen" style="color: blue; font-weight: bold;">The Collection Snowboard: Hydrogen</a>.` ';
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
   const formattedSystemMessagePrompt = await systemMessagePrompt.format({
     context: context,
-    catalog: catalog,
   });
 
   const humanTemplate = "{message}";

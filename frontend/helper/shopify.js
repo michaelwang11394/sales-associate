@@ -92,7 +92,7 @@ export const getGreetingMessage = async (event) => {
       if (isOfferCoupon.offerCoupon === true) {
         return "I am back at my cart again. I will consider purchasing if you give me a coupon.";
       } else {
-        return "Encourage me to checkout.";
+        return "I am on the cart page. Encourage me to checkout.";
       }
     // Product Intent
     case "product_viewed":
