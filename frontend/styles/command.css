@@ -1,0 +1,4 @@
+.rce-mbox-text::after {
+  content: none;
+  display: none;
+}
