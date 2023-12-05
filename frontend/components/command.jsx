@@ -37,14 +37,14 @@ export default function CommandPalette({ props }) {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
-          const messages = data.data
+          const history = data.data
             .map((messageRow) =>
               formatMessage(messageRow.message, messageRow.sender)
             )
             .reverse();
           // @ts-ignore
-          setMessages((prevMessages) => messages.concat(prevMessages));
-          createOpenaiWithHistory(clientId, messages).then((res) => {
+          setMessages((prevMessages) => history.concat(prevMessages));
+          createOpenaiWithHistory(clientId, history).then((res) => {
             setOpenai(res);
           });
         }
@@ -120,6 +120,7 @@ export default function CommandPalette({ props }) {
 
     // TODO: Turn off openai for now. Add dev mode as toggle
     if (openai && true) {
+      console.log(openai)
       await openai
         .call({ message: userInput })
         .then((response) => {

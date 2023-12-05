@@ -4,7 +4,7 @@ import {
   SystemMessagePromptTemplate,
 } from "langchain/prompts";
 import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
-import { LLMChain } from "langchain/chains";
+import { ConversationChain, LLMChain } from "langchain/chains";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
@@ -29,7 +29,7 @@ export const createOpenaiWithHistory = async (clientId, messages = []) => {
   customerContext.push(newCustomer.message);
 
   // If customer is not new, check their cart history and product_viewed history. Add relevant links
-  if (newCustomer.isNew === false) {
+  if (false && newCustomer.isNew === false) {
     const itemsInCart = await hasItemsInCart(clientId);
     const productsViewed = await hasViewedProducts(clientId);
 
@@ -67,7 +67,7 @@ const createOpenai = async (context, history = []) => {
   //   .join("\n");
 
   const systemTemplate =
-    'You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it\'s by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevant context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link. \nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com\nIf the customer asks you how their search experience was, ask them if they found what they\'re looking for and offer to help refine the search.\nIf the customer is viewing a product, recommend a similar product they may also enjoy.\n When giving product links, remember to make sure it is a hyperlink that\'s clickable, bold, and in blue color font. For example, outputing https://openai.com would look like this:<a href="https://openai.com" style="color: blue; font-weight: bold;">https://openai.com/</a>. Another example would be: <a href="https://google.com" style="color: blue; font-weight: bold;">https://google.com/</a>. It is very important that you always follow this format when outputting links. \n Here\'s the whole product catalog, where each line is a JSON object containing the title, description, and id:\n{catalog}';
+    'You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it\'s by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. Here\'s the whole product catalog for reference, where each line is a JSON object containing the title, description, variants (includes prices if not empty), and id:\n{catalog}. The below is relevant context for this customer:\n{context}\nGiven that catalog and context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart, encourage them to go to their cart and complete the purchase. You are provided the link for the cart. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link. \nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com\nIf the customer asks you how their search experience was, ask them if they found what they\'re looking for and offer to help refine the search.\nIf the customer is viewing a product, recommend a similar product they may also enjoy.\n When giving product links, remember to make sure it is a hyperlink that\'s clickable, bold, and in blue color font. For example, outputing https://openai.com would look like this:<a href="https://openai.com" style="color: blue; font-weight: bold;">https://openai.com/</a>. Another example would be: <a href="https://google.com" style="color: blue; font-weight: bold;">https://google.com/</a>. It is very important that you always follow this format when outputting links. When a user asks you a question always prioritize the thread history';
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
@@ -86,6 +86,7 @@ const createOpenai = async (context, history = []) => {
   /* MEMORY 
   // TODO: Because memory is loaded on render, that means, it will also be cleaned out upon navigation to a different page
   */
+ console.log("bufferwindowmemory is ", JSON.stringify(history))
   const memory = new BufferWindowMemory({
     chatHistory: new ChatMessageHistory(history),
     k: LANGCHAIN_MEMORY_BUFFER_SIZE,

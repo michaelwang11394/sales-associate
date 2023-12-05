@@ -98,7 +98,7 @@ export const isNewCustomer = async (customerId) => {
     return {
       isNew: data.length <= 1,
       message: data.length <= 1
-        ? "This is the first time the customer has visited the store."
+        ? "This is the first time the customer has visited the store in over a week."
         : "This customer has visited the store before.",
     };
   } catch (error) {
@@ -151,9 +151,11 @@ export const hasViewedProducts = async (customerId) => {
     const { data, error } = await supabase
       .from("events")
       .select("*")
+      .order("timestamp", { ascending: false })
       .eq("clientId", customerId)
       .eq("name", "product_viewed")
-      .gte("timestamp", oneWeekAgo.toISOString());
+      .gte("timestamp", oneWeekAgo.toISOString())
+      .limit(5);
 
     if (error) {
       console.error("Error", error);

@@ -22,8 +22,8 @@ const shopifyRestQuery = async (endpoint) => {
 
 const formatCatalogEntry = (product) => {
   // Fields we care about
-  const { title, body_html: description, id } = product;
-  return JSON.stringify({ title, description, id });
+  const { title, body_html: description, id, variants } = product;
+  return JSON.stringify({ title, description, id, variants });
 };
 
 export const addToCart = async (id, quantity) => {

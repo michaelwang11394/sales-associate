@@ -47,7 +47,7 @@ export default function Icon({ props }) {
   return (
     <div
       className="mt-4"
-      style={{ position: "relative" }}
+      style={{ position: "relative", cursor: "pointer" }}
       onClick={handleIconClick}
     >
       {/* Icon */}
