@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "react-chat-elements/dist/main.css";
+import "@/styles/command.css";
 import { MessageList, Avatar, MessageBox } from "react-chat-elements";
 // @ts-ignore
 import { getSuggestions, getGreetingMessage } from "@/helper/shopify";
@@ -409,6 +410,7 @@ export default function CommandPalette({ props }) {
                     type={message.type}
                     text={
                       <div
+                        // className="message-box"
                         dangerouslySetInnerHTML={{
                           __html: `${message.text}`,
                         }}
