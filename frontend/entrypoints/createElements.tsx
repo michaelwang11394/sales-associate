@@ -35,7 +35,7 @@ export function createOverlayDiv() {
     overlayDiv.className = "overlay";
     document.body.appendChild(overlayDiv);
     ReactDOM.createRoot(document.getElementById(divId)).render(
-      <CommandPalette props={{overlayDiv: overlayDiv}} />
+      <CommandPalette props={{ overlayDiv: overlayDiv }} />
     );
   }
 

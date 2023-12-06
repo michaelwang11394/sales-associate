@@ -23,8 +23,7 @@ export default function AdditionalPage() {
                 using{" "}
                 <Link
                   url="https://shopify.dev/docs/apps/tools/app-bridge"
-                  target="_blank"
-                >
+                  target="_blank">
                   App Bridge
                 </Link>
                 .
@@ -48,8 +47,7 @@ export default function AdditionalPage() {
                 <List.Item>
                   <Link
                     url="https://shopify.dev/docs/apps/design-guidelines/navigation#app-nav"
-                    target="_blank"
-                  >
+                    target="_blank">
                     App nav best practices
                   </Link>
                 </List.Item>
@@ -72,8 +70,7 @@ function Code({ children }) {
       background="bg-subdued"
       borderWidth="1"
       borderColor="border"
-      borderRadius="1"
-    >
+      borderRadius="1">
       <code>{children}</code>
     </Box>
   );

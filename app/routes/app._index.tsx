@@ -133,8 +133,7 @@ export default function Index() {
                     This embedded app template uses{" "}
                     <Link
                       url="https://shopify.dev/docs/apps/tools/app-bridge"
-                      target="_blank"
-                    >
+                      target="_blank">
                       App Bridge
                     </Link>{" "}
                     interface examples like an{" "}
@@ -144,8 +143,7 @@ export default function Index() {
                     , as well as an{" "}
                     <Link
                       url="https://shopify.dev/docs/api/admin-graphql"
-                      target="_blank"
-                    >
+                      target="_blank">
                       Admin GraphQL
                     </Link>{" "}
                     mutation demo, to provide a starting point for app
@@ -161,8 +159,7 @@ export default function Index() {
                     that product. Learn more about the{" "}
                     <Link
                       url="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-                      target="_blank"
-                    >
+                      target="_blank">
                       productCreate
                     </Link>{" "}
                     mutation in our API references.
@@ -172,8 +169,7 @@ export default function Index() {
                   {actionData?.product && (
                     <Button
                       url={`shopify:admin/products/${productId}`}
-                      target="_blank"
-                    >
+                      target="_blank">
                       View product
                     </Button>
                   )}
@@ -188,8 +184,7 @@ export default function Index() {
                     borderColor="border"
                     borderWidth="1"
                     borderRadius="2"
-                    overflowX="scroll"
-                  >
+                    overflowX="scroll">
                     <pre style={{ margin: 0 }}>
                       <code>{JSON.stringify(actionData.product, null, 2)}</code>
                     </pre>
@@ -236,8 +231,7 @@ export default function Index() {
                         {", "}
                         <Link
                           url="https://shopify.dev/docs/apps/tools/app-bridge"
-                          target="_blank"
-                        >
+                          target="_blank">
                           App Bridge
                         </Link>
                       </span>
@@ -249,8 +243,7 @@ export default function Index() {
                       </Text>
                       <Link
                         url="https://shopify.dev/docs/api/admin-graphql"
-                        target="_blank"
-                      >
+                        target="_blank">
                         GraphQL API
                       </Link>
                     </HorizontalStack>
@@ -267,8 +260,7 @@ export default function Index() {
                       Build an{" "}
                       <Link
                         url="https://shopify.dev/docs/apps/getting-started/build-app-example"
-                        target="_blank"
-                      >
+                        target="_blank">
                         {" "}
                         example app
                       </Link>{" "}
@@ -278,8 +270,7 @@ export default function Index() {
                       Explore Shopify’s API with{" "}
                       <Link
                         url="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-                        target="_blank"
-                      >
+                        target="_blank">
                         GraphiQL
                       </Link>
                     </List.Item>

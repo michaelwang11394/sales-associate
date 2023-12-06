@@ -54,9 +54,13 @@ export const getMessages = async (clientId, limit) => {
 export const subscribeToMessages = (clientId, handleInserts) => {
   try {
     supabase
-      .channel('messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, handleInserts)
-      .subscribe()
+      .channel("messages")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        handleInserts
+      )
+      .subscribe();
   } catch (error) {
     console.error("Error", error);
     return { success: false, message: "An unexpected error occurred." };
@@ -74,10 +78,10 @@ export const insertMessage = async (clientId, sender, message) => {
 
   if (error) {
     console.error("Error during insert:", error);
-    return false
+    return false;
   }
-  return true
-}
+  return true;
+};
 
 export const isNewCustomer = async (customerId) => {
   try {
@@ -97,9 +101,10 @@ export const isNewCustomer = async (customerId) => {
 
     return {
       isNew: data.length <= 1,
-      message: data.length <= 1
-        ? "This is the first time the customer has visited the store."
-        : "This customer has visited the store before.",
+      message:
+        data.length <= 1
+          ? "This is the first time the customer has visited the store."
+          : "This customer has visited the store before.",
     };
   } catch (error) {
     console.error("Error", error);
@@ -131,11 +136,16 @@ export const hasItemsInCart = async (customerId) => {
 
       return {
         hasItems: true,
-        message: `This customer has the following items in their cart: ${cartProductTitles.join(", ")}`,
+        message: `This customer has the following items in their cart: ${cartProductTitles.join(
+          ", "
+        )}`,
         cartURL: `The customer can go to their cart by clicking this link: ${cartURL}`,
       };
     } else {
-      return { hasItems: false, message: "This customer does not have items in their cart." };
+      return {
+        hasItems: false,
+        message: "This customer does not have items in their cart.",
+      };
     }
   } catch (error) {
     console.error("Error", error);
@@ -157,21 +167,33 @@ export const hasViewedProducts = async (customerId) => {
 
     if (error) {
       console.error("Error", error);
-      return { hasViewed: false, message: "Error checking if customer has viewed products." };
+      return {
+        hasViewed: false,
+        message: "Error checking if customer has viewed products.",
+      };
     }
 
     if (data.length > 0) {
       const productTitles = data.map(
         (item) => item.detail.productVariant.product.title
       );
-      const productURLs = data.map((item) => item.context.document.location.href);
+      const productURLs = data.map(
+        (item) => item.context.document.location.href
+      );
       return {
         hasViewed: true,
-        message: `This customer has viewed the following products: ${productTitles.join(", ")}`,
-        productURLs: `The customer can revisit these products by clicking these links: ${productURLs.join(", ")}`,
+        message: `This customer has viewed the following products: ${productTitles.join(
+          ", "
+        )}`,
+        productURLs: `The customer can revisit these products by clicking these links: ${productURLs.join(
+          ", "
+        )}`,
       };
     } else {
-      return { hasViewed: false, message: "This customer has not viewed any products." };
+      return {
+        hasViewed: false,
+        message: "This customer has not viewed any products.",
+      };
     }
   } catch (error) {
     console.error("Error", error);
@@ -193,7 +215,10 @@ export const offerCoupon = async (customerId) => {
 
     if (error) {
       console.error("Error", error);
-      return { offerCoupon: false, message: "Error checking if customer has viewed products." };
+      return {
+        offerCoupon: false,
+        message: "Error checking if customer has viewed products.",
+      };
     }
 
     return { offerCoupon: data.length > 2 };

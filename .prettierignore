@@ -11,3 +11,5 @@ shopify-app-remix
 tmp
 *.yml
 .shopify
+**/assets
+**/dist
