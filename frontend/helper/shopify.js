@@ -1,9 +1,4 @@
-import {
-  hasItemsInCart,
-  hasViewedProducts,
-  isNewCustomer,
-  offerCoupon,
-} from "./supabase"; // Updated reference to refactored supabase functions
+import { isNewCustomer, offerCoupon } from "./supabase"; // Updated reference to refactored supabase functions
 const shopifyRestQuery = async (endpoint) => {
   try {
     return fetch(window.Shopify.routes.root + endpoint)
@@ -28,28 +23,26 @@ const formatCatalogEntry = (product) => {
 
 export const addToCart = async (id, quantity) => {
   try {
-    return fetch(window.Shopify.routes.root + 'cart/add.js', {
+    return fetch(window.Shopify.routes.root + "cart/add.js", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        Accept: "application/json",
       },
       body: JSON.stringify({
         id: id,
-        quantity: 1
-      })
-    }).then((response) => response.json())
+        quantity: 1,
+      }),
+    })
+      .then((response) => response.json())
       .then((json) => {
         return json;
       });
   } catch (error) {
-    console.error(
-      `Error adding to cart`,
-      error.message
-    );
+    console.error(`Error adding to cart`, error.message);
     return null;
   }
-}
+};
 
 // Function to retrieve suggestions based on a search query
 export const getSuggestions = async (query) => {
@@ -106,8 +99,6 @@ export const getGreetingMessage = async (event) => {
       return "Hello.";
   }
 };
-
-
 
 // Example usage
 /*
