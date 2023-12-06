@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 import "react-chat-elements/dist/main.css";
-import { MessageList, Avatar, MessageBox } from "react-chat-elements";
-// @ts-ignore
-import { getSuggestions, getGreetingMessage } from "@/helper/shopify";
-// @ts-ignore
-import { getLastPixelEvent } from "@/helper/supabase";
-// @ts-ignore
-import { createOpenaiWithHistory } from "@/helper/ai";
-import { subscribeToMessages } from "@/helper/supabase";
-import { insertMessage } from "@/helper/supabase";
-import { getMessages } from "@/helper/supabase";
+import { MessageBox } from "react-chat-elements";
+import {
+  getSuggestions,
+  getGreetingMessage,
+  addToCart,
+} from "@/helper/shopify";
+import { createOpenaiWithHistory, formatMessage } from "@/helper/ai";
+import {
+  subscribeToMessages,
+  getLastPixelEvent,
+  insertMessage,
+  getMessages,
+} from "@/helper/supabase";
 import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
 import { toggleOverlayVisibility } from "@/helper/animations";
-import { addToCart } from "@/helper/shopify";
-import { formatMessage } from "@/helper/ai";
-
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -61,7 +61,7 @@ export default function CommandPalette({ props }) {
         });
       });
     }
-  }, [openai])
+  }, [openai]);
 
   useEffect(() => {
     scrollToBottom();
@@ -99,8 +99,8 @@ export default function CommandPalette({ props }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (userInput === '') {
-      return
+    if (userInput === "") {
+      return;
     }
     const newUserMessage = formatMessage(userInput, "user");
     await handleNewMessage(clientId, newUserMessage);
