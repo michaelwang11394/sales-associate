@@ -138,8 +138,7 @@ export default function CommandPalette({ props }) {
           position: "relative",
           overflow: "hidden",
           backgroundSize: "cover",
-        }}
-      >
+        }}>
         <div
           style={{
             position: "relative",
@@ -147,8 +146,7 @@ export default function CommandPalette({ props }) {
             alignItems: "center",
             justifyContent: "center",
             padding: "2rem",
-          }}
-        >
+          }}>
           <div
             style={{
               maxWidth: "1200px",
@@ -161,8 +159,7 @@ export default function CommandPalette({ props }) {
               backdropFilter: "blur(10px)",
               borderRadius: "1rem",
               borderWidth: "thin",
-            }}
-          >
+            }}>
             <div style={{ position: "relative" }}>
               <form onSubmit={handleSubmit}>
                 <input
@@ -197,8 +194,7 @@ export default function CommandPalette({ props }) {
                     height: "1.5rem",
                     width: "1.5rem",
                     color: "black",
-                  }}
-                >
+                  }}>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -217,16 +213,14 @@ export default function CommandPalette({ props }) {
                 flexDirection: "column",
                 overflowY: "auto",
                 maxHeight: "60rem",
-              }}
-            >
+              }}>
               <div
                 style={{
                   flex: "1",
                   minWidth: "0",
                   padding: "1.5rem",
                   position: "relative", // Add this line
-                }}
-              >
+                }}>
                 <button
                   style={{
                     position: "absolute",
@@ -237,8 +231,7 @@ export default function CommandPalette({ props }) {
                     fontSize: "2rem",
                     cursor: "pointer",
                   }}
-                  onClick={() => toggleOverlayVisibility(props.overlayDiv)}
-                >
+                  onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
                   &times;
                 </button>
                 <div
@@ -246,8 +239,7 @@ export default function CommandPalette({ props }) {
                     fontWeight: "bold",
                     marginBottom: "10px",
                     textAlign: "center",
-                  }}
-                >
+                  }}>
                   Product Suggestions
                 </div>
                 <div
@@ -255,8 +247,7 @@ export default function CommandPalette({ props }) {
                     display: "flex",
                     flexWrap: "wrap",
                     justifyContent: "space-around",
-                  }}
-                >
+                  }}>
                   {suggestions && suggestions.length > 0 ? (
                     suggestions.slice(0, 4).map((product, index) => (
                       <div
@@ -267,8 +258,7 @@ export default function CommandPalette({ props }) {
                           textAlign: "center",
                           padding: "0.2em",
                           margin: "0.2em",
-                        }}
-                      >
+                        }}>
                         <a
                           // @ts-ignore
                           href={product.url}
@@ -281,8 +271,7 @@ export default function CommandPalette({ props }) {
                             alignItems: "center",
                             justifyContent: "space-between", // Distribute space between elements
                             minHeight: "150px", // Ensure a minimum height
-                          }}
-                        >
+                          }}>
                           {/* Product Image */}
                           <img
                             // @ts-ignore
@@ -335,8 +324,7 @@ export default function CommandPalette({ props }) {
                                       product.title + " has been added to cart"
                                     )
                                 );
-                              }}
-                            >
+                              }}>
                               Add to Cart
                             </button>
                           )}
@@ -355,8 +343,7 @@ export default function CommandPalette({ props }) {
                       display: "flex",
                       justifyContent: "center",
                       marginTop: "1rem",
-                    }}
-                  >
+                    }}>
                     <button
                       style={{
                         padding: "0.5rem 1rem",
@@ -370,8 +357,7 @@ export default function CommandPalette({ props }) {
                       }}
                       onClick={() =>
                         (window.location.href = `/search?q=${userInput}`)
-                      }
-                    >
+                      }>
                       View all Items
                     </button>
                   </div>
@@ -389,8 +375,7 @@ export default function CommandPalette({ props }) {
                   fontWeight: "bold",
                   marginBottom: "10px",
                   textAlign: "center",
-                }}
-              >
+                }}>
                 Conversation
               </div>
               <div
@@ -400,8 +385,7 @@ export default function CommandPalette({ props }) {
                   minWidth: "0",
                   padding: "1.5rem",
                   overflowY: "auto",
-                }}
-              >
+                }}>
                 {messages.map((message, index) => (
                   <MessageBox
                     key={index}

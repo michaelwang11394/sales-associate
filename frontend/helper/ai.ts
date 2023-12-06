@@ -17,7 +17,7 @@ const chat = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
   streaming: true,
-  modelName: 'gpt-3.5-turbo'
+  modelName: "gpt-3.5-turbo",
 });
 
 export const formatMessage = (text, source) => {

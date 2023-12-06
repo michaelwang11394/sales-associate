@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     shopify({
       themeRoot: "extensions/chat-interface",
-      snippetFile: "vite-generator.liquid"
+      snippetFile: "vite-generator.liquid",
     }),
     react(),
   ],

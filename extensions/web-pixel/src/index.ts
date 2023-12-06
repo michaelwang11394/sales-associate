@@ -7,7 +7,7 @@ register(async ({ analytics, browser, settings }) => {
     console.log("web pixel event:", event);
 
     const { clientId, context, id, name, timestamp } = event;
-    browser.localStorage.setItem('webPixelShopifyClientId', clientId)
+    browser.localStorage.setItem("webPixelShopifyClientId", clientId);
     const detail = (event as any).data;
 
     const pathname = context.document.location.pathname;
