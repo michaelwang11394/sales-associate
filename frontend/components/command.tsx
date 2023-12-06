@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "react-chat-elements/dist/main.css";
+import "@/styles/command.css";
 import { MessageBox } from "react-chat-elements";
 import {
   getSuggestions,
