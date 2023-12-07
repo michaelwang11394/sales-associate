@@ -15,7 +15,14 @@ import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
-import { RunnableSequence } from "langchain/schema/runnable";
+import {
+  RunnablePassthrough,
+  RunnableSequence,
+} from "langchain/schema/runnable";
+
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { formatDocumentsAsString } from "langchain/util/document";
 
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
@@ -181,6 +188,15 @@ const createOpenai = async (
     ? "Here are some highly relevant products:\n" + ""
     : "";
 
+  const vectorStore = await MemoryVectorStore.fromTexts(
+    ["mitochondria is the powerhouse of the cell"],
+    [{ id: 1 }],
+    new OpenAIEmbeddings({
+      openAIApiKey: "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",
+    })
+  );
+  const retriever = vectorStore.asRetriever();
+
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
   const formattedSystemMessagePrompt = await systemMessagePrompt.format({
@@ -218,6 +234,10 @@ const createOpenai = async (
   const outputParser = new JsonOutputFunctionsParser();
 
   const chain = RunnableSequence.from([
+    {
+      context: retriever.pipe(formatDocumentsAsString),
+      question: new RunnablePassthrough(),
+    },
     {
       input: (initialInput) => initialInput.input,
       memory: () => memory.loadMemoryVariables({}),
