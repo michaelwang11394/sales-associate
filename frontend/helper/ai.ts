@@ -2,6 +2,7 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
+  PromptTemplate,
   SystemMessagePromptTemplate,
 } from "langchain/prompts";
 import { z } from "zod";
@@ -106,7 +107,7 @@ const zodSchema = z.object({
 /* CHATS 
 // HACK: Replace key after migration to nextjs
 */
-const chat = new ChatOpenAI({
+const chatModel = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
   modelName: "gpt-3.5-turbo-16k",
@@ -188,6 +189,7 @@ const createOpenai = async (
     ? "Here are some highly relevant products:\n" + ""
     : "";
 
+  // RAG Search
   const vectorStore = await MemoryVectorStore.fromTexts(
     ["mitochondria is the powerhouse of the cell"],
     [{ id: 1 }],
@@ -196,6 +198,9 @@ const createOpenai = async (
     })
   );
   const retriever = vectorStore.asRetriever();
+
+  const productTemplate = `You are given a store product catalog and a user question. If the user is asking a question about products, return information on all relevant products. If the user is not asking a question about products, return "Unrelated to products".\n Here is the {catalog}.\nHere is the user question {userInput}`;
+  const PRODUCT_PROMPT = PromptTemplate.fromTemplate(productTemplate);
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
@@ -220,7 +225,7 @@ const createOpenai = async (
 
   // Binding "function_call" below makes the model always call the specified function.
   // If you want to allow the model to call functions selectively, omit it.
-  const functionCallingModel = chat.bind({
+  const functionCallingModel = chatModel.bind({
     functions: [
       {
         name: "output_formatter",
@@ -233,11 +238,16 @@ const createOpenai = async (
 
   const outputParser = new JsonOutputFunctionsParser();
 
-  const chain = RunnableSequence.from([
+  const productChain = RunnableSequence.from([
     {
-      context: retriever.pipe(formatDocumentsAsString),
-      question: new RunnablePassthrough(),
+      catalog: retriever.pipe(formatDocumentsAsString),
+      userInput: new RunnablePassthrough(),
     },
+    PRODUCT_PROMPT,
+    chatModel,
+  ]);
+
+  const salesChain = RunnableSequence.from([
     {
       input: (initialInput) => initialInput.input,
       memory: () => memory.loadMemoryVariables({}),
@@ -249,13 +259,7 @@ const createOpenai = async (
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
 
-  /*
-  const chain = new LLMChain({
-    llm: chat,
-    prompt: chatPrompt,
-    memory: memory,
-  });
-  */
+  const finalChain = salesChain.pipe(productChain);
 
-  return new RunnableWithMemory(chain, memory);
+  return new RunnableWithMemory(finalChain, memory);
 };
