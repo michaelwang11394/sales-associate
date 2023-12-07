@@ -41,7 +41,10 @@ export class RunnableWithMemory {
 
   public run = async (input: string) => {
     const res = await this.runnable.invoke({ input: input });
-    await this.memory.saveContext({ input: input }, { output: res.plainText });
+    await this.memory.saveContext(
+      { input: input },
+      { output: res.plainText + JSON.stringify(res.products) }
+    );
     console.log(await this.memory.loadMemoryVariables({}));
     return res;
   };
