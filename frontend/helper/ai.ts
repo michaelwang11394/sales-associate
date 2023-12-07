@@ -62,13 +62,13 @@ const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
     include_embedding: false,
-    include_catalog: true,
+    include_catalog: false,
     include_context: true,
   },
   [MessageSource.EMBED]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
     include_embedding: false,
-    include_catalog: true,
+    include_catalog: false,
     include_context: true,
   },
 };
@@ -189,15 +189,23 @@ const createOpenai = async (
     ? "Here are some highly relevant products:\n" + ""
     : "";
 
-  // RAG Search
+  /* 
+  RAG Search
+  TODO: Store in proper vector table, create index.
+  */
+  // Pre-process products for embedding
+  const { metadataIds, strippedProducts } = await getProducts();
+
   const vectorStore = await MemoryVectorStore.fromTexts(
-    ["mitochondria is the powerhouse of the cell"],
-    [{ id: 1 }],
+    [strippedProducts],
+    [metadataIds],
     new OpenAIEmbeddings({
       openAIApiKey: "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",
     })
   );
+  console.log("vector store", vectorStore);
   const retriever = vectorStore.asRetriever();
+  console.log("retriever", retriever);
 
   const productTemplate = `You are given a store product catalog and a user question. If the user is asking a question about products, return information on all relevant products. If the user is not asking a question about products, return "Unrelated to products".\n Here is the {catalog}.\nHere is the user question {userInput}`;
   const PRODUCT_PROMPT = PromptTemplate.fromTemplate(productTemplate);

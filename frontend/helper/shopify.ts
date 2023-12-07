@@ -62,10 +62,22 @@ export const getSuggestions = async (query) => {
 export const getProducts = async () => {
   // TODO: paginate for larger stores
   const json = await shopifyRestQuery("products.json?limit=250&status=active");
-  console.log(json);
-  return json?.products
+  const jsonProducts = json?.products;
+  const stringifiedProducts = json?.products
     ?.map((product) => formatCatalogEntry(product))
     .join("\r\n");
+
+  // RAG and embeddings pre-processing
+  const metadataIds = jsonProducts.map((product) => product.id);
+  const strippedProducts = jsonProducts.map((product) => {
+    // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
+    return JSON.stringify(product)
+      .replace(/"/g, "")
+      .replace(/\n/g, " ")
+      .replace(/id/g, "");
+  });
+
+  return { stringifiedProducts, metadataIds, strippedProducts };
 };
 
 export const getGreetingMessage = async (event) => {
