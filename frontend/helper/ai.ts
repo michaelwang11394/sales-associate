@@ -1,14 +1,100 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   ChatPromptTemplate,
+  MessagesPlaceholder,
   SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
-import { LLMChain } from "langchain/chains";
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import {
+  BufferMemory,
+  BufferWindowMemory,
+  ChatMessageHistory,
+} from "langchain/memory";
 import { HumanMessage, AIMessage } from "langchain/schema";
+import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
-import { LANGCHAIN_MEMORY_BUFFER_SIZE } from "@/constants/constants";
+import { RunnableSequence } from "langchain/schema/runnable";
+
+export enum MessageSource {
+  EMBED, // Pop up greeting in app embed
+  CHAT, // Conversation/thread with customer
+}
+
+interface LLMConfigType {
+  prompt: string;
+  include_embedding: boolean;
+  include_catalog: boolean;
+  include_context: boolean;
+  include_navigation?: boolean; // Assuming this property is optional
+}
+
+export class RunnableWithMemory {
+  constructor(
+    private runnable: RunnableSequence,
+    private memory: BufferMemory
+  ) {
+    this.runnable = runnable;
+    this.memory = memory;
+  }
+
+  public run = async (input: string) => {
+    const res = await this.runnable.invoke({ input: input });
+    await this.memory.saveContext(
+      { input: input },
+      { output: res.plainText + JSON.stringify(res.products) }
+    );
+    console.log(await this.memory.loadMemoryVariables({}));
+    return res;
+  };
+}
+
+const LLMConfig: Record<MessageSource, LLMConfigType> = {
+  [MessageSource.CHAT]: {
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
+    include_embedding: false,
+    include_catalog: true,
+    include_context: true,
+  },
+  [MessageSource.EMBED]: {
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
+    include_embedding: false,
+    include_catalog: true,
+    include_context: true,
+  },
+};
+
+const zodSchema = z.object({
+  plainText: z.string().describe("The response directly displayed to user"),
+  products: z
+    .array(
+      z.object({
+        name: z.string().describe("The name of the product"),
+        product_handle: z.string().describe("The product handle"),
+        image_src: z
+          .string()
+          .url()
+          .describe("The image source url of the product"),
+        variants: z
+          .array(
+            z
+              .object({
+                title: z.string().describe("The title of this variant"),
+                price: z.number().describe("The price of the product"),
+                variant_image_src: z
+                  .string()
+                  .url()
+                  .describe("The image source url of the product variant"),
+              })
+              .describe("A variant of product that has a specific price")
+          )
+          .describe("Array of variants of product if not empty")
+          .optional(),
+      })
+    )
+    .describe("A list of products mentioned in the response, if any"),
+});
 
 /* CHATS 
 // HACK: Replace key after migration to nextjs
@@ -16,8 +102,7 @@ import { LANGCHAIN_MEMORY_BUFFER_SIZE } from "@/constants/constants";
 const chat = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
-  streaming: true,
-  modelName: "gpt-3.5-turbo",
+  modelName: "gpt-3.5-turbo-16k",
 });
 
 export const formatMessage = (text, source) => {
@@ -42,7 +127,11 @@ export const formatMessage = (text, source) => {
 };
 
 /* CALLING FUNCTION */
-export const createOpenaiWithHistory = async (clientId, messages = []) => {
+export const createOpenaiWithHistory = async (
+  clientId,
+  messageSource: MessageSource,
+  messages = []
+) => {
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext = [];
 
@@ -51,9 +140,9 @@ export const createOpenaiWithHistory = async (clientId, messages = []) => {
   customerContext.push(newCustomer.message);
 
   // If customer is not new, check their cart history and product_viewed history. Add relevant links
-  if (false && newCustomer.isNew === false) {
+  if (newCustomer.isNew === false) {
     const itemsInCart = await hasItemsInCart(clientId);
-    const productsViewed = await hasViewedProducts(clientId);
+    const productsViewed = await hasViewedProducts(clientId, 5);
 
     // Check if the customer has items in their cart
     if (itemsInCart.hasItems === true) {
@@ -72,52 +161,81 @@ export const createOpenaiWithHistory = async (clientId, messages = []) => {
     m.source === "user" ? new HumanMessage(m.text) : new AIMessage(m.text)
   );
 
-  return await createOpenai(customerContext, history);
+  return await createOpenai(customerContext, messageSource, history);
 };
 
-const createOpenai = async (context, history = []) => {
-  // Get Product Catalog
-  const catalog = await getProducts();
-
-  // const formattedContext = context
-  //   .map((item) => {
-  //     if (item.startsWith("http")) {
-  //       return `[Link](${item})`;
-  //     }
-  //     return item;
-  //   })
-  //   .join("\n");
-
-  const systemTemplate =
-    'You are a helpful online sales assistant. Your goal is to help customers in their shopping experience whether it\'s by answering questions, recommending products, or helping them checkout. Be friendly, helpful, and concise in your responses. The below is relevant context for this customer:\n{context}\nGiven that context, here are some suggestions to give the customer a great experience:\nIf the customer has items in their cart but am not on the cart page, encourage them to go to their cart and complete the purchase. \nIf the customer has viewed a product multiple times, encourage them to revisit the product by giving them the product link. \nIf the customer asks for a coupon, give them a coupon link at www.claimcoupon.com\nIf the customer asks you how their search experience was, ask them if they found what they\'re looking for and offer to help refine the search.\nIf the customer is viewing a product, recommend a similar product they may also enjoy.\n The three products this store has are "The Collection Snowboard: Hydrogen", "The Multi-managed Snowboard", and "The Multi-location Snowboard". If you are asked for "recs for beginner boards", recommend these three products: "The Collection Snowboard: Hydrogen", "The Multi-managed Snowboard", and "The Multi-location Snowboard". The respective prices are 600.00USD, 629.95USD, and 729.95USD. When providing a link for the hydrogen model, return the following string `<a href="https://quickstart-c57f5b6f.myshopify.com/products/the-collection-snowboard-hydrogen" style="color: blue; font-weight: bold;">The Collection Snowboard: Hydrogen</a>.` ';
+const createOpenai = async (
+  context,
+  messageSource: MessageSource,
+  history: (HumanMessage | AIMessage)[] = []
+) => {
+  console.log(messageSource);
+  const llmConfig = LLMConfig[messageSource];
+  console.log(llmConfig);
+  const systemTemplate = llmConfig.prompt;
+  let inventory = llmConfig.include_catalog
+    ? "Here is a full catalog of products:\n" + (await getProducts())
+    : "";
+  // TODO @michaelwang11394 add embedding data here
+  inventory += llmConfig.include_embedding
+    ? "Here are some highly relevant products:\n" + ""
+    : "";
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
   const formattedSystemMessagePrompt = await systemMessagePrompt.format({
-    context: context,
+    context: llmConfig.include_navigation ? context : "",
+    inventory: inventory,
   });
-
-  const humanTemplate = "{message}";
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
     formattedSystemMessagePrompt,
-    humanTemplate,
+    new MessagesPlaceholder("history"),
+    ["human", "{input}"],
   ]);
 
-  /* MEMORY 
-  // TODO: Because memory is loaded on render, that means, it will also be cleaned out upon navigation to a different page
-  */
-  const memory = new BufferWindowMemory({
+  const memory = new BufferMemory({
     chatHistory: new ChatMessageHistory(history),
-    k: LANGCHAIN_MEMORY_BUFFER_SIZE,
+    inputKey: "input",
+    outputKey: "output",
+    memoryKey: "history",
+    returnMessages: true,
   });
 
-  /* CHAIN */
+  // Binding "function_call" below makes the model always call the specified function.
+  // If you want to allow the model to call functions selectively, omit it.
+  const functionCallingModel = chat.bind({
+    functions: [
+      {
+        name: "output_formatter",
+        description: "Should always be used to properly format output",
+        parameters: zodToJsonSchema(zodSchema),
+      },
+    ],
+    function_call: { name: "output_formatter" },
+  });
+
+  const outputParser = new JsonOutputFunctionsParser();
+
+  const chain = RunnableSequence.from([
+    {
+      input: (initialInput) => initialInput.input,
+      memory: () => memory.loadMemoryVariables({}),
+    },
+    {
+      input: (previousOutput) => previousOutput.input,
+      history: (previousOutput) => previousOutput.memory.history,
+    },
+    chatPrompt.pipe(functionCallingModel).pipe(outputParser),
+  ]);
+
+  /*
   const chain = new LLMChain({
     llm: chat,
     prompt: chatPrompt,
     memory: memory,
   });
+  */
 
-  return chain;
+  return new RunnableWithMemory(chain, memory);
 };

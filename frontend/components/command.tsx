@@ -7,7 +7,11 @@ import {
   getGreetingMessage,
   addToCart,
 } from "@/helper/shopify";
-import { createOpenaiWithHistory, formatMessage } from "@/helper/ai";
+import {
+  MessageSource,
+  createOpenaiWithHistory,
+  formatMessage,
+} from "@/helper/ai";
 import {
   subscribeToMessages,
   getLastPixelEvent,
@@ -36,9 +40,11 @@ export default function CommandPalette({ props }) {
             .reverse();
           // @ts-ignore
           setMessages((prevMessages) => messages.concat(prevMessages));
-          createOpenaiWithHistory(clientId, messages).then((res) => {
-            setOpenai(res);
-          });
+          createOpenaiWithHistory(clientId, MessageSource.CHAT, messages).then(
+            (res) => {
+              setOpenai(res);
+            }
+          );
         }
       });
       subscribeToMessages(clientId, (message) => {
@@ -53,9 +59,13 @@ export default function CommandPalette({ props }) {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
           await openai
-            .call({ message: greetingPrompt })
+            .run(greetingPrompt)
             .then((response) => {
-              const newResponseMessage = formatMessage(response.text, "system");
+              console.log(response.products);
+              const newResponseMessage = formatMessage(
+                response.plainText,
+                "system"
+              );
               handleNewMessage(clientId, newResponseMessage);
             })
             .catch((err) => console.error(err));
@@ -106,14 +116,20 @@ export default function CommandPalette({ props }) {
     const newUserMessage = formatMessage(userInput, "user");
     await handleNewMessage(clientId, newUserMessage);
 
-    // TODO: Turn off openai for now. Add dev mode as toggle
-    if (openai && true) {
+    if (openai) {
       await openai
-        .call({ message: userInput })
+        .run(userInput)
         .then((response) => {
-          console.log(response.text);
-          const newResponseMessage = formatMessage(response.text, "ai");
+          console.log(response.products);
+          const newResponseMessage = formatMessage(response.plainText, "ai");
           handleNewMessage(clientId, newResponseMessage);
+          // TODO update with card html element
+          response.products.forEach((product) =>
+            handleNewMessage(
+              clientId,
+              formatMessage(JSON.stringify(product), "ai")
+            )
+          );
           console.log("message after openai", messages);
         })
         .catch((err) => console.error(err));

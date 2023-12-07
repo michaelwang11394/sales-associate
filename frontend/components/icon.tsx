@@ -4,7 +4,11 @@ import "@/styles/chat.css";
 import { getGreetingMessage } from "@/helper/shopify";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
-import { formatMessage, createOpenaiWithHistory } from "@/helper/ai";
+import {
+  formatMessage,
+  createOpenaiWithHistory,
+  MessageSource,
+} from "@/helper/ai";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
@@ -26,9 +30,11 @@ export default function Icon({ props }) {
               formatMessage(messageRow.message, messageRow.sender)
             )
             .reverse();
-          createOpenaiWithHistory(clientId, messages).then((res) => {
-            setOpenai(res);
-          });
+          createOpenaiWithHistory(clientId, MessageSource.EMBED, messages).then(
+            (res) => {
+              setOpenai(res);
+            }
+          );
         }
       });
     }
@@ -56,9 +62,9 @@ export default function Icon({ props }) {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
           await openai
-            .call({ message: greetingPrompt })
+            .run(greetingPrompt)
             .then((response) => {
-              setGreeting(response.text);
+              setGreeting(response.plainText);
             })
             .catch((err) => console.error(err));
         });
