@@ -99,7 +99,7 @@ const zodSchema = z.object({
 const chat = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
-  modelName: "gpt-4-1106-preview",
+  modelName: "gpt-3.5-turbo-16k",
 });
 
 export const formatMessage = (text, source) => {
