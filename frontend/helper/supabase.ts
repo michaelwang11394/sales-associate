@@ -153,7 +153,7 @@ export const hasItemsInCart = async (customerId) => {
   }
 };
 
-export const hasViewedProducts = async (customerId) => {
+export const hasViewedProducts = async (customerId, count: number) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -163,7 +163,8 @@ export const hasViewedProducts = async (customerId) => {
       .select("*")
       .eq("clientId", customerId)
       .eq("name", "product_viewed")
-      .gte("timestamp", oneWeekAgo.toISOString());
+      .gte("timestamp", oneWeekAgo.toISOString())
+      .limit(count);
 
     if (error) {
       console.error("Error", error);
