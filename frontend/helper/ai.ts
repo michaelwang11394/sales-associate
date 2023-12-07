@@ -52,13 +52,13 @@ export class RunnableWithMemory {
 
 const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
     include_embedding: false,
     include_catalog: true,
     include_context: true,
   },
   [MessageSource.EMBED]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
     include_embedding: false,
     include_catalog: true,
     include_context: true,

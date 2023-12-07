@@ -116,14 +116,20 @@ export default function CommandPalette({ props }) {
     const newUserMessage = formatMessage(userInput, "user");
     await handleNewMessage(clientId, newUserMessage);
 
-    // TODO: Turn off openai for now. Add dev mode as toggle
-    if (openai && true) {
+    if (openai) {
       await openai
         .run(userInput)
         .then((response) => {
           console.log(response.products);
           const newResponseMessage = formatMessage(response.plainText, "ai");
           handleNewMessage(clientId, newResponseMessage);
+          // TODO update with card html element
+          response.products.forEach((product) =>
+            handleNewMessage(
+              clientId,
+              formatMessage(JSON.stringify(product), "ai")
+            )
+          );
           console.log("message after openai", messages);
         })
         .catch((err) => console.error(err));
