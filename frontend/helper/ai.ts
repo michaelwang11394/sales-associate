@@ -12,6 +12,7 @@ import {
   BufferWindowMemory,
   ChatMessageHistory,
 } from "langchain/memory";
+import type { BaseMessage } from "langchain/schema";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase"; // Updated reference to refactored supabase functions
@@ -24,7 +25,7 @@ import {
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { formatDocumentsAsString } from "langchain/util/document";
-
+import { StringOutputParser } from "langchain/schema/output_parser";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -32,10 +33,8 @@ export enum MessageSource {
 
 interface LLMConfigType {
   prompt: string;
-  include_embedding: boolean;
-  include_catalog: boolean;
-  include_context: boolean;
-  include_navigation?: boolean; // Assuming this property is optional
+  include_embeddings: boolean;
+  run_catalog_chain?: boolean; // Whether to run a pass at reducing catalog
 }
 
 export class RunnableWithMemory {
@@ -61,15 +60,13 @@ export class RunnableWithMemory {
 const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
-    include_embedding: false,
-    include_catalog: false,
-    include_context: true,
+    include_embeddings: false,
+    run_catalog_chain: true,
   },
   [MessageSource.EMBED]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
-    include_embedding: false,
-    include_catalog: false,
-    include_context: true,
+    include_embeddings: false,
+    run_catalog_chain: true,
   },
 };
 
@@ -134,9 +131,128 @@ export const formatMessage = (text, source) => {
   return message;
 };
 
+const createEmbeddings = async (query, document, uids) => {
+  const vectorStore = await MemoryVectorStore.fromTexts(
+    [document],
+    [uids],
+    new OpenAIEmbeddings({
+      openAIApiKey: "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",
+    })
+  );
+  console.log("vector store", vectorStore);
+  const retriever = vectorStore.asRetriever();
+  console.log("retriever", retriever);
+  const relevantDocs = retriever.getRelevantDocuments(query);
+  console.log("relevant docs", relevantDocs);
+  return relevantDocs;
+};
+
+// Narrow down relevant products. Optionally use embeddings
+const createProductChain = async (include_embeddings: boolean) => {
+  /* 
+  RAG Search
+  TODO: Store in proper vector table, create index.
+  */
+  // Pre-process products for embedding
+  const { metadataIds, strippedProducts } = await getProducts();
+
+  const productChain = RunnableSequence.from([
+    {
+      catalog: () => strippedProducts.join("\r\n"),
+      input: (input) => {
+        console.log("In first product chain");
+        console.log(input);
+        return input.input;
+      },
+    },
+    {
+      res: (previousOutput) =>
+        PromptTemplate.fromTemplate(
+          `You are given a store product catalog and a user question. If the user is asking a question about products, return information on all relevant products. If the user is not asking a question about products, simply return "none".\n Here is the {catalog}.\nHere is the user question {input}`
+        )
+          .format(previousOutput)
+          .then(
+            async (formatted_prompt) => await chatModel.invoke(formatted_prompt)
+          ),
+      input: (previousOutput) => previousOutput.input,
+    },
+    {
+      input: (previousOutput) => {
+        return previousOutput.res.content !== "none"
+          ? previousOutput.res.content + "\n" + previousOutput.input
+          : previousOutput.input;
+      },
+    },
+  ]);
+  return productChain;
+};
+
+const createFinalChain = async (
+  context: string[],
+  llmConfig: LLMConfigType,
+  memory: BufferMemory,
+  previous_chain? // If chaining, what is the previous chain
+) => {
+  const systemTemplate = llmConfig.prompt;
+  let inventory = llmConfig.run_catalog_chain
+    ? ""
+    : "Here is a full catalog of products:\n" +
+      (await getProducts()).strippedProducts;
+
+  const systemMessagePrompt =
+    SystemMessagePromptTemplate.fromTemplate(systemTemplate);
+  const formattedSystemMessagePrompt = await systemMessagePrompt.format({
+    context: context,
+    inventory: inventory,
+  });
+
+  const chatPrompt = ChatPromptTemplate.fromMessages([
+    formattedSystemMessagePrompt,
+    new MessagesPlaceholder("history"),
+    ["user", "{input}"],
+  ]);
+
+  // Binding "function_call" below makes the model always call the specified function.
+  // If you want to allow the model to call functions selectively, omit it.
+  const functionCallingModel = chatModel.bind({
+    functions: [
+      {
+        name: "output_formatter",
+        description: "Should always be used to properly format output",
+        parameters: zodToJsonSchema(zodSchema),
+      },
+    ],
+    function_call: { name: "output_formatter" },
+  });
+
+  const outputParser = new JsonOutputFunctionsParser();
+
+  const salesChain = RunnableSequence.from([
+    {
+      input: (initialInput) => {
+        console.log("BOI");
+        console.log(JSON.stringify(initialInput));
+        return initialInput.input;
+      },
+      memory: () => memory.loadMemoryVariables({}),
+    },
+    {
+      input: (previousOutput) => {
+        console.log("BOI2");
+        console.log(previousOutput);
+        return previousOutput.input;
+      },
+      history: (previousOutput) => previousOutput.memory.history,
+    },
+    chatPrompt.pipe(functionCallingModel).pipe(outputParser),
+  ]);
+
+  return previous_chain ? previous_chain.pipe(salesChain) : salesChain;
+};
+
 /* CALLING FUNCTION */
 export const createOpenaiWithHistory = async (
-  clientId,
+  clientId: string,
   messageSource: MessageSource,
   messages = []
 ) => {
@@ -173,56 +289,15 @@ export const createOpenaiWithHistory = async (
 };
 
 const createOpenai = async (
-  context,
+  context: string[],
   messageSource: MessageSource,
   history: (HumanMessage | AIMessage)[] = []
 ) => {
   console.log(messageSource);
   const llmConfig = LLMConfig[messageSource];
   console.log(llmConfig);
-  const systemTemplate = llmConfig.prompt;
-  let inventory = llmConfig.include_catalog
-    ? "Here is a full catalog of products:\n" + (await getProducts())
-    : "";
-  // TODO @michaelwang11394 add embedding data here
-  inventory += llmConfig.include_embedding
-    ? "Here are some highly relevant products:\n" + ""
-    : "";
 
-  /* 
-  RAG Search
-  TODO: Store in proper vector table, create index.
-  */
-  // Pre-process products for embedding
-  const { metadataIds, strippedProducts } = await getProducts();
-
-  const vectorStore = await MemoryVectorStore.fromTexts(
-    [strippedProducts],
-    [metadataIds],
-    new OpenAIEmbeddings({
-      openAIApiKey: "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",
-    })
-  );
-  console.log("vector store", vectorStore);
-  const retriever = vectorStore.asRetriever();
-  console.log("retriever", retriever);
-
-  const productTemplate = `You are given a store product catalog and a user question. If the user is asking a question about products, return information on all relevant products. If the user is not asking a question about products, return "Unrelated to products".\n Here is the {catalog}.\nHere is the user question {userInput}`;
-  const PRODUCT_PROMPT = PromptTemplate.fromTemplate(productTemplate);
-
-  const systemMessagePrompt =
-    SystemMessagePromptTemplate.fromTemplate(systemTemplate);
-  const formattedSystemMessagePrompt = await systemMessagePrompt.format({
-    context: llmConfig.include_navigation ? context : "",
-    inventory: inventory,
-  });
-
-  const chatPrompt = ChatPromptTemplate.fromMessages([
-    formattedSystemMessagePrompt,
-    new MessagesPlaceholder("history"),
-    ["human", "{input}"],
-  ]);
-
+  // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
   const memory = new BufferMemory({
     chatHistory: new ChatMessageHistory(history),
     inputKey: "input",
@@ -231,43 +306,14 @@ const createOpenai = async (
     returnMessages: true,
   });
 
-  // Binding "function_call" below makes the model always call the specified function.
-  // If you want to allow the model to call functions selectively, omit it.
-  const functionCallingModel = chatModel.bind({
-    functions: [
-      {
-        name: "output_formatter",
-        description: "Should always be used to properly format output",
-        parameters: zodToJsonSchema(zodSchema),
-      },
-    ],
-    function_call: { name: "output_formatter" },
-  });
-
-  const outputParser = new JsonOutputFunctionsParser();
-
-  const productChain = RunnableSequence.from([
-    {
-      catalog: retriever.pipe(formatDocumentsAsString),
-      userInput: new RunnablePassthrough(),
-    },
-    PRODUCT_PROMPT,
-    chatModel,
-  ]);
-
-  const salesChain = RunnableSequence.from([
-    {
-      input: (initialInput) => initialInput.input,
-      memory: () => memory.loadMemoryVariables({}),
-    },
-    {
-      input: (previousOutput) => previousOutput.input,
-      history: (previousOutput) => previousOutput.memory.history,
-    },
-    chatPrompt.pipe(functionCallingModel).pipe(outputParser),
-  ]);
-
-  const finalChain = salesChain.pipe(productChain);
+  const finalChain = await createFinalChain(
+    context,
+    llmConfig,
+    memory,
+    llmConfig.run_catalog_chain
+      ? await createProductChain(llmConfig.include_embeddings)
+      : null
+  );
 
   return new RunnableWithMemory(finalChain, memory);
 };
