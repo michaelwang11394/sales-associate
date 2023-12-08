@@ -195,16 +195,24 @@ const createOpenai = async (
   */
   // Pre-process products for embedding
   const { metadataIds, strippedProducts } = await getProducts();
+  console.log(
+    "types",
+    typeof metadataIds,
+    typeof strippedProducts,
+    strippedProducts
+  );
 
   const vectorStore = await MemoryVectorStore.fromTexts(
-    [strippedProducts],
-    [metadataIds],
+    strippedProducts,
+    metadataIds,
     new OpenAIEmbeddings({
       openAIApiKey: "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",
     })
   );
   console.log("vector store", vectorStore);
+  // const retriever = vectorStore.similaritySearch("snowboards", 1);
   const retriever = vectorStore.asRetriever();
+
   console.log("retriever", retriever);
 
   const productTemplate = `You are given a store product catalog and a user question. If the user is asking a question about products, return information on all relevant products. If the user is not asking a question about products, return "Unrelated to products".\n Here is the {catalog}.\nHere is the user question {userInput}`;
@@ -249,7 +257,11 @@ const createOpenai = async (
   const productChain = RunnableSequence.from([
     {
       catalog: retriever.pipe(formatDocumentsAsString),
-      userInput: new RunnablePassthrough(),
+      userInput: () => {
+        const res2 = new RunnablePassthrough();
+        console.log("retriever userinput", res2);
+        return res2;
+      },
     },
     PRODUCT_PROMPT,
     chatModel,
@@ -257,6 +269,7 @@ const createOpenai = async (
 
   console.log("product chain", productChain);
 
+  //add product catalog here?
   const salesChain = RunnableSequence.from([
     {
       input: (initialInput) => initialInput.input,
@@ -266,6 +279,7 @@ const createOpenai = async (
       input: (previousOutput) => previousOutput.input,
       history: (previousOutput) => previousOutput.memory.history,
     },
+
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
 

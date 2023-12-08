@@ -77,6 +77,20 @@ export const getProducts = async () => {
       .replace(/id/g, "");
   });
 
+  // Ensure that strippedProducts is an array of strings
+  if (
+    !Array.isArray(strippedProducts) ||
+    strippedProducts.some((item) => typeof item !== "string")
+  ) {
+    throw new Error(`Expected strippedProducts to be an array of strings`);
+  }
+
+  // Ensure that metadataIds is an array
+  if (!Array.isArray(metadataIds)) {
+    throw new Error(`Expected metadataIds to be an array`);
+  }
+  console.log("all checks passed!");
+
   return { stringifiedProducts, metadataIds, strippedProducts };
 };
 
