@@ -89,7 +89,6 @@ export const getProducts = async () => {
   if (!Array.isArray(metadataIds)) {
     throw new Error(`Expected metadataIds to be an array`);
   }
-  console.log("all checks passed!");
 
   return { stringifiedProducts, metadataIds, strippedProducts };
 };

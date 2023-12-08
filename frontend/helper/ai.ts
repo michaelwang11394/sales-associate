@@ -60,13 +60,13 @@ export class RunnableWithMemory {
 
 const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's catalog: {catalog}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
     include_embedding: false,
     include_catalog: false,
     include_context: true,
   },
   [MessageSource.EMBED]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's catalog: {catalog}.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
     include_embedding: false,
     include_catalog: false,
     include_context: true,
@@ -111,6 +111,7 @@ const chatModel = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
   modelName: "gpt-3.5-turbo-16k",
+  verbose: true,
 });
 
 export const formatMessage = (text, source) => {
@@ -184,7 +185,6 @@ const createOpenai = async (
   let inventory = llmConfig.include_catalog
     ? "Here is a full catalog of products:\n" + (await getProducts())
     : "";
-  // TODO @michaelwang11394 add embedding data here
   inventory += llmConfig.include_embedding
     ? "Here are some highly relevant products:\n" + ""
     : "";
@@ -195,12 +195,6 @@ const createOpenai = async (
   */
   // Pre-process products for embedding
   const { metadataIds, strippedProducts } = await getProducts();
-  console.log(
-    "types",
-    typeof metadataIds,
-    typeof strippedProducts,
-    strippedProducts
-  );
 
   const vectorStore = await MemoryVectorStore.fromTexts(
     strippedProducts,
@@ -265,7 +259,7 @@ const createOpenai = async (
     },
     PRODUCT_PROMPT,
     chatModel,
-  ]);
+  ]).pipe((output) => ({ catalog: output }));
 
   console.log("product chain", productChain);
 
@@ -274,10 +268,12 @@ const createOpenai = async (
     {
       input: (initialInput) => initialInput.input,
       memory: () => memory.loadMemoryVariables({}),
+      catalog: (initialInput) => initialInput.catalog,
     },
     {
       input: (previousOutput) => previousOutput.input,
       history: (previousOutput) => previousOutput.memory.history,
+      catalog: (previousOutput) => previousOutput.catalog,
     },
 
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
