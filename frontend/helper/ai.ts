@@ -255,6 +255,8 @@ const createOpenai = async (
     chatModel,
   ]);
 
+  console.log("product chain", productChain);
+
   const salesChain = RunnableSequence.from([
     {
       input: (initialInput) => initialInput.input,
@@ -267,7 +269,7 @@ const createOpenai = async (
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
 
-  const finalChain = salesChain.pipe(productChain);
+  const finalChain = productChain.pipe(salesChain);
 
   return new RunnableWithMemory(finalChain, memory);
 };
