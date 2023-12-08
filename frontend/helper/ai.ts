@@ -60,7 +60,7 @@ export class RunnableWithMemory {
 const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
-    include_embeddings: false,
+    include_embeddings: true,
     run_catalog_chain: true,
   },
   [MessageSource.EMBED]: {
@@ -131,22 +131,6 @@ export const formatMessage = (text, source) => {
   return message;
 };
 
-const createEmbeddings = async (query, document, uids) => {
-  const vectorStore = await MemoryVectorStore.fromTexts(
-    [document],
-    [uids],
-    new OpenAIEmbeddings({
-      openAIApiKey: "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",
-    })
-  );
-  console.log("vector store", vectorStore);
-  const retriever = vectorStore.asRetriever();
-  console.log("retriever", retriever);
-  const relevantDocs = retriever.getRelevantDocuments(query);
-  console.log("relevant docs", relevantDocs);
-  return relevantDocs;
-};
-
 // Narrow down relevant products. Optionally use embeddings
 const createProductChain = async (include_embeddings: boolean) => {
   /* 
@@ -156,9 +140,19 @@ const createProductChain = async (include_embeddings: boolean) => {
   // Pre-process products for embedding
   const { metadataIds, strippedProducts } = await getProducts();
 
+  const vectorStore = await MemoryVectorStore.fromTexts(
+    strippedProducts,
+    metadataIds,
+    new OpenAIEmbeddings({
+      openAIApiKey: "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",
+    })
+  );
+
+  const retriever = vectorStore.asRetriever();
+
   const productChain = RunnableSequence.from([
     {
-      catalog: () => strippedProducts.join("\r\n"),
+      catalog: (input) => retriever.getRelevantDocuments(input.input),
       input: (input) => {
         console.log("In first product chain");
         console.log(input);
