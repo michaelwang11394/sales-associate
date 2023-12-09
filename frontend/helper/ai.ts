@@ -7,11 +7,8 @@ import {
 } from "langchain/prompts";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import {
-  BufferMemory,
-  BufferWindowMemory,
-  ChatMessageHistory,
-} from "langchain/memory";
+import type { BufferMemory } from "langchain/memory";
+import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
 import type { BaseMessage } from "langchain/schema";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
@@ -26,6 +23,7 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { formatDocumentsAsString } from "langchain/util/document";
 import { StringOutputParser } from "langchain/schema/output_parser";
+import { BACK_FORTH_MEMORY_LIMIT } from "@/constants/constants";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -242,7 +240,11 @@ const createFinalRunnable = async (
         console.log(previousOutput);
         return previousOutput.input;
       },
-      history: (previousOutput) => previousOutput.memory.history,
+      history: (previousOutput) => {
+        const mem = previousOutput.memory.history;
+        console.log("current memory", mem);
+        return mem;
+      },
     },
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
@@ -298,10 +300,11 @@ const createOpenai = async (
   console.log(llmConfig);
 
   // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
-  const memory = new BufferMemory({
+  const memory = new BufferWindowMemory({
     chatHistory: new ChatMessageHistory(history),
     inputKey: "input",
     outputKey: "output",
+    k: BACK_FORTH_MEMORY_LIMIT, // Note this is k back and forth (naively assumes that human and ai have one message each) so its double the number here
     memoryKey: "history",
     returnMessages: true,
   });
