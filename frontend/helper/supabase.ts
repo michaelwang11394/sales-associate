@@ -1,9 +1,63 @@
 import { createClient } from "@supabase/supabase-js";
+import { getProducts } from "./shopify";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { SupabaseVectorStore } from "langchain/vectorstores";
+import "dotenv/config";
+import OpenAI from "openai";
 
 const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
-const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+export const createCatalogEmbeddings = async () => {
+  // Initialize the LLM of choice to answer the question.
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPEN_AI_API_KEY,
+  });
+  const { metadataIds, strippedProducts } = await getProducts();
+
+  const embeddingResponse = await openai.embeddings.create({
+    model: "text-embedding-ada-002",
+    input: strippedProducts,
+    encoding_format: "float",
+  });
+
+  console.log(embeddingResponse);
+
+  const [{ embedding }] = embeddingResponse.data;
+
+  try {
+    const { data } = await supabase.from("documents").insert({
+      store: "demo",
+      content: document,
+      metadata: metadataIds,
+      embedding,
+    });
+    console.log("data from supabase", data);
+    return true;
+  } catch (error) {
+    console.error("Error from uploading product embedding:", error);
+  }
+};
+
+export const getProductEmbedding = async (store) => {
+  try {
+    const { data } = await supabase
+      .from("vector_catalog")
+      .select("*")
+      .eq("store", store);
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error", error);
+    return {
+      success: false,
+      message: "An unexpected error with retreiving store embedding occurred.",
+    };
+  }
+};
 
 export const getLastPixelEvent = async (clientId) => {
   try {
@@ -19,7 +73,6 @@ export const getLastPixelEvent = async (clientId) => {
       return { success: false, message: "Error subscribing to events." };
     }
 
-    console.log("Data", data);
     return { success: true, data };
   } catch (error) {
     console.error("Error", error);

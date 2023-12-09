@@ -15,17 +15,25 @@ import {
 import type { BaseMessage } from "langchain/schema";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
-import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase"; // Updated reference to refactored supabase functions
+import {
+  createCatalogEmbeddings,
+  getProductEmbedding,
+  hasItemsInCart,
+  hasViewedProducts,
+  isNewCustomer,
+  supabase,
+} from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
 import {
   RunnablePassthrough,
   RunnableSequence,
 } from "langchain/schema/runnable";
-
+import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { formatDocumentsAsString } from "langchain/util/document";
 import { StringOutputParser } from "langchain/schema/output_parser";
+import { OpenAI } from "openai";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -104,7 +112,7 @@ const zodSchema = z.object({
 const chatModel = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
-  modelName: "gpt-3.5-turbo-16k",
+  modelName: "gpt-3.5-turbo",
 });
 
 export const formatMessage = (text, source) => {
@@ -130,18 +138,33 @@ export const formatMessage = (text, source) => {
 
 // TODO: @michaelwang11394 create retrieve vector store from supabase
 const runEmbeddingsAndSearch = async (query, document, uids) => {
-  const vectorStore = await MemoryVectorStore.fromTexts(
-    document,
-    uids,
-    new OpenAIEmbeddings({
-      openAIApiKey: "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",
-    })
-  );
-  console.log("vector store", vectorStore);
-  const retriever = vectorStore.asRetriever();
-  console.log("retriever", retriever);
-  const relevantDocs = await retriever.getRelevantDocuments(query);
-  return relevantDocs.map((doc) => doc.pageContent);
+  const res = await createCatalogEmbeddings();
+  console.log(res);
+  // // Get store embedding
+  // productEmbedding = await getProductEmbedding("demo")
+  // // Generate a one-time embedding for the query itself
+  //   const openai = new OpenAI({
+  //     apiKey: "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",
+  //   });
+  //  const queryEmbedding = await openai.embeddings.create({
+  //    model: "text-embedding-ada-002",
+  //    input: query,
+  //    encoding_format: "float",
+  //  });
+
+  // const vectorStore = await SupabaseVectorStore.fromExistingIndex(
+  //   queryEmbedding,
+  //   {
+  //     client,
+  //     tableName: "documents",
+  //     queryName: "match_documents",
+  //   }
+  // );
+  // console.log("vector store", vectorStore);
+  // const retriever = vectorStore.asRetriever();
+  // console.log("retriever", retriever);
+  // const relevantDocs = await retriever.getRelevantDocuments(query);
+  // return relevantDocs.map((doc) => doc.pageContent);
 };
 
 // Narrow down relevant products by asking LLM directly
