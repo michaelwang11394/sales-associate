@@ -109,8 +109,9 @@ const zodSchema = z.object({
 /* CHATS 
 // HACK: Replace key after migration to nextjs
 */
+const OPENAI_API_KEY = "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";
 const chatModel = new ChatOpenAI({
-  openAIApiKey: "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",
+  openAIApiKey: OPENAI_API_KEY,
   temperature: 0.7,
   modelName: "gpt-3.5-turbo",
 });
@@ -136,35 +137,21 @@ export const formatMessage = (text, source) => {
   return message;
 };
 
-// TODO: @michaelwang11394 create retrieve vector store from supabase
+// TODO: Move createCatalogEmbeddings to app home once we create that.
 const runEmbeddingsAndSearch = async (query, document, uids) => {
-  const res = await createCatalogEmbeddings();
-  console.log(res);
-  // // Get store embedding
-  // productEmbedding = await getProductEmbedding("demo")
-  // // Generate a one-time embedding for the query itself
-  //   const openai = new OpenAI({
-  //     apiKey: "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",
-  //   });
-  //  const queryEmbedding = await openai.embeddings.create({
-  //    model: "text-embedding-ada-002",
-  //    input: query,
-  //    encoding_format: "float",
-  //  });
-
-  // const vectorStore = await SupabaseVectorStore.fromExistingIndex(
-  //   queryEmbedding,
-  //   {
-  //     client,
-  //     tableName: "documents",
-  //     queryName: "match_documents",
-  //   }
-  // );
-  // console.log("vector store", vectorStore);
-  // const retriever = vectorStore.asRetriever();
-  // console.log("retriever", retriever);
-  // const relevantDocs = await retriever.getRelevantDocuments(query);
-  // return relevantDocs.map((doc) => doc.pageContent);
+  // const res = await createCatalogEmbeddings();
+  // console.log(res);
+  const supabaseVectorStore = await SupabaseVectorStore.fromExistingIndex(
+    new OpenAIEmbeddings({ openAIApiKey: OPENAI_API_KEY }),
+    {
+      client: supabase,
+      tableName: "vector_catalog",
+      queryName: "match_documents",
+    }
+  );
+  const retriever = supabaseVectorStore.asRetriever();
+  const relevantDocs = await retriever.getRelevantDocuments(query);
+  return relevantDocs.map((doc) => doc.pageContent);
 };
 
 // Narrow down relevant products by asking LLM directly
