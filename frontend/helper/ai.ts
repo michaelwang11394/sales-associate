@@ -34,7 +34,6 @@ export enum MessageSource {
 interface LLMConfigType {
   prompt: string;
   include_embeddings: boolean;
-  run_catalog_chain?: boolean; // Whether to run a pass at reducing catalog
 }
 
 export class RunnableWithMemory {
@@ -59,14 +58,12 @@ export class RunnableWithMemory {
 
 const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
-    include_embeddings: false,
-    run_catalog_chain: true,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
+    include_embeddings: true,
   },
   [MessageSource.EMBED]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\n Here is the store's inventory {inventory}.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
-    include_embeddings: false,
-    run_catalog_chain: true,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
+    include_embeddings: true,
   },
 };
 
@@ -131,10 +128,11 @@ export const formatMessage = (text, source) => {
   return message;
 };
 
-const createEmbeddings = async (query, document, uids) => {
+// TODO: @michaelwang11394 create retrieve vector store from supabase
+const runEmbeddingsAndSearch = async (query, document, uids) => {
   const vectorStore = await MemoryVectorStore.fromTexts(
-    [document],
-    [uids],
+    document,
+    uids,
     new OpenAIEmbeddings({
       openAIApiKey: "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",
     })
@@ -142,19 +140,13 @@ const createEmbeddings = async (query, document, uids) => {
   console.log("vector store", vectorStore);
   const retriever = vectorStore.asRetriever();
   console.log("retriever", retriever);
-  const relevantDocs = retriever.getRelevantDocuments(query);
-  console.log("relevant docs", relevantDocs);
-  return relevantDocs;
+  const relevantDocs = await retriever.getRelevantDocuments(query);
+  return relevantDocs.map((doc) => doc.pageContent);
 };
 
-// Narrow down relevant products. Optionally use embeddings
-const createProductChain = async (include_embeddings: boolean) => {
-  /* 
-  RAG Search
-  TODO: Store in proper vector table, create index.
-  */
-  // Pre-process products for embedding
-  const { metadataIds, strippedProducts } = await getProducts();
+// Narrow down relevant products by asking LLM directly
+const createSimpleSearchRunnable = async () => {
+  const { strippedProducts } = await getProducts();
 
   const productChain = RunnableSequence.from([
     {
@@ -187,23 +179,33 @@ const createProductChain = async (include_embeddings: boolean) => {
   return productChain;
 };
 
-const createFinalChain = async (
+const createEmbedRunnable = async () => {
+  const { metadataIds, strippedProducts } = await getProducts();
+  return RunnableSequence.from([
+    {
+      catalog: (input) =>
+        runEmbeddingsAndSearch(input.input, strippedProducts, metadataIds),
+      input: (input) => input,
+    },
+    {
+      input: (previousOutput) =>
+        previousOutput.catalog.join("\r\n") + previousOutput.input,
+    },
+  ]);
+};
+
+const createFinalRunnable = async (
   context: string[],
   llmConfig: LLMConfigType,
   memory: BufferMemory,
   previous_chain? // If chaining, what is the previous chain
 ) => {
   const systemTemplate = llmConfig.prompt;
-  let inventory = llmConfig.run_catalog_chain
-    ? ""
-    : "Here is a full catalog of products:\n" +
-      (await getProducts()).strippedProducts;
 
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
   const formattedSystemMessagePrompt = await systemMessagePrompt.format({
     context: context,
-    inventory: inventory,
   });
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
@@ -230,7 +232,6 @@ const createFinalChain = async (
   const salesChain = RunnableSequence.from([
     {
       input: (initialInput) => {
-        console.log("BOI");
         console.log(JSON.stringify(initialInput));
         return initialInput.input;
       },
@@ -238,7 +239,6 @@ const createFinalChain = async (
     },
     {
       input: (previousOutput) => {
-        console.log("BOI2");
         console.log(previousOutput);
         return previousOutput.input;
       },
@@ -306,13 +306,13 @@ const createOpenai = async (
     returnMessages: true,
   });
 
-  const finalChain = await createFinalChain(
+  const finalChain = await createFinalRunnable(
     context,
     llmConfig,
     memory,
-    llmConfig.run_catalog_chain
-      ? await createProductChain(llmConfig.include_embeddings)
-      : null
+    llmConfig.include_embeddings
+      ? await createEmbedRunnable()
+      : await createSimpleSearchRunnable()
   );
 
   return new RunnableWithMemory(finalChain, memory);

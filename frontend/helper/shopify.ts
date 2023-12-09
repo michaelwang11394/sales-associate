@@ -81,11 +81,17 @@ export const getProducts = async () => {
 };
 
 export const getGreetingMessage = async (event) => {
+  return (
+    getEventSpecificMessage(event.name) +
+    "The entire response should fit in 150 characters, nothing in products field."
+  );
+};
+
+export const getEventSpecificMessage = async (event) => {
   // Check if the customer has viewed their cart multiple times in the past 30 minutes
   // Check if the customer is new
   const newCustomer = await isNewCustomer(event.clientId);
   const isOfferCoupon = await offerCoupon(event.clientId);
-
   switch (event.name) {
     // Welcome Intent
     case "page_viewed":
@@ -113,7 +119,6 @@ export const getGreetingMessage = async (event) => {
       return "Hello.";
   }
 };
-
 // Example usage
 /*
 const searchQuery = 'bag';
