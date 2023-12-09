@@ -57,7 +57,7 @@ export default function Icon({ props }) {
   }, []);
 
   useEffect(() => {
-    if (clientId && openai) {
+    if (clientId && openai && props.mountDiv === "embed") {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);

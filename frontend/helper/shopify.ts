@@ -61,19 +61,39 @@ export const getSuggestions = async (query) => {
 
 export const getProducts = async () => {
   // TODO: paginate for larger stores
-  const json = await shopifyRestQuery("products.json?limit=250&status=active");
-  console.log(json);
-  return json?.products
+  const json = await shopifyRestQuery(
+    "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
+  );
+  const jsonProducts = json?.products;
+  const stringifiedProducts = json?.products
     ?.map((product) => formatCatalogEntry(product))
     .join("\r\n");
+
+  // RAG and embeddings pre-processing
+  const metadataIds = jsonProducts.map((product) => product.id);
+  const strippedProducts = jsonProducts.map((product) => {
+    // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
+    return JSON.stringify(product)
+      .replace(/"/g, "")
+      .replace(/\n/g, " ")
+      .replace(/id/g, "");
+  });
+
+  return { stringifiedProducts, metadataIds, strippedProducts };
 };
 
 export const getGreetingMessage = async (event) => {
+  return (
+    getEventSpecificMessage(event.name) +
+    "The entire response should fit in 150 characters, nothing in products field."
+  );
+};
+
+export const getEventSpecificMessage = async (event) => {
   // Check if the customer has viewed their cart multiple times in the past 30 minutes
   // Check if the customer is new
   const newCustomer = await isNewCustomer(event.clientId);
   const isOfferCoupon = await offerCoupon(event.clientId);
-
   switch (event.name) {
     // Welcome Intent
     case "page_viewed":
@@ -101,7 +121,6 @@ export const getGreetingMessage = async (event) => {
       return "Hello.";
   }
 };
-
 // Example usage
 /*
 const searchQuery = 'bag';
