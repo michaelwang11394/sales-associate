@@ -23,7 +23,10 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { formatDocumentsAsString } from "langchain/util/document";
 import { StringOutputParser } from "langchain/schema/output_parser";
-import { BACK_FORTH_MEMORY_LIMIT } from "@/constants/constants";
+import {
+  BACK_FORTH_MEMORY_LIMIT,
+  RETURN_TOP_N_SIMILARITY_DOCS,
+} from "@/constants/constants";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -102,7 +105,7 @@ const zodSchema = z.object({
 const chatModel = new ChatOpenAI({
   openAIApiKey: "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",
   temperature: 0.7,
-  modelName: "gpt-3.5-turbo-16k",
+  modelName: "gpt-3.5-turbo",
 });
 
 export const formatMessage = (text, source) => {
@@ -138,7 +141,10 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
   console.log("vector store", vectorStore);
   const retriever = vectorStore.asRetriever();
   console.log("retriever", retriever);
-  const relevantDocs = await retriever.getRelevantDocuments(query);
+  const relevantDocs = (await retriever.getRelevantDocuments(query)).slice(
+    0,
+    RETURN_TOP_N_SIMILARITY_DOCS
+  );
   return relevantDocs.map((doc) => doc.pageContent);
 };
 
@@ -183,7 +189,7 @@ const createEmbedRunnable = async () => {
     {
       catalog: (input) =>
         runEmbeddingsAndSearch(input.input, strippedProducts, metadataIds),
-      input: (input) => input,
+      input: (input) => input.input,
     },
     {
       input: (previousOutput) =>
