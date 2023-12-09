@@ -19,6 +19,7 @@ import {
   getMessages,
 } from "@/helper/supabase";
 import {
+  OPENAI_RETRY_COUNT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
@@ -116,12 +117,14 @@ export default function CommandPalette({ props }) {
     if (userInput === "") {
       return;
     }
-    const newUserMessage = formatMessage(userInput, "user");
+    const input = userInput;
+    setUserInput("");
+    const newUserMessage = formatMessage(input, "user");
     await handleNewMessage(clientId, newUserMessage);
 
     if (openai) {
       await openai
-        .run(userInput)
+        .run(input)
         .then(async (response) => {
           console.log(response.products);
           const newResponseMessage = formatMessage(response.plainText, "ai");
@@ -136,7 +139,13 @@ export default function CommandPalette({ props }) {
           );
           console.log("message after openai", messages);
         })
-        .catch((err) => console.error(err));
+        .catch(async (err) => {
+          await handleNewMessage(
+            clientId,
+            formatMessage("AI is not available, please try again", "system")
+          );
+          console.error(err);
+        });
     } else {
       await handleNewMessage(
         clientId,
@@ -144,7 +153,6 @@ export default function CommandPalette({ props }) {
       );
       console.error("openai not available");
     }
-    setUserInput("");
   };
 
   const handleDropdownItemClick = (item) => {
