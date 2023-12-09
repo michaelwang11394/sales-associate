@@ -7,11 +7,7 @@ import {
 } from "langchain/prompts";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import {
-  BufferMemory,
-  BufferWindowMemory,
-  ChatMessageHistory,
-} from "langchain/memory";
+import { BufferMemory, ChatMessageHistory } from "langchain/memory";
 import type { BaseMessage } from "langchain/schema";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
@@ -34,6 +30,11 @@ import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { formatDocumentsAsString } from "langchain/util/document";
 import { StringOutputParser } from "langchain/schema/output_parser";
 import { OpenAI } from "openai";
+import {
+  BACK_FORTH_MEMORY_LIMIT,
+  OPENAI_RETRIES,
+  RETURN_TOP_N_SIMILARITY_DOCS,
+} from "@/constants/constants";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -53,14 +54,31 @@ export class RunnableWithMemory {
     this.memory = memory;
   }
 
+  private runPrivate = async (input: string, retry_left: number) => {
+    if (retry_left === 0) {
+      throw new Error("openai retries exceeded");
+    }
+    try {
+      const res = await this.runnable.invoke({ input: input });
+      await this.memory.saveContext(
+        { input: input },
+        { output: res.plainText + JSON.stringify(res.products) }
+      );
+      console.log(await this.memory.loadMemoryVariables({}));
+      return res;
+    } catch (error: any) {
+      // Means openai function parsing failed, retry
+      if (error.name === "SyntaxError") {
+        console.log("OpenAI function parsing failed, trying again");
+        return this.runPrivate(input, retry_left - 1);
+      } else {
+        throw new Error("Unexpected openai error");
+      }
+    }
+  };
+
   public run = async (input: string) => {
-    const res = await this.runnable.invoke({ input: input });
-    await this.memory.saveContext(
-      { input: input },
-      { output: res.plainText + JSON.stringify(res.products) }
-    );
-    console.log(await this.memory.loadMemoryVariables({}));
-    return res;
+    return await this.runPrivate(input, OPENAI_RETRIES);
   };
 }
 
@@ -195,7 +213,7 @@ const createEmbedRunnable = async () => {
     {
       catalog: (input) =>
         runEmbeddingsAndSearch(input.input, strippedProducts, metadataIds),
-      input: (input) => input,
+      input: (input) => input.input,
     },
     {
       input: (previousOutput) =>
@@ -252,7 +270,11 @@ const createFinalRunnable = async (
         console.log(previousOutput);
         return previousOutput.input;
       },
-      history: (previousOutput) => previousOutput.memory.history,
+      history: (previousOutput) => {
+        const mem = previousOutput.memory.history;
+        console.log("current memory", mem);
+        return mem;
+      },
     },
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
@@ -308,10 +330,11 @@ const createOpenai = async (
   console.log(llmConfig);
 
   // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
-  const memory = new BufferMemory({
+  const memory = new BufferWindowMemory({
     chatHistory: new ChatMessageHistory(history),
     inputKey: "input",
     outputKey: "output",
+    k: BACK_FORTH_MEMORY_LIMIT, // Note this is k back and forth (naively assumes that human and ai have one message each) so its double the number here
     memoryKey: "history",
     returnMessages: true,
   });

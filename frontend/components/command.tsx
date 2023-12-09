@@ -18,7 +18,11 @@ import {
   insertMessage,
   getMessages,
 } from "@/helper/supabase";
-import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
+import {
+  OPENAI_RETRY_COUNT,
+  PALETTE_DIV_ID,
+  SUPABASE_MESSAGES_RETRIEVED,
+} from "@/constants/constants";
 import { toggleOverlayVisibility } from "@/helper/animations";
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
@@ -113,26 +117,35 @@ export default function CommandPalette({ props }) {
     if (userInput === "") {
       return;
     }
-    const newUserMessage = formatMessage(userInput, "user");
+    const input = userInput;
+    setUserInput("");
+    const newUserMessage = formatMessage(input, "user");
     await handleNewMessage(clientId, newUserMessage);
 
     if (openai) {
       await openai
-        .run(userInput)
-        .then((response) => {
+        .run(input)
+        .then(async (response) => {
           console.log(response.products);
           const newResponseMessage = formatMessage(response.plainText, "ai");
-          handleNewMessage(clientId, newResponseMessage);
+          await handleNewMessage(clientId, newResponseMessage);
           // TODO update with card html element
-          response.products.forEach((product) =>
-            handleNewMessage(
-              clientId,
-              formatMessage(JSON.stringify(product), "ai")
-            )
+          response.products.forEach(
+            async (product) =>
+              await handleNewMessage(
+                clientId,
+                formatMessage(JSON.stringify(product), "ai")
+              )
           );
           console.log("message after openai", messages);
         })
-        .catch((err) => console.error(err));
+        .catch(async (err) => {
+          await handleNewMessage(
+            clientId,
+            formatMessage("AI is not available, please try again", "system")
+          );
+          console.error(err);
+        });
     } else {
       await handleNewMessage(
         clientId,
@@ -140,7 +153,6 @@ export default function CommandPalette({ props }) {
       );
       console.error("openai not available");
     }
-    setUserInput("");
   };
 
   const handleDropdownItemClick = (item) => {
@@ -151,6 +163,7 @@ export default function CommandPalette({ props }) {
   return (
     <div id="overlay" style={{ height: "70%" }}>
       <section
+        id={PALETTE_DIV_ID}
         style={{
           position: "relative",
           overflow: "hidden",

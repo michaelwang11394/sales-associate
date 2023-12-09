@@ -28,8 +28,9 @@ export function createOverlayDiv() {
     overlayDiv.style.position = "fixed";
     overlayDiv.style.top = "0";
     overlayDiv.style.left = "0";
+    overlayDiv.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
     overlayDiv.style.width = "100%";
-    overlayDiv.style.height = "70%";
+    overlayDiv.style.height = "100%";
     overlayDiv.style.zIndex = "1000";
     overlayDiv.style.display = "block";
     overlayDiv.className = "overlay";

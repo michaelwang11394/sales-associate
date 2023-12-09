@@ -61,7 +61,9 @@ export const getSuggestions = async (query) => {
 
 export const getProducts = async () => {
   // TODO: paginate for larger stores
-  const json = await shopifyRestQuery("products.json?limit=250&status=active");
+  const json = await shopifyRestQuery(
+    "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
+  );
   const jsonProducts = json?.products;
   const stringifiedProducts = json?.products
     ?.map((product) => formatCatalogEntry(product))

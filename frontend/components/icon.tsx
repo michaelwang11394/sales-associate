@@ -3,7 +3,10 @@ import { getLastPixelEvent, getMessages } from "@/helper/supabase";
 import "@/styles/chat.css";
 import { getGreetingMessage } from "@/helper/shopify";
 import { toggleOverlayVisibility } from "@/helper/animations";
-import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
+import {
+  PALETTE_DIV_ID,
+  SUPABASE_MESSAGES_RETRIEVED,
+} from "@/constants/constants";
 import {
   formatMessage,
   createOpenaiWithHistory,
@@ -40,10 +43,11 @@ export default function Icon({ props }) {
     }
     // Add event listener to close overlay when clicking outside of it
     const handleClickOutside = (event) => {
+      const clickTarget = document.getElementById(PALETTE_DIV_ID);
       const overlayDiv = props.overlayDiv;
 
       if (
-        !overlayDiv.contains(event.target) &&
+        !clickTarget?.contains(event.target) &&
         overlayDiv.classList.contains("visible")
       ) {
         toggleOverlayVisibility(overlayDiv);
@@ -57,7 +61,7 @@ export default function Icon({ props }) {
   }, []);
 
   useEffect(() => {
-    if (clientId && openai) {
+    if (clientId && openai && props.mountDiv === "embed") {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
