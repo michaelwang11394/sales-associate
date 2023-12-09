@@ -258,6 +258,7 @@ body {
 
 .overlay.visible {
   opacity: 1;
+  color: black;
   visibility: visible;
   transition: opacity 200ms ease, visibility 0s ease 0s;
 }

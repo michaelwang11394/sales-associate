@@ -18,7 +18,10 @@ import {
   insertMessage,
   getMessages,
 } from "@/helper/supabase";
-import { SUPABASE_MESSAGES_RETRIEVED } from "@/constants/constants";
+import {
+  PALETTE_DIV_ID,
+  SUPABASE_MESSAGES_RETRIEVED,
+} from "@/constants/constants";
 import { toggleOverlayVisibility } from "@/helper/animations";
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
@@ -151,6 +154,7 @@ export default function CommandPalette({ props }) {
   return (
     <div id="overlay" style={{ height: "70%" }}>
       <section
+        id={PALETTE_DIV_ID}
         style={{
           position: "relative",
           overflow: "hidden",
