@@ -122,16 +122,17 @@ export default function CommandPalette({ props }) {
     if (openai) {
       await openai
         .run(userInput)
-        .then((response) => {
+        .then(async (response) => {
           console.log(response.products);
           const newResponseMessage = formatMessage(response.plainText, "ai");
-          handleNewMessage(clientId, newResponseMessage);
+          await handleNewMessage(clientId, newResponseMessage);
           // TODO update with card html element
-          response.products.forEach((product) =>
-            handleNewMessage(
-              clientId,
-              formatMessage(JSON.stringify(product), "ai")
-            )
+          response.products.forEach(
+            async (product) =>
+              await handleNewMessage(
+                clientId,
+                formatMessage(JSON.stringify(product), "ai")
+              )
           );
           console.log("message after openai", messages);
         })

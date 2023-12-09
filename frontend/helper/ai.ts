@@ -189,7 +189,7 @@ const createEmbedRunnable = async () => {
     {
       catalog: (input) =>
         runEmbeddingsAndSearch(input.input, strippedProducts, metadataIds),
-      input: (input) => input,
+      input: (input) => input.input,
     },
     {
       input: (previousOutput) =>
