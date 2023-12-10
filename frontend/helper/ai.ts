@@ -7,34 +7,24 @@ import {
 } from "langchain/prompts";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { BufferMemory, ChatMessageHistory } from "langchain/memory";
-import type { BaseMessage } from "langchain/schema";
+import {
+  BufferMemory,
+  BufferWindowMemory,
+  ChatMessageHistory,
+} from "langchain/memory";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import {
-  createCatalogEmbeddings,
-  getProductEmbedding,
   hasItemsInCart,
   hasViewedProducts,
   isNewCustomer,
   supabase,
 } from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
-import {
-  RunnablePassthrough,
-  RunnableSequence,
-} from "langchain/schema/runnable";
+import { RunnableSequence } from "langchain/schema/runnable";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { formatDocumentsAsString } from "langchain/util/document";
-import { StringOutputParser } from "langchain/schema/output_parser";
-import { OpenAI } from "openai";
-import {
-  BACK_FORTH_MEMORY_LIMIT,
-  OPENAI_RETRIES,
-  RETURN_TOP_N_SIMILARITY_DOCS,
-} from "@/constants/constants";
+import { BACK_FORTH_MEMORY_LIMIT, OPENAI_RETRIES } from "@/constants/constants";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
