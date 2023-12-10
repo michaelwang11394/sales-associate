@@ -7,11 +7,8 @@ import {
 } from "langchain/prompts";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import {
-  BufferMemory,
-  BufferWindowMemory,
-  ChatMessageHistory,
-} from "langchain/memory";
+import type { BufferMemory } from "langchain/memory";
+import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import {
@@ -25,7 +22,11 @@ import { RunnableSequence } from "langchain/schema/runnable";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { BACK_FORTH_MEMORY_LIMIT, OPENAI_RETRIES } from "@/constants/constants";
+import {
+  BACK_FORTH_MEMORY_LIMIT,
+  OPENAI_RETRIES,
+  OPENAI_KEY,
+} from "@/constants/constants";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -115,17 +116,14 @@ const zodSchema = z.object({
     .describe("A list of products mentioned in the response, if any"),
 });
 
-/* CHATS 
-// HACK: Replace key after migration to nextjs
-*/
-const OPENAI_API_KEY = "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";
-const chatModel = new ChatOpenAI({
-  openAIApiKey: OPENAI_API_KEY,
+const chatSalesModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
   temperature: 0.7,
   modelName: "gpt-3.5-turbo",
 });
-const productModel = new ChatOpenAI({
-  openAIApiKey: OPENAI_API_KEY,
+
+const chatProductModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
   temperature: 1.0,
   modelName: "gpt-3.5-turbo-16k",
 });
@@ -158,7 +156,7 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
   let vectorStore;
   try {
     vectorStore = await SupabaseVectorStore.fromExistingIndex(
-      new OpenAIEmbeddings({ openAIApiKey: OPENAI_API_KEY }),
+      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
       {
         client: supabase,
         tableName: "vector_catalog",
@@ -171,7 +169,7 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
       document,
       uids,
       new OpenAIEmbeddings({
-        openAIApiKey: "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",
+        openAIApiKey: OPENAI_KEY,
       })
     );
   }
@@ -199,7 +197,7 @@ const createSimpleSearchRunnable = async () => {
           .format(previousOutput)
           .then(
             async (formatted_prompt) =>
-              await productModel.invoke(formatted_prompt)
+              await chatProductModel.invoke(formatted_prompt)
           ),
       input: (previousOutput) => previousOutput.input,
     },
@@ -251,7 +249,7 @@ const createFinalRunnable = async (
 
   // Binding "function_call" below makes the model always call the specified function.
   // If you want to allow the model to call functions selectively, omit it.
-  const functionCallingModel = chatModel.bind({
+  const functionCallingModel = chatSalesModel.bind({
     functions: [
       {
         name: "output_formatter",

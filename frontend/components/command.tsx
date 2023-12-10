@@ -142,7 +142,10 @@ export default function CommandPalette({ props }) {
         .catch(async (err) => {
           await handleNewMessage(
             clientId,
-            formatMessage("AI is not available, please try again", "system")
+            formatMessage(
+              "AI has encountered an error, please try again",
+              "system"
+            )
           );
           console.error(err);
         });
