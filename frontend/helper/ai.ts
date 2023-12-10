@@ -9,25 +9,23 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import type { BufferMemory } from "langchain/memory";
 import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
-import type { BaseMessage } from "langchain/schema";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
-import { hasItemsInCart, hasViewedProducts, isNewCustomer } from "./supabase"; // Updated reference to refactored supabase functions
-import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
 import {
-  RunnablePassthrough,
-  RunnableSequence,
-} from "langchain/schema/runnable";
-
+  hasItemsInCart,
+  hasViewedProducts,
+  isNewCustomer,
+  supabase,
+} from "./supabase";
+import { getProducts } from "./shopify";
+import { RunnableSequence } from "langchain/schema/runnable";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { formatDocumentsAsString } from "langchain/util/document";
-import { StringOutputParser } from "langchain/schema/output_parser";
 import {
   BACK_FORTH_MEMORY_LIMIT,
-  OPENAI_KEY,
   OPENAI_RETRIES,
-  RETURN_TOP_N_SIMILARITY_DOCS,
+  OPENAI_KEY,
 } from "@/constants/constants";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
@@ -151,22 +149,32 @@ export const formatMessage = (text, source) => {
   return message;
 };
 
-// TODO: @michaelwang11394 create retrieve vector store from supabase
+// TODO: Move createCatalogEmbeddings to app home once we create that.
 const runEmbeddingsAndSearch = async (query, document, uids) => {
-  const vectorStore = await MemoryVectorStore.fromTexts(
-    document,
-    uids,
-    new OpenAIEmbeddings({
-      openAIApiKey: OPENAI_KEY,
-    })
-  );
-  console.log("vector store", vectorStore);
+  // const res = await createCatalogEmbeddings();
+  // console.log(res);
+  let vectorStore;
+  try {
+    vectorStore = await SupabaseVectorStore.fromExistingIndex(
+      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
+      {
+        client: supabase,
+        tableName: "vector_catalog",
+        queryName: "match_documents",
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    vectorStore = await MemoryVectorStore.fromTexts(
+      document,
+      uids,
+      new OpenAIEmbeddings({
+        openAIApiKey: "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",
+      })
+    );
+  }
   const retriever = vectorStore.asRetriever();
-  console.log("retriever", retriever);
-  const relevantDocs = (await retriever.getRelevantDocuments(query)).slice(
-    0,
-    RETURN_TOP_N_SIMILARITY_DOCS
-  );
+  const relevantDocs = await retriever.getRelevantDocuments(query);
   return relevantDocs.map((doc) => doc.pageContent);
 };
 
@@ -178,8 +186,6 @@ const createSimpleSearchRunnable = async () => {
     {
       catalog: () => strippedProducts.join("\r\n"),
       input: (input) => {
-        console.log("In first product chain");
-        console.log(input);
         return input.input;
       },
     },
@@ -259,19 +265,16 @@ const createFinalRunnable = async (
   const salesChain = RunnableSequence.from([
     {
       input: (initialInput) => {
-        console.log(JSON.stringify(initialInput));
         return initialInput.input;
       },
       memory: () => memory.loadMemoryVariables({}),
     },
     {
       input: (previousOutput) => {
-        console.log(previousOutput);
         return previousOutput.input;
       },
       history: (previousOutput) => {
         const mem = previousOutput.memory.history;
-        console.log("current memory", mem);
         return mem;
       },
     },
@@ -285,10 +288,10 @@ const createFinalRunnable = async (
 export const createOpenaiWithHistory = async (
   clientId: string,
   messageSource: MessageSource,
-  messages = []
+  messages: { text: string; source: string }[] = []
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
-  let customerContext = [];
+  let customerContext: string[] = [];
 
   // Check if the customer is new
   const newCustomer = await isNewCustomer(clientId);
@@ -302,13 +305,13 @@ export const createOpenaiWithHistory = async (
     // Check if the customer has items in their cart
     if (itemsInCart.hasItems === true) {
       customerContext.push(itemsInCart.message);
-      customerContext.push(itemsInCart.cartURL);
+      customerContext.push(itemsInCart.cartURL!);
     }
 
     // Check if the customer has viewed any products
     if (productsViewed.hasViewed === true) {
       customerContext.push(productsViewed.message);
-      customerContext.push(productsViewed.productURLs);
+      customerContext.push(productsViewed.productURLs!);
     }
   }
 
@@ -324,9 +327,7 @@ const createOpenai = async (
   messageSource: MessageSource,
   history: (HumanMessage | AIMessage)[] = []
 ) => {
-  console.log(messageSource);
   const llmConfig = LLMConfig[messageSource];
-  console.log(llmConfig);
 
   // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
   const memory = new BufferWindowMemory({

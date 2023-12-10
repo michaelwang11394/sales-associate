@@ -1,9 +1,51 @@
 import { createClient } from "@supabase/supabase-js";
+import { getProducts } from "./shopify";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 
 const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
-const supabase = createClient(supabaseUrl, supabaseKey);
+const openAIApiKey = "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";
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// TODO: Update the store column. No way to do it from supabaseVector.
+//TODO: Clean up stripped products to remove ids completely. Right now only the id key itself is removed.
+export const createCatalogEmbeddings = async () => {
+  const { metadataIds, strippedProducts } = await getProducts();
+  try {
+    const vectorStore = await SupabaseVectorStore.fromTexts(
+      strippedProducts,
+      metadataIds,
+      new OpenAIEmbeddings({ openAIApiKey }),
+      {
+        client: supabase,
+        tableName: "vector_catalog",
+        queryName: "match_documents",
+      }
+    );
+    return { success: true, vectorStore };
+  } catch (error) {
+    console.error("Error with creating product embedding:", error);
+    return { success: false };
+  }
+};
+
+export const getProductEmbedding = async (store) => {
+  try {
+    const { data } = await supabase
+      .from("vector_catalog")
+      .select("*")
+      .eq("store", store);
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error", error);
+    return {
+      success: false,
+      message: "An unexpected error with retreiving store embedding occurred.",
+    };
+  }
+};
 
 export const getLastPixelEvent = async (clientId) => {
   try {
@@ -19,7 +61,6 @@ export const getLastPixelEvent = async (clientId) => {
       return { success: false, message: "Error subscribing to events." };
     }
 
-    console.log("Data", data);
     return { success: true, data };
   } catch (error) {
     console.error("Error", error);
