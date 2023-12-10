@@ -169,7 +169,7 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
       document,
       uids,
       new OpenAIEmbeddings({
-        openAIApiKey: "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",
+        openAIApiKey: OPENAI_KEY,
       })
     );
   }
