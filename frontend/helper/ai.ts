@@ -19,8 +19,8 @@ import {
   hasViewedProducts,
   isNewCustomer,
   supabase,
-} from "./supabase"; // Updated reference to refactored supabase functions
-import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
+} from "./supabase";
+import { getProducts } from "./shopify";
 import { RunnableSequence } from "langchain/schema/runnable";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
@@ -188,8 +188,6 @@ const createSimpleSearchRunnable = async () => {
     {
       catalog: () => strippedProducts.join("\r\n"),
       input: (input) => {
-        console.log("In first product chain");
-        console.log(input);
         return input.input;
       },
     },
@@ -269,19 +267,16 @@ const createFinalRunnable = async (
   const salesChain = RunnableSequence.from([
     {
       input: (initialInput) => {
-        console.log(JSON.stringify(initialInput));
         return initialInput.input;
       },
       memory: () => memory.loadMemoryVariables({}),
     },
     {
       input: (previousOutput) => {
-        console.log(previousOutput);
         return previousOutput.input;
       },
       history: (previousOutput) => {
         const mem = previousOutput.memory.history;
-        console.log("current memory", mem);
         return mem;
       },
     },
@@ -334,9 +329,7 @@ const createOpenai = async (
   messageSource: MessageSource,
   history: (HumanMessage | AIMessage)[] = []
 ) => {
-  console.log(messageSource);
   const llmConfig = LLMConfig[messageSource];
-  console.log(llmConfig);
 
   // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
   const memory = new BufferWindowMemory({
