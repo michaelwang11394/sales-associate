@@ -2,11 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 import { getProducts } from "./shopify";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
+import { OPENAI_KEY } from "@/constants/constants";
 
 const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
-const openAIApiKey = "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";
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // TODO: Update the store column. No way to do it from supabaseVector.
@@ -17,7 +17,7 @@ export const createCatalogEmbeddings = async () => {
     const vectorStore = await SupabaseVectorStore.fromTexts(
       strippedProducts,
       metadataIds,
-      new OpenAIEmbeddings({ openAIApiKey }),
+      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
       {
         client: supabase,
         tableName: "vector_catalog",
