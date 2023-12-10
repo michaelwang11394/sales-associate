@@ -127,7 +127,7 @@ const chatModel = new ChatOpenAI({
 const productModel = new ChatOpenAI({
   openAIApiKey: OPENAI_API_KEY,
   temperature: 1.0,
-  modelName: "gpt-3.5-turbo",
+  modelName: "gpt-3.5-turbo-16k",
 });
 
 export const formatMessage = (text, source) => {
