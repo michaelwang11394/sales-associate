@@ -22,6 +22,7 @@ import {
 } from "./supabase"; // Updated reference to refactored supabase functions
 import { getProducts } from "./shopify"; // Updated reference to refactored shopify function
 import { RunnableSequence } from "langchain/schema/runnable";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { BACK_FORTH_MEMORY_LIMIT, OPENAI_RETRIES } from "@/constants/constants";
@@ -123,6 +124,11 @@ const chatModel = new ChatOpenAI({
   temperature: 0.7,
   modelName: "gpt-3.5-turbo",
 });
+const productModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_API_KEY,
+  temperature: 1.0,
+  modelName: "gpt-3.5-turbo",
+});
 
 export const formatMessage = (text, source) => {
   const title = source !== "user" ? "Sales Associate" : "";
@@ -149,15 +155,27 @@ export const formatMessage = (text, source) => {
 const runEmbeddingsAndSearch = async (query, document, uids) => {
   // const res = await createCatalogEmbeddings();
   // console.log(res);
-  const supabaseVectorStore = await SupabaseVectorStore.fromExistingIndex(
-    new OpenAIEmbeddings({ openAIApiKey: OPENAI_API_KEY }),
-    {
-      client: supabase,
-      tableName: "vector_catalog",
-      queryName: "match_documents",
-    }
-  );
-  const retriever = supabaseVectorStore.asRetriever();
+  let vectorStore;
+  try {
+    vectorStore = await SupabaseVectorStore.fromExistingIndex(
+      new OpenAIEmbeddings({ openAIApiKey: OPENAI_API_KEY }),
+      {
+        client: supabase,
+        tableName: "vector_catalog",
+        queryName: "match_documents",
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    vectorStore = await MemoryVectorStore.fromTexts(
+      document,
+      uids,
+      new OpenAIEmbeddings({
+        openAIApiKey: "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",
+      })
+    );
+  }
+  const retriever = vectorStore.asRetriever();
   const relevantDocs = await retriever.getRelevantDocuments(query);
   return relevantDocs.map((doc) => doc.pageContent);
 };
@@ -182,7 +200,8 @@ const createSimpleSearchRunnable = async () => {
         )
           .format(previousOutput)
           .then(
-            async (formatted_prompt) => await chatModel.invoke(formatted_prompt)
+            async (formatted_prompt) =>
+              await productModel.invoke(formatted_prompt)
           ),
       input: (previousOutput) => previousOutput.input,
     },
@@ -276,10 +295,10 @@ const createFinalRunnable = async (
 export const createOpenaiWithHistory = async (
   clientId: string,
   messageSource: MessageSource,
-  messages = []
+  messages: { text: string; source: string }[] = []
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
-  let customerContext = [];
+  let customerContext: string[] = [];
 
   // Check if the customer is new
   const newCustomer = await isNewCustomer(clientId);
@@ -293,13 +312,13 @@ export const createOpenaiWithHistory = async (
     // Check if the customer has items in their cart
     if (itemsInCart.hasItems === true) {
       customerContext.push(itemsInCart.message);
-      customerContext.push(itemsInCart.cartURL);
+      customerContext.push(itemsInCart.cartURL!);
     }
 
     // Check if the customer has viewed any products
     if (productsViewed.hasViewed === true) {
       customerContext.push(productsViewed.message);
-      customerContext.push(productsViewed.productURLs);
+      customerContext.push(productsViewed.productURLs!);
     }
   }
 
