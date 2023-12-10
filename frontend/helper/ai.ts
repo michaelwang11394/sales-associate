@@ -26,6 +26,7 @@ import { StringOutputParser } from "langchain/schema/output_parser";
 import {
   BACK_FORTH_MEMORY_LIMIT,
   OPENAI_KEY,
+  OPENAI_RETRIES,
   RETURN_TOP_N_SIMILARITY_DOCS,
 } from "@/constants/constants";
 export enum MessageSource {
@@ -47,14 +48,31 @@ export class RunnableWithMemory {
     this.memory = memory;
   }
 
+  private runPrivate = async (input: string, retry_left: number) => {
+    if (retry_left === 0) {
+      throw new Error("openai retries exceeded");
+    }
+    try {
+      const res = await this.runnable.invoke({ input: input });
+      await this.memory.saveContext(
+        { input: input },
+        { output: res.plainText + JSON.stringify(res.products) }
+      );
+      console.log(await this.memory.loadMemoryVariables({}));
+      return res;
+    } catch (error: any) {
+      // Means openai function parsing failed, retry
+      if (error.name === "SyntaxError") {
+        console.log("OpenAI function parsing failed, trying again");
+        return this.runPrivate(input, retry_left - 1);
+      } else {
+        throw new Error("Unexpected openai error");
+      }
+    }
+  };
+
   public run = async (input: string) => {
-    const res = await this.runnable.invoke({ input: input });
-    await this.memory.saveContext(
-      { input: input },
-      { output: res.plainText + JSON.stringify(res.products) }
-    );
-    console.log(await this.memory.loadMemoryVariables({}));
-    return res;
+    return await this.runPrivate(input, OPENAI_RETRIES);
   };
 }
 

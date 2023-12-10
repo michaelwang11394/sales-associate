@@ -6,3 +6,4 @@ export const RETURN_TOP_N_SIMILARITY_DOCS = 3;
 // HACK: Replace key after migration to nextjs
 */
 export const OPENAI_KEY = "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";
+export const OPENAI_RETRIES = 3;
