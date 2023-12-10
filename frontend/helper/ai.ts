@@ -25,6 +25,7 @@ import { formatDocumentsAsString } from "langchain/util/document";
 import { StringOutputParser } from "langchain/schema/output_parser";
 import {
   BACK_FORTH_MEMORY_LIMIT,
+  OPENAI_KEY,
   RETURN_TOP_N_SIMILARITY_DOCS,
 } from "@/constants/constants";
 export enum MessageSource {
@@ -99,13 +100,16 @@ const zodSchema = z.object({
     .describe("A list of products mentioned in the response, if any"),
 });
 
-/* CHATS 
-// HACK: Replace key after migration to nextjs
-*/
-const chatModel = new ChatOpenAI({
-  openAIApiKey: "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",
+const chatSalesModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
   temperature: 0.7,
   modelName: "gpt-3.5-turbo",
+});
+
+const chatProductModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
+  temperature: 1.0,
+  modelName: "gpt-3.5-turbo-16k",
 });
 
 export const formatMessage = (text, source) => {
@@ -135,7 +139,7 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
     document,
     uids,
     new OpenAIEmbeddings({
-      openAIApiKey: "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",
+      openAIApiKey: OPENAI_KEY,
     })
   );
   console.log("vector store", vectorStore);
@@ -168,7 +172,8 @@ const createSimpleSearchRunnable = async () => {
         )
           .format(previousOutput)
           .then(
-            async (formatted_prompt) => await chatModel.invoke(formatted_prompt)
+            async (formatted_prompt) =>
+              await chatProductModel.invoke(formatted_prompt)
           ),
       input: (previousOutput) => previousOutput.input,
     },
@@ -220,7 +225,7 @@ const createFinalRunnable = async (
 
   // Binding "function_call" below makes the model always call the specified function.
   // If you want to allow the model to call functions selectively, omit it.
-  const functionCallingModel = chatModel.bind({
+  const functionCallingModel = chatSalesModel.bind({
     functions: [
       {
         name: "output_formatter",

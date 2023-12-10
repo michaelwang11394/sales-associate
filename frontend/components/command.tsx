@@ -136,7 +136,13 @@ export default function CommandPalette({ props }) {
           );
           console.log("message after openai", messages);
         })
-        .catch((err) => console.error(err));
+        .catch(async (err) => {
+          await handleNewMessage(
+            clientId,
+            formatMessage("AI is not available, please try again", "system")
+          );
+          console.error(err);
+        });
     } else {
       await handleNewMessage(
         clientId,
