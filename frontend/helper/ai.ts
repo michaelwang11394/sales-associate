@@ -209,25 +209,13 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
   // const res = await createCatalogEmbeddings();
   // console.log(res);
   let vectorStore;
-  try {
-    vectorStore = await SupabaseVectorStore.fromExistingIndex(
-      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
-      {
-        client: supabase,
-        tableName: "vector_catalog",
-        queryName: "match_documents",
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    vectorStore = await MemoryVectorStore.fromTexts(
-      document,
-      uids,
-      new OpenAIEmbeddings({
-        openAIApiKey: OPENAI_KEY,
-      })
-    );
-  }
+  vectorStore = await MemoryVectorStore.fromTexts(
+    document,
+    uids,
+    new OpenAIEmbeddings({
+      openAIApiKey: OPENAI_KEY,
+    })
+  );
   const retriever = vectorStore.asRetriever();
   const relevantDocs = await retriever.getRelevantDocuments(query);
   return relevantDocs.map((doc) => doc.pageContent);
@@ -271,8 +259,12 @@ const createEmbedRunnable = async () => {
   const { metadataIds, strippedProducts } = await getProducts();
   return RunnableSequence.from([
     {
-      catalog: (input) =>
-        runEmbeddingsAndSearch(input.input, strippedProducts, metadataIds),
+      catalog: async (input) =>
+        await runEmbeddingsAndSearch(
+          input.input,
+          strippedProducts,
+          metadataIds
+        ),
       input: (input) => input.input,
     },
     {
