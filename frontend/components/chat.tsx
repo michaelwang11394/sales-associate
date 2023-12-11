@@ -28,6 +28,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   isAISender,
   content,
 }) => {
+  console.log("hi", type, isAISender, content);
   const renderMessage = () => {
     switch (type) {
       case "text":

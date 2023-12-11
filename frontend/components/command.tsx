@@ -421,14 +421,16 @@ export default function CommandPalette({ props }) {
                   padding: "1.5rem",
                   overflowY: "auto",
                 }}>
-                {messages.map((message, index) => (
-                  <ChatBubble
-                    key={index}
-                    type={message.type}
-                    isAISender={message.isAISender}
-                    content={message.content}
-                  />
-                ))}
+                {messages
+                  .filter((message) => message.content !== undefined)
+                  .map((message, index) => (
+                    <ChatBubble
+                      key={index}
+                      type={message.type}
+                      isAISender={message.isAISender}
+                      content={message.content}
+                    />
+                  ))}
               </div>
             </div>
           </div>
