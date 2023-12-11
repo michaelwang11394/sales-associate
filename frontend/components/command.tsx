@@ -19,16 +19,21 @@ import {
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
 import { toggleOverlayVisibility } from "@/helper/animations";
-import type { FormattedMessage, DBMessage, Product } from "@/constants/types";
+import {
+  type FormattedMessage,
+  type DBMessage,
+  type Product,
+  SenderType,
+} from "@/constants/types";
 import { ChatBubble } from "./chat";
 
 export const formatDBMessage = (messageRow: DBMessage) => {
-  const { id, type, content, isAISender } = messageRow;
+  const { id, type, content, sender } = messageRow;
 
   const message: FormattedMessage = {
     id,
     type,
-    isAISender,
+    sender,
     content,
   };
   return message;
@@ -74,8 +79,8 @@ export default function CommandPalette({ props }) {
               console.log(response.products);
               const newResponseMessage: FormattedMessage = {
                 type: "text",
+                sender: SenderType.SYSTEM,
                 content: response.plainText,
-                isAISender: true,
               };
               handleNewMessage(clientId, newResponseMessage);
             })
@@ -100,7 +105,7 @@ export default function CommandPalette({ props }) {
     const success = await insertMessage(
       clientId,
       newUserMessage.type,
-      newUserMessage.isAISender,
+      newUserMessage.sender,
       newUserMessage.content
     );
     if (!success) {
@@ -128,8 +133,8 @@ export default function CommandPalette({ props }) {
     setUserInput("");
     const newUserMessage: FormattedMessage = {
       type: "text",
+      sender: SenderType.USER,
       content: input,
-      isAISender: false,
     };
     await handleNewMessage(clientId, newUserMessage);
     if (openai) {
@@ -138,16 +143,16 @@ export default function CommandPalette({ props }) {
         .then(async (response) => {
           const newResponseMessage: FormattedMessage = {
             type: "text",
+            sender: SenderType.AI,
             content: response.plainText,
-            isAISender: true,
           };
           await handleNewMessage(clientId, newResponseMessage);
           response.products.forEach(
             async (product) =>
               await handleNewMessage(clientId, {
                 type: "link",
+                sender: SenderType.AI,
                 content: JSON.stringify(product),
-                isAISender: true,
               } as FormattedMessage)
           );
         })
@@ -155,7 +160,7 @@ export default function CommandPalette({ props }) {
           await handleNewMessage(clientId, {
             type: "text",
             content: "AI has encountered an error. Please try agian.",
-            isAISender: true,
+            sender: SenderType.SYSTEM,
           } as FormattedMessage);
           console.error(err);
         });
@@ -163,7 +168,7 @@ export default function CommandPalette({ props }) {
       await handleNewMessage(clientId, {
         type: "text",
         content: "AI has encountered an error. Please try agian.",
-        isAISender: true,
+        sender: SenderType.SYSTEM,
       } as FormattedMessage);
       console.error("openai not available");
     }
@@ -425,7 +430,7 @@ export default function CommandPalette({ props }) {
                     <ChatBubble
                       key={index}
                       type={message.type}
-                      isAISender={message.isAISender}
+                      isAISender={message.sender !== SenderType.USER}
                       content={message.content}
                     />
                   ))}

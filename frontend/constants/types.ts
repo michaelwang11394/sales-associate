@@ -1,3 +1,9 @@
+export enum SenderType {
+  AI = "ai",
+  USER = "user",
+  SYSTEM = "system", // Generated greetings, noninteractive
+}
+
 export interface Product {
   url: string;
   featured_image: {
@@ -16,7 +22,7 @@ export interface DBMessage {
   id: number;
   type: string;
   content: string;
-  isAISender: boolean;
+  sender: SenderType;
   clientId: string;
   timestamp: Date;
 }
@@ -24,7 +30,7 @@ export interface DBMessage {
 export interface FormattedMessage {
   id?: number;
   type: string;
-  isAISender: boolean;
+  sender: SenderType;
   content: string;
 }
 export interface ChatMessage {

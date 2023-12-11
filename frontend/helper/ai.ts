@@ -27,7 +27,7 @@ import {
   OPENAI_RETRIES,
   OPENAI_KEY,
 } from "@/constants/constants";
-import type { FormattedMessage } from "@/constants/types";
+import { SenderType, type FormattedMessage } from "@/constants/types";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -292,7 +292,7 @@ export const createOpenaiWithHistory = async (
     }
   }
   const history = messages.map((m) =>
-    m.isAISender === false
+    m.sender === SenderType.USER
       ? new HumanMessage(m.content)
       : new AIMessage(m.content)
   );

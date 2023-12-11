@@ -3,6 +3,7 @@ import { getProducts } from "./shopify";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OPENAI_KEY } from "@/constants/constants";
+import { SenderType } from "@/constants/types";
 
 const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
 const supabaseKey =
@@ -75,7 +76,7 @@ export const getMessages = async (clientId, limit) => {
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
-      .neq("isAISender", "true")
+      .neq("sender", SenderType.SYSTEM)
       .limit(limit);
 
     if (error) {
@@ -106,12 +107,12 @@ export const subscribeToMessages = (clientId, handleInserts) => {
   }
 };
 
-export const insertMessage = async (clientId, type, isAISender, content) => {
+export const insertMessage = async (clientId, type, sender, content) => {
   const { error } = await supabase.from("messages").insert([
     {
       clientId,
       type,
-      isAISender,
+      sender,
       content,
     },
   ]);
