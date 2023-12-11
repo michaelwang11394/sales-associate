@@ -15,11 +15,29 @@ const ImageMessage: React.FC<ImageMessageProps> = ({ src }) => {
   return <img src={src} className="w-40 h-40 rounded-lg object-cover" />;
 };
 
-const LinkMessage: React.FC<LinkMessageProps> = ({ url, text }) => {
+const LinkMessage: React.FC<LinkMessageProps> = ({
+  name,
+  handle,
+  price,
+  image,
+}) => {
   return (
-    <a href={url} className="text-blue-500 hover:underline">
-      {text}
-    </a>
+    <div className="bg-gray-100 rounded-lg max-w-xs py-2 px-4">
+      <div className="flex space-x-4">
+        <img className="w-20 h-20 rounded object-cover" src={image} />
+
+        <div>
+          {/* <p className="text-gray-900 font-medium mb-1">@{handle}</p> */}
+          {/* {price && <p className="font-bold text-xl">${price}</p>} */}
+        </div>
+      </div>
+
+      <a
+        href={handle}
+        className="block text-blue-500 text-center font-medium hover:underline mt-2">
+        {name}
+      </a>
+    </div>
   );
 };
 
@@ -28,7 +46,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   isAISender,
   content,
 }) => {
-  console.log("hi", type, isAISender, content);
   const renderMessage = () => {
     switch (type) {
       case "text":
@@ -36,9 +53,20 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       case "img":
         // TODO Add IMG
         return <ImageMessage src={content || ""} />;
-      //TODO ADd url
-      case "url":
-        return <LinkMessage url={content || ""} text={content || ""} />;
+      case "link":
+        const linkObject = JSON.parse(content);
+        const name = linkObject.name;
+        const handle = linkObject.product_handle;
+        const price = linkObject.variants[0].price || "";
+        const image = linkObject.image;
+        return (
+          <LinkMessage
+            name={name}
+            handle={handle}
+            price={price}
+            image={image}
+          />
+        );
       default:
         return <TextMessage text={content || ""} />;
     }

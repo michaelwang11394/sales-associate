@@ -93,20 +93,17 @@ const zodSchema = z.object({
       z.object({
         name: z.string().describe("The name of the product"),
         product_handle: z.string().describe("The product handle"),
-        image_src: z
-          .string()
-          .url()
-          .describe("The image source url of the product"),
+        image: z.string().url().describe("The image of the product"),
         variants: z
           .array(
             z
               .object({
                 title: z.string().describe("The title of this variant"),
                 price: z.number().describe("The price of the product"),
-                variant_image_src: z
+                featured_image: z
                   .string()
                   .url()
-                  .describe("The image source url of the product variant"),
+                  .describe("The featured image of the product variant"),
               })
               .describe("A variant of product that has a specific price")
           )
@@ -294,7 +291,6 @@ export const createOpenaiWithHistory = async (
       customerContext.push(productsViewed.productURLs!);
     }
   }
-
   const history = messages.map((m) =>
     m.isAISender === false
       ? new HumanMessage(m.content)

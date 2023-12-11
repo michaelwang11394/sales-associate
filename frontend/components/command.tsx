@@ -23,7 +23,8 @@ import type { FormattedMessage, DBMessage, Product } from "@/constants/types";
 import { ChatBubble } from "./chat";
 
 export const formatDBMessage = (messageRow: DBMessage) => {
-  const { id, type, message: content, isAISender } = messageRow;
+  const { id, type, content, isAISender } = messageRow;
+
   const message: FormattedMessage = {
     id,
     type,
@@ -51,7 +52,7 @@ export default function CommandPalette({ props }) {
           setMessages((prevMessages) => messages.concat(prevMessages));
           createOpenaiWithHistory(clientId, MessageSource.CHAT, messages).then(
             (res) => {
-              setOpenai(undefined); // Set to undefined to toggle off openai
+              setOpenai(res); // Set to undefined to toggle off openai
             }
           );
         }
@@ -131,7 +132,6 @@ export default function CommandPalette({ props }) {
       isAISender: false,
     };
     await handleNewMessage(clientId, newUserMessage);
-
     if (openai) {
       await openai
         .run(input)
@@ -142,7 +142,6 @@ export default function CommandPalette({ props }) {
             isAISender: true,
           };
           await handleNewMessage(clientId, newResponseMessage);
-          // TODO update with card html element
           response.products.forEach(
             async (product) =>
               await handleNewMessage(clientId, {
@@ -151,7 +150,6 @@ export default function CommandPalette({ props }) {
                 isAISender: true,
               } as FormattedMessage)
           );
-          console.log("message after openai", messages);
         })
         .catch(async (err) => {
           await handleNewMessage(clientId, {

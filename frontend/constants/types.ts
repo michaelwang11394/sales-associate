@@ -15,7 +15,7 @@ export interface Product {
 export interface DBMessage {
   id: number;
   type: string;
-  message: string;
+  content: string;
   isAISender: boolean;
   clientId: string;
   timestamp: Date;
@@ -50,6 +50,8 @@ export interface ImageMessageProps {
 }
 
 export interface LinkMessageProps {
-  url: string;
-  text: string;
+  name: string;
+  handle: string;
+  price: string;
+  image: string;
 }
