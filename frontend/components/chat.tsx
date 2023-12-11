@@ -7,7 +7,7 @@ import type {
 import React from "react";
 
 const TextMessage: React.FC<TextMessageProps> = ({ text }) => {
-  return <p className="text-sm">{text}</p>;
+  return <p className="text-md">{text}</p>;
 };
 
 const ImageMessage: React.FC<ImageMessageProps> = ({ src }) => {
@@ -44,19 +44,25 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   };
   return (
     <div
-      className={`bubble flex ${isAISender ? "justify-start" : "justify-end"}`}>
+      className={`bubble flex items-end ${
+        isAISender ? "justify-start" : "justify-end"
+      }`}>
       <div
         className={`avatar ${
           isAISender ? "block" : "hidden"
-        } w-6 rounded-full`}>
-        {!isAISender && (
-          <img src="avatar.png" alt="" className="w-full rounded-full" />
+        } w-20 rounded-full mr-4`}>
+        {isAISender && (
+          <img
+            src="https://plus.unsplash.com/premium_photo-1661726660137-61b182d93809?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            alt=""
+            className="w-20 rounded-full"
+          />
         )}
       </div>
 
       <div
         className={`message max-w-3/4 rounded-lg px-4 py-2 ${
-          isAISender ? "bg-blue-600 ml-2 text-white" : "bg-gray-300 mr-2"
+          isAISender ? "bg-gray-300 mr-2" : "bg-blue-600 ml-2 text-white"
         }`}>
         <div className="message">{renderMessage()}</div>
       </div>
