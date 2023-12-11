@@ -4,6 +4,14 @@ export enum SenderType {
   SYSTEM = "system", // Generated greetings, noninteractive
 }
 
+// Hallucination severity in decreasing order
+export enum HalluctinationCheckSeverity {
+  FAIL = 4, // If any detected fail and do not retry
+  RETRY = 3, // If any detected retry
+  FILTER = 2, // Filter out any hallucinated entries
+  NONE = 1, // Do not do any checks
+}
+
 export interface Product {
   url: string;
   featured_image: {
@@ -60,4 +68,11 @@ export interface LinkMessageProps {
   handle: string;
   price: string;
   image: string;
+}
+
+export class HallucinationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "HallucinationError";
+  }
 }

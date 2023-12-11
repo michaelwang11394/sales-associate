@@ -17,7 +17,7 @@ import {
   isNewCustomer,
   supabase,
 } from "./supabase";
-import { getProducts } from "./shopify";
+import { getProducts, isValidProduct } from "./shopify";
 import { RunnableSequence } from "langchain/schema/runnable";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
@@ -27,7 +27,11 @@ import {
   OPENAI_RETRIES,
   OPENAI_KEY,
 } from "@/constants/constants";
-import { SenderType, type FormattedMessage } from "@/constants/types";
+import { SenderType, HallucinationError } from "@/constants/types";
+import {
+  HalluctinationCheckSeverity,
+  type FormattedMessage,
+} from "@/constants/types";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -36,15 +40,18 @@ export enum MessageSource {
 interface LLMConfigType {
   prompt: string;
   include_embeddings: boolean;
+  validate_hallucination: HalluctinationCheckSeverity;
 }
 
 export class RunnableWithMemory {
   constructor(
     private runnable: RunnableSequence,
-    private memory: BufferMemory
+    private memory: BufferMemory,
+    private hallucinationSeverity: HalluctinationCheckSeverity
   ) {
     this.runnable = runnable;
     this.memory = memory;
+    this.hallucinationSeverity = hallucinationSeverity;
   }
 
   private runPrivate = async (input: string, retry_left: number) => {
@@ -53,6 +60,56 @@ export class RunnableWithMemory {
     }
     try {
       const res = await this.runnable.invoke({ input: input });
+      // Check with the zod schema if products returned
+      if (
+        this.hallucinationSeverity > HalluctinationCheckSeverity.NONE &&
+        res.products?.length > 0
+      ) {
+        const filtered = await Promise.all(
+          res.products.map(async (product) => {
+            // Check image field
+            const imageUrl = product.image;
+            const fileExtension = (
+              imageUrl.split(".").pop()?.split("?")[0] || ""
+            ).toLowerCase();
+
+            // Check if image file extension and handle is real product
+            const valid =
+              (imageUrl.startsWith("cdn.shopify.com") ||
+                imageUrl.startsWith("https://cdn.shopify.com")) &&
+              (fileExtension === "jpg" ||
+                fileExtension === "jpeg" ||
+                fileExtension === "png" ||
+                fileExtension === "gif") &&
+              (await isValidProduct(product.product_handle));
+            return { valid: valid, product: product };
+          })
+        );
+
+        if (filtered.some((product) => !product.valid)) {
+          const hallucinated = filtered
+            .filter((product) => !product.valid)
+            .map((product) => product.product);
+          if (
+            this.hallucinationSeverity === HalluctinationCheckSeverity.FILTER
+          ) {
+            console.error(
+              "Hallucination detected but filtered out:",
+              hallucinated
+            );
+          } else if (
+            this.hallucinationSeverity > HalluctinationCheckSeverity.FILTER
+          ) {
+            throw new HallucinationError(
+              "Hallucination detected with" + JSON.stringify(hallucinated)
+            );
+          }
+        }
+        res.products = filtered
+          .filter((product) => product.valid)
+          .map((product) => product.product);
+      }
+
       await this.memory.saveContext(
         { input: input },
         { output: res.plainText + JSON.stringify(res.products) }
@@ -60,12 +117,24 @@ export class RunnableWithMemory {
       console.log(await this.memory.loadMemoryVariables({}));
       return res;
     } catch (error: any) {
-      // Means openai function parsing failed, retry
-      if (error.name === "SyntaxError") {
+      if (error instanceof HallucinationError) {
+        switch (this.hallucinationSeverity) {
+          case HalluctinationCheckSeverity.FAIL:
+            throw error;
+          case HalluctinationCheckSeverity.RETRY:
+            // Means openai function parsing or hallucination failed, retry
+            console.log("OpenAI hallucination detected, trying again");
+            return this.runPrivate(input, retry_left - 1);
+          case HalluctinationCheckSeverity.FILTER:
+          case HalluctinationCheckSeverity.NONE:
+            throw new Error("Hallucination is not handled correctly");
+        }
+      } else if (error instanceof SyntaxError) {
+        // Means openai function parsing or hallucination failed, retry
         console.log("OpenAI function parsing failed, trying again");
         return this.runPrivate(input, retry_left - 1);
       } else {
-        throw new Error("Unexpected openai error");
+        throw error;
       }
     }
   };
@@ -79,10 +148,12 @@ const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
     include_embeddings: true,
+    validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.EMBED]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
     include_embeddings: true,
+    validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
 };
 
@@ -93,7 +164,14 @@ const zodSchema = z.object({
       z.object({
         name: z.string().describe("The name of the product"),
         product_handle: z.string().describe("The product handle"),
-        image: z.string().url().describe("The image of the product"),
+        image: z
+          .string()
+          .includes("cdn.shopify.com", {
+            message: "Must include cdn.shopify.com",
+          })
+          .describe(
+            "The image url of the product. Must include cdn.shopify.com"
+          ),
         variants: z
           .array(
             z
@@ -326,5 +404,9 @@ const createOpenai = async (
       : await createSimpleSearchRunnable()
   );
 
-  return new RunnableWithMemory(finalChain, memory);
+  return new RunnableWithMemory(
+    finalChain,
+    memory,
+    llmConfig.validate_hallucination
+  );
 };
