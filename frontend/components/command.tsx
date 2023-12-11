@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react";
 import "react-chat-elements/dist/main.css";
 import "@/styles/command.css";
-import { MessageBox } from "react-chat-elements";
 import {
   getSuggestions,
   getGreetingMessage,
   addToCart,
 } from "@/helper/shopify";
-import {
-  MessageSource,
-  createOpenaiWithHistory,
-  formatMessage,
-} from "@/helper/ai";
+import type { RunnableWithMemory } from "@/helper/ai";
+import { MessageSource, createOpenaiWithHistory } from "@/helper/ai";
 import {
   subscribeToMessages,
   getLastPixelEvent,
@@ -19,16 +15,29 @@ import {
   getMessages,
 } from "@/helper/supabase";
 import {
-  OPENAI_RETRY_COUNT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
 import { toggleOverlayVisibility } from "@/helper/animations";
+import type { FormattedMessage, DBMessage, Product } from "@/constants/types";
+import { ChatBubble } from "./chat";
+
+export const formatDBMessage = (messageRow: DBMessage) => {
+  const { id, type, content, isAISender } = messageRow;
+
+  const message: FormattedMessage = {
+    id,
+    type,
+    isAISender,
+    content,
+  };
+  return message;
+};
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [openai, setOpenai] = useState();
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [messages, setMessages] = useState<FormattedMessage[]>([]);
+  const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
@@ -37,16 +46,13 @@ export default function CommandPalette({ props }) {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
-          const messages = data.data
-            .map((messageRow) =>
-              formatMessage(messageRow.message, messageRow.sender)
-            )
+          const messages = data
+            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
-          // @ts-ignore
           setMessages((prevMessages) => messages.concat(prevMessages));
           createOpenaiWithHistory(clientId, MessageSource.CHAT, messages).then(
             (res) => {
-              setOpenai(res);
+              setOpenai(res); // Set to undefined to toggle off openai
             }
           );
         }
@@ -66,10 +72,11 @@ export default function CommandPalette({ props }) {
             .run(greetingPrompt)
             .then((response) => {
               console.log(response.products);
-              const newResponseMessage = formatMessage(
-                response.plainText,
-                "system"
-              );
+              const newResponseMessage: FormattedMessage = {
+                type: "text",
+                content: response.plainText,
+                isAISender: true,
+              };
               handleNewMessage(clientId, newResponseMessage);
             })
             .catch((err) => console.error(err));
@@ -92,13 +99,13 @@ export default function CommandPalette({ props }) {
   const handleNewMessage = async (clientId, newUserMessage) => {
     const success = await insertMessage(
       clientId,
-      newUserMessage.source,
-      newUserMessage.text
+      newUserMessage.type,
+      newUserMessage.isAISender,
+      newUserMessage.content
     );
     if (!success) {
       console.error("Messages update failed for supabase table messages");
     }
-    // @ts-ignore
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
   };
 
@@ -119,41 +126,45 @@ export default function CommandPalette({ props }) {
     }
     const input = userInput;
     setUserInput("");
-    const newUserMessage = formatMessage(input, "user");
+    const newUserMessage: FormattedMessage = {
+      type: "text",
+      content: input,
+      isAISender: false,
+    };
     await handleNewMessage(clientId, newUserMessage);
-
     if (openai) {
       await openai
         .run(input)
         .then(async (response) => {
-          console.log(response.products);
-          const newResponseMessage = formatMessage(response.plainText, "ai");
+          const newResponseMessage: FormattedMessage = {
+            type: "text",
+            content: response.plainText,
+            isAISender: true,
+          };
           await handleNewMessage(clientId, newResponseMessage);
-          // TODO update with card html element
           response.products.forEach(
             async (product) =>
-              await handleNewMessage(
-                clientId,
-                formatMessage(JSON.stringify(product), "ai")
-              )
+              await handleNewMessage(clientId, {
+                type: "link",
+                content: JSON.stringify(product),
+                isAISender: true,
+              } as FormattedMessage)
           );
-          console.log("message after openai", messages);
         })
         .catch(async (err) => {
-          await handleNewMessage(
-            clientId,
-            formatMessage(
-              "AI has encountered an error, please try again",
-              "system"
-            )
-          );
+          await handleNewMessage(clientId, {
+            type: "text",
+            content: "AI has encountered an error. Please try agian.",
+            isAISender: true,
+          } as FormattedMessage);
           console.error(err);
         });
     } else {
-      await handleNewMessage(
-        clientId,
-        formatMessage("AI is not available, please try again", "system")
-      );
+      await handleNewMessage(clientId, {
+        type: "text",
+        content: "AI has encountered an error. Please try agian.",
+        isAISender: true,
+      } as FormattedMessage);
       console.error("openai not available");
     }
   };
@@ -293,7 +304,6 @@ export default function CommandPalette({ props }) {
                           margin: "0.2em",
                         }}>
                         <a
-                          // @ts-ignore
                           href={product.url}
                           onClick={() => handleDropdownItemClick(product)}
                           style={{
@@ -307,9 +317,7 @@ export default function CommandPalette({ props }) {
                           }}>
                           {/* Product Image */}
                           <img
-                            // @ts-ignore
                             src={product.featured_image.url}
-                            // @ts-ignore
                             alt={product.featured_image.alt}
                             style={{
                               width: "80%",
@@ -322,19 +330,11 @@ export default function CommandPalette({ props }) {
 
                           {/* Product Name */}
                           <div style={{ marginBottom: "8px", height: "40px" }}>
-                            {
-                              // @ts-ignore
-                              product.title
-                            }
+                            {product.title}
                           </div>
 
                           {/* Product Price */}
-                          <div>
-                            {
-                              // @ts-ignore
-                              product.price
-                            }
-                          </div>
+                          <div>{product.price}</div>
                           {/* Add to Cart Button */}
                           {product.variants.length > 0 && (
                             <button
@@ -419,23 +419,16 @@ export default function CommandPalette({ props }) {
                   padding: "1.5rem",
                   overflowY: "auto",
                 }}>
-                {messages.map((message, index) => (
-                  <MessageBox
-                    key={index}
-                    position={message.position}
-                    type={message.type}
-                    text={
-                      <div
-                        // className="message-box"
-                        dangerouslySetInnerHTML={{
-                          __html: `${message.text}`,
-                        }}
-                      />
-                    }
-                    avatar={message.avatar}
-                    title={message.title}
-                  />
-                ))}
+                {messages
+                  .filter((message) => message.content !== undefined)
+                  .map((message, index) => (
+                    <ChatBubble
+                      key={index}
+                      type={message.type}
+                      isAISender={message.isAISender}
+                      content={message.content}
+                    />
+                  ))}
               </div>
             </div>
           </div>
