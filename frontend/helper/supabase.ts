@@ -75,15 +75,13 @@ export const getMessages = async (clientId, limit) => {
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
-      .neq("sender", "system")
+      .neq("isAISender", "true")
       .limit(limit);
 
     if (error) {
       console.error("Error", error);
       return { success: false, message: "Error getting messages." };
     }
-
-    console.log("Data", data);
     return { success: true, data };
   } catch (error) {
     console.error("Error", error);
@@ -108,12 +106,13 @@ export const subscribeToMessages = (clientId, handleInserts) => {
   }
 };
 
-export const insertMessage = async (clientId, sender, message) => {
+export const insertMessage = async (clientId, type, isAISender, content) => {
   const { error } = await supabase.from("messages").insert([
     {
-      clientId: clientId,
-      sender: sender,
-      message: message,
+      clientId,
+      type,
+      isAISender,
+      content,
     },
   ]);
 

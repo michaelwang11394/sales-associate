@@ -7,17 +7,16 @@ import {
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
-import {
-  formatMessage,
-  createOpenaiWithHistory,
-  MessageSource,
-} from "@/helper/ai";
+import type { RunnableWithMemory } from "@/helper/ai";
+import { createOpenaiWithHistory, MessageSource } from "@/helper/ai";
+import type { DBMessage } from "@/constants/types";
+import { formatDBMessage } from "./command";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
     "Welcome to the store, click me to start chatting with your AI sales assistant!"
   );
-  const [openai, setOpenai] = useState();
+  const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const iconRef = useRef(null);
   const iconSize = props.iconSize;
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
@@ -28,14 +27,12 @@ export default function Icon({ props }) {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
-          const messages = data.data
-            .map((messageRow) =>
-              formatMessage(messageRow.message, messageRow.sender)
-            )
+          const messages = data
+            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
           createOpenaiWithHistory(clientId, MessageSource.EMBED, messages).then(
             (res) => {
-              setOpenai(res);
+              setOpenai(undefined); // Set to undefined to toggle off openai
             }
           );
         }
@@ -74,6 +71,7 @@ export default function Icon({ props }) {
         });
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openai]);
 
   const handleIconClick = (event) => {

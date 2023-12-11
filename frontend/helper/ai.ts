@@ -27,6 +27,7 @@ import {
   OPENAI_RETRIES,
   OPENAI_KEY,
 } from "@/constants/constants";
+import type { FormattedMessage } from "@/constants/types";
 export enum MessageSource {
   EMBED, // Pop up greeting in app embed
   CHAT, // Conversation/thread with customer
@@ -127,27 +128,6 @@ const chatProductModel = new ChatOpenAI({
   temperature: 1.0,
   modelName: "gpt-3.5-turbo-16k",
 });
-
-export const formatMessage = (text, source) => {
-  const title = source !== "user" ? "Sales Associate" : "";
-  const position = source !== "user" ? "left" : "right";
-  const messageType = "text";
-  const avatar =
-    source !== "user"
-      ? "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1061&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-      : "";
-
-  //TODO: Download photo locally
-  const message = {
-    position: position,
-    type: messageType,
-    title: title,
-    text: text,
-    avatar: avatar,
-    source: source,
-  };
-  return message;
-};
 
 // TODO: Move createCatalogEmbeddings to app home once we create that.
 const runEmbeddingsAndSearch = async (query, document, uids) => {
@@ -288,7 +268,7 @@ const createFinalRunnable = async (
 export const createOpenaiWithHistory = async (
   clientId: string,
   messageSource: MessageSource,
-  messages: { text: string; source: string }[] = []
+  messages: FormattedMessage[] = []
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext: string[] = [];
@@ -316,7 +296,9 @@ export const createOpenaiWithHistory = async (
   }
 
   const history = messages.map((m) =>
-    m.source === "user" ? new HumanMessage(m.text) : new AIMessage(m.text)
+    m.isAISender === false
+      ? new HumanMessage(m.content)
+      : new AIMessage(m.content)
   );
 
   return await createOpenai(customerContext, messageSource, history);
