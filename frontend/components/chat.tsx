@@ -57,7 +57,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         const linkObject = JSON.parse(content);
         const name = linkObject.name;
         const handle = linkObject.product_handle;
-        const price = linkObject.variants[0].price || "";
+        const price = linkObject.variants[0]?.price || "";
         const image = linkObject.image;
         return (
           <LinkMessage

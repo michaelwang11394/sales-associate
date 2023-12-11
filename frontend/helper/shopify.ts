@@ -59,6 +59,12 @@ export const getSuggestions = async (query) => {
   return json?.resources?.results?.products;
 };
 
+export const isValidProduct = async (handle) => {
+  // TODO: paginate for larger stores
+  const json = await shopifyRestQuery(`products.json?limit=1&handle=${handle}`);
+  return json?.products.length > 0;
+};
+
 export const getProducts = async () => {
   // TODO: paginate for larger stores
   const json = await shopifyRestQuery(

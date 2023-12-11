@@ -76,7 +76,7 @@ export default function CommandPalette({ props }) {
           await openai
             .run(greetingPrompt)
             .then((response) => {
-              console.log(response.products);
+              console.log(response.plainText);
               const newResponseMessage: FormattedMessage = {
                 type: "text",
                 sender: SenderType.SYSTEM,
@@ -147,7 +147,7 @@ export default function CommandPalette({ props }) {
             content: response.plainText,
           };
           await handleNewMessage(clientId, newResponseMessage);
-          response.products.forEach(
+          response.products?.forEach(
             async (product) =>
               await handleNewMessage(clientId, {
                 type: "link",
