@@ -60,6 +60,7 @@ export class RunnableWithMemory {
     }
     try {
       const res = await this.runnable.invoke({ input: input });
+      console.log("BOI", res.products);
       // Check with the zod schema if products returned
       if (
         this.hallucinationSeverity > HalluctinationCheckSeverity.NONE &&
@@ -70,13 +71,13 @@ export class RunnableWithMemory {
             // Check image field
             const imageUrl = product.image;
             const fileExtension = (
-              imageUrl.split(".").pop()?.split("?")[0] || ""
+              imageUrl?.split(".").pop()?.split("?")[0] || ""
             ).toLowerCase();
 
             // Check if image file extension and handle is real product
             const valid =
-              (imageUrl.startsWith("cdn.shopify.com") ||
-                imageUrl.startsWith("https://cdn.shopify.com")) &&
+              (imageUrl?.startsWith("cdn.shopify.com") ||
+                imageUrl?.startsWith("https://cdn.shopify.com")) &&
               (fileExtension === "jpg" ||
                 fileExtension === "jpeg" ||
                 fileExtension === "png" ||
