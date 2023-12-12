@@ -22,7 +22,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   image,
 }) => {
   return (
-    <div>
+    <div className="w-64">
       <img src={image} alt={name} className="w-full h-48 object-cover" />
       <div className="flex flex-col p-4">
         <h3 className="text-xl font-semibold mb-2">{name}</h3>
