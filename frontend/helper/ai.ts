@@ -22,6 +22,7 @@ import { RunnableSequence } from "langchain/schema/runnable";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+
 import {
   BACK_FORTH_MEMORY_LIMIT,
   OPENAI_RETRIES,
@@ -210,18 +211,33 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
   // const res = await createCatalogEmbeddings();
   // console.log(res);
   let vectorStore;
-  vectorStore = await MemoryVectorStore.fromTexts(
-    document,
-    uids,
-    new OpenAIEmbeddings({
-      openAIApiKey: OPENAI_KEY,
-    })
+  try {
+    vectorStore = new SupabaseVectorStore(
+      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
+      {
+        client: supabase,
+        tableName: "vector_catalog",
+        queryName: "search_catalog",
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    console.log("memory vector");
+    vectorStore = await MemoryVectorStore.fromTexts(
+      document,
+      uids,
+      new OpenAIEmbeddings({
+        openAIApiKey: OPENAI_KEY,
+      })
+    );
+  }
+
+  const relevantDocs = await vectorStore.similaritySearch(
+    query,
+    RETURN_TOP_N_SIMILARITY_DOCS
   );
-  const retriever = vectorStore.asRetriever();
-  const relevantDocs = await retriever.getRelevantDocuments(query);
-  return relevantDocs
-    .map((doc) => doc.pageContent)
-    .slice(0, RETURN_TOP_N_SIMILARITY_DOCS);
+
+  return relevantDocs.map((doc) => doc.pageContent);
 };
 
 // Narrow down relevant products by asking LLM directly

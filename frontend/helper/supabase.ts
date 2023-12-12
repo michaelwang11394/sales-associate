@@ -22,7 +22,7 @@ export const createCatalogEmbeddings = async () => {
       {
         client: supabase,
         tableName: "vector_catalog",
-        queryName: "match_documents",
+        queryName: "search_catalog",
       }
     );
     return { success: true, vectorStore };
