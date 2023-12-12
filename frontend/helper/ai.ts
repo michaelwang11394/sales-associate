@@ -232,11 +232,12 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
     );
   }
 
-  const relevantDocs = await vectorStore.similaritySearch(query, 3);
+  const relevantDocs = await vectorStore.similaritySearch(
+    query,
+    RETURN_TOP_N_SIMILARITY_DOCS
+  );
 
-  return relevantDocs
-    .map((doc) => doc.pageContent)
-    .slice(0, RETURN_TOP_N_SIMILARITY_DOCS);
+  return relevantDocs.map((doc) => doc.pageContent);
 };
 
 // Narrow down relevant products by asking LLM directly
