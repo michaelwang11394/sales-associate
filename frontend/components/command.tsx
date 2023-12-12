@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { debounce } from "lodash";
 import "react-chat-elements/dist/main.css";
 import "@/styles/command.css";
 import {
@@ -57,7 +58,7 @@ export default function CommandPalette({ props }) {
           setMessages((prevMessages) => messages.concat(prevMessages));
           createOpenaiWithHistory(clientId, MessageSource.CHAT, messages).then(
             (res) => {
-              setOpenai(res); // Set to undefined to toggle off openai
+              setOpenai(undefined); // Set to undefined to toggle off openai
             }
           );
         }
@@ -114,14 +115,18 @@ export default function CommandPalette({ props }) {
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
   };
 
-  const handleInputChange = async (event) => {
+  const handleInputChange = (event) => {
     setUserInput(event.target.value);
-    if (event.target.value != "") {
-      const suggestions = await getSuggestions(event.target.value);
-      setSuggestions(suggestions);
-    } else {
-      setSuggestions([]);
-    }
+    const debouncedGetSuggestions = debounce(async () => {
+      if (event.target.value !== "") {
+        const suggestions = await getSuggestions(event.target.value);
+        setSuggestions(suggestions);
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+
+    debouncedGetSuggestions();
   };
 
   const handleSubmit = async (event) => {
