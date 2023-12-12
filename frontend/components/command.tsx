@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { debounce } from "lodash";
-import "react-chat-elements/dist/main.css";
-import "@/styles/command.css";
 import {
   getSuggestions,
   getGreetingMessage,
@@ -190,8 +188,8 @@ export default function CommandPalette({ props }) {
       <section
         id={PALETTE_DIV_ID}
         className="relative overflow-hidden bg-cover">
-        <div className="relative flex items-center justify-center p-8">
-          <div className="max-w-[1200px] w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg ">
+        <div className="relative flex items-center justify-center">
+          <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg ">
             <div className="relative">
               <form onSubmit={handleSubmit}>
                 <input
