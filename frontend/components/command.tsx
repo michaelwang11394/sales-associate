@@ -190,32 +190,37 @@ export default function CommandPalette({ props }) {
         className="relative overflow-hidden bg-cover">
         <div className="relative flex items-center justify-center">
           <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg ">
-            <div className="relative">
-              <form onSubmit={handleSubmit}>
+            <div className="flex justify-center">
+              <form
+                onSubmit={handleSubmit}
+                className="w-1/2 border-4 border-black m-2 flex">
                 <input
                   type="text"
                   value={userInput}
                   onChange={handleInputChange}
-                  onSubmit={handleSubmit}
-                  className="w-full h-16 pr-4 text-black border-none rounded-t-lg pl-11"
+                  className="w-full h-16 pr-4 text-black border-none rounded-t-lg pl-11 focus:outline-none focus:shadow-none focus:border-none "
                   placeholder="Ask me anything! I am not your typical search bar."
                   role="combobox"
                   aria-expanded="false"
                   aria-controls="options"
                 />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="absolute top-1/2 right-2 transform -translate-y-1/2 h-6 w-6 text-black">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <button
+                  type="submit"
+                  className="rounded-full bg-blue-600 text-white w-16 h-16 flex items-center m-1 justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="h-6 w-6 transform rotate-90">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </button>
               </form>
             </div>
             {/* Dividing Line */}
