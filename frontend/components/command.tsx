@@ -165,9 +165,10 @@ export default function CommandPalette({ props }) {
           console.error(err);
         });
     } else {
+      const dummyLink = `{"name":"The Collection Snowboard: Hydrogen","product_handle":"the-collection-snowboard-hydrogen","image":"https://quickstart-91d3669c.myshopify.com/cdn/shop/products/Main_b9e0da7f-db89-4d41-83f0-7f417b02831d.jpg?v=1695859472&width=1100","variants":[{"title":"Hydrogen","price":299.99,"featured_image":"https://quickstart-91d3669c.myshopify.com/products/the-collection-snowboard-hydrogen"}]}`;
       await handleNewMessage(clientId, {
-        type: "text",
-        content: "AI has encountered an error. Please try agian.",
+        type: "link",
+        content: dummyLink,
         sender: SenderType.SYSTEM,
       } as FormattedMessage);
       console.error("openai not available");

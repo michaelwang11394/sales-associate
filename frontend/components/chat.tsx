@@ -22,21 +22,19 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   image,
 }) => {
   return (
-    <div className="bg-gray-100 rounded-lg max-w-xs py-2 px-4">
-      <div className="flex space-x-4">
-        <img className="w-20 h-20 rounded object-cover" src={image} />
-
-        <div>
-          {/* <p className="text-gray-900 font-medium mb-1">@{handle}</p> */}
-          {/* {price && <p className="font-bold text-xl">${price}</p>} */}
-        </div>
+    <div>
+      <img src={image} alt={name} className="w-full h-48 object-cover" />
+      <div className="flex flex-col p-4">
+        <h3 className="text-xl font-semibold mb-2">{name}</h3>
+        <p className="text-lg font-medium text-gray-500 mb-4">{price}</p>
+        <a
+          href={handle}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center justify-center px-4 py-2 bg-white text-black font-semibold rounded-md shadow-md hover:bg-gray-600">
+          View Product
+        </a>
       </div>
-
-      <a
-        href={handle}
-        className="block text-blue-500 text-center font-medium hover:underline mt-2">
-        {name}
-      </a>
     </div>
   );
 };
@@ -75,7 +73,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     <div
       className={`bubble flex items-end ${
         isAISender ? "justify-start" : "justify-end"
-      }`}>
+      } mb-2`}>
       <div
         className={`avatar ${
           isAISender ? "block" : "hidden"
@@ -91,7 +89,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 
       <div
         className={`message max-w-3/4 rounded-lg px-4 py-2 ${
-          isAISender ? "bg-gray-300 mr-2" : "bg-blue-600 ml-2 text-white"
+          isAISender ? "bg-gray-200 mr-2" : "bg-blue-600 ml-2 text-white"
         }`}>
         <div className="message">{renderMessage()}</div>
       </div>
