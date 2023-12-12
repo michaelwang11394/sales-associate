@@ -6,7 +6,11 @@ import "./section.css";
 import "@/styles/chat.css";
 
 export function createIcon(home, mountDiv, overlayDiv, iconSize = 2) {
-  ReactDOM.createRoot(document.getElementById(mountDiv)).render(
+  const element = document.getElementById(mountDiv);
+  if (!element) {
+    throw new Error(`Element with id "${mountDiv}" not found`);
+  }
+  ReactDOM.createRoot(element).render(
     <Icon
       props={{
         home: home,
@@ -35,7 +39,7 @@ export function createOverlayDiv() {
     overlayDiv.style.display = "block";
     overlayDiv.className = "overlay";
     document.body.appendChild(overlayDiv);
-    ReactDOM.createRoot(document.getElementById(divId)).render(
+    ReactDOM.createRoot(overlayDiv).render(
       <CommandPalette props={{ overlayDiv: overlayDiv }} />
     );
   }
