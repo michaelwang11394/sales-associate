@@ -17,10 +17,32 @@ const shopifyRestQuery = async (endpoint) => {
 
 const formatCatalogEntry = (product) => {
   // Fields we care about
-  const { title, body_html: description, handle, images, variants } = product;
+  const {
+    id,
+    title,
+    body_html: description,
+    handle,
+    images,
+    variants,
+  } = product;
   // There's a image for each variant if any, otherwise it's an array of a single element
+  const formattedVariants = variants?.map((variant) => {
+    return {
+      id: variant.id,
+      price: variant.price,
+      product_id: variant.product_id,
+      title: variant.title,
+    };
+  });
   const image_url = images.length > 0 ? images[0].src : "";
-  return JSON.stringify({ title, description, handle, image_url, variants });
+  return {
+    id,
+    title,
+    description,
+    handle,
+    image_url,
+    variants: formattedVariants,
+  };
 };
 
 export const addToCart = async (id, quantity) => {
@@ -70,19 +92,19 @@ export const getProducts = async () => {
   const json = await shopifyRestQuery(
     "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
   );
-  const jsonProducts = json?.products;
-  const stringifiedProducts = json?.products
-    ?.map((product) => formatCatalogEntry(product))
+  const formattedProducts = json?.products?.map((product) =>
+    formatCatalogEntry(product)
+  );
+
+  const stringifiedProducts = formattedProducts
+    .map((product) => JSON.stringify(product))
     .join("\r\n");
 
   // RAG and embeddings pre-processing
-  const metadataIds = jsonProducts.map((product) => product.id);
-  const strippedProducts = jsonProducts.map((product) => {
+  const metadataIds = formattedProducts.map((product) => product.id);
+  const strippedProducts = formattedProducts.map((product) => {
     // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
-    return JSON.stringify(product)
-      .replace(/"/g, "")
-      .replace(/\n/g, " ")
-      .replace(/id/g, "");
+    return JSON.stringify(product).replace(/"/g, "").replace(/\n/g, " ");
   });
 
   return { stringifiedProducts, metadataIds, strippedProducts };
