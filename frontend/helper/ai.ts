@@ -26,6 +26,7 @@ import {
   BACK_FORTH_MEMORY_LIMIT,
   OPENAI_RETRIES,
   OPENAI_KEY,
+  RETURN_TOP_N_SIMILARITY_DOCS,
 } from "@/constants/constants";
 import { SenderType, HallucinationError } from "@/constants/types";
 import {
@@ -60,7 +61,6 @@ export class RunnableWithMemory {
     }
     try {
       const res = await this.runnable.invoke({ input: input });
-      console.log("BOI", res.products);
       // Check with the zod schema if products returned
       if (
         this.hallucinationSeverity > HalluctinationCheckSeverity.NONE &&
@@ -219,7 +219,9 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
   );
   const retriever = vectorStore.asRetriever();
   const relevantDocs = await retriever.getRelevantDocuments(query);
-  return relevantDocs.map((doc) => doc.pageContent);
+  return relevantDocs
+    .map((doc) => doc.pageContent)
+    .slice(0, RETURN_TOP_N_SIMILARITY_DOCS);
 };
 
 // Narrow down relevant products by asking LLM directly
