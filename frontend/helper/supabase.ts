@@ -1,9 +1,52 @@
 import { createClient } from "@supabase/supabase-js";
+import { getProducts } from "./shopify";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
+import { OPENAI_KEY } from "@/constants/constants";
+import { SenderType } from "@/constants/types";
 
 const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
-const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// TODO: Update the store column. No way to do it from supabaseVector.
+//TODO: Clean up stripped products to remove ids completely. Right now only the id key itself is removed.
+export const createCatalogEmbeddings = async () => {
+  const { metadataIds, strippedProducts } = await getProducts();
+  try {
+    const vectorStore = await SupabaseVectorStore.fromTexts(
+      strippedProducts,
+      metadataIds,
+      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
+      {
+        client: supabase,
+        tableName: "vector_catalog",
+        queryName: "search_catalog",
+      }
+    );
+    return { success: true, vectorStore };
+  } catch (error) {
+    console.error("Error with creating product embedding:", error);
+    return { success: false };
+  }
+};
+
+export const getProductEmbedding = async (store) => {
+  try {
+    const { data } = await supabase
+      .from("vector_catalog")
+      .select("*")
+      .eq("store", store);
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error", error);
+    return {
+      success: false,
+      message: "An unexpected error with retreiving store embedding occurred.",
+    };
+  }
+};
 
 export const getLastPixelEvent = async (clientId) => {
   try {
@@ -19,7 +62,6 @@ export const getLastPixelEvent = async (clientId) => {
       return { success: false, message: "Error subscribing to events." };
     }
 
-    console.log("Data", data);
     return { success: true, data };
   } catch (error) {
     console.error("Error", error);
@@ -34,15 +76,13 @@ export const getMessages = async (clientId, limit) => {
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
-      .neq("sender", "system")
+      .neq("sender", SenderType.SYSTEM)
       .limit(limit);
 
     if (error) {
       console.error("Error", error);
       return { success: false, message: "Error getting messages." };
     }
-
-    console.log("Data", data);
     return { success: true, data };
   } catch (error) {
     console.error("Error", error);
@@ -67,12 +107,13 @@ export const subscribeToMessages = (clientId, handleInserts) => {
   }
 };
 
-export const insertMessage = async (clientId, sender, message) => {
+export const insertMessage = async (clientId, type, sender, content) => {
   const { error } = await supabase.from("messages").insert([
     {
-      clientId: clientId,
-      sender: sender,
-      message: message,
+      clientId,
+      type,
+      sender,
+      content,
     },
   ]);
 
@@ -153,7 +194,7 @@ export const hasItemsInCart = async (customerId) => {
   }
 };
 
-export const hasViewedProducts = async (customerId) => {
+export const hasViewedProducts = async (customerId, count: number) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -163,7 +204,8 @@ export const hasViewedProducts = async (customerId) => {
       .select("*")
       .eq("clientId", customerId)
       .eq("name", "product_viewed")
-      .gte("timestamp", oneWeekAgo.toISOString());
+      .gte("timestamp", oneWeekAgo.toISOString())
+      .limit(count);
 
     if (error) {
       console.error("Error", error);
