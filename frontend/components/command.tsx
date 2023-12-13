@@ -40,6 +40,7 @@ export const formatDBMessage = (messageRow: DBMessage) => {
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
@@ -56,7 +57,7 @@ export default function CommandPalette({ props }) {
           setMessages((prevMessages) => messages.concat(prevMessages));
           createOpenaiWithHistory(clientId, MessageSource.CHAT, messages).then(
             (res) => {
-              setOpenai(undefined); // Set to undefined to toggle off openai
+              setOpenai(res); // Set to undefined to toggle off openai
             }
           );
         }
@@ -132,6 +133,7 @@ export default function CommandPalette({ props }) {
     if (userInput === "") {
       return;
     }
+    setIsLoading(true);
     const input = userInput;
     setUserInput("");
     const newUserMessage: FormattedMessage = {
@@ -139,11 +141,21 @@ export default function CommandPalette({ props }) {
       sender: SenderType.USER,
       content: input,
     };
+    const loadingMessage: FormattedMessage = {
+      type: "loading",
+      sender: SenderType.SYSTEM,
+      content: "Loading...",
+    };
     await handleNewMessage(clientId, newUserMessage);
+    setMessages((prevMessages) => [...prevMessages, loadingMessage]);
     if (openai) {
       await openai
         .run(input)
         .then(async (response) => {
+          setIsLoading(false);
+          setMessages((prevMessages) =>
+            prevMessages.filter((message) => message.type !== "loading")
+          );
           const newResponseMessage: FormattedMessage = {
             type: "text",
             sender: SenderType.AI,
@@ -160,6 +172,7 @@ export default function CommandPalette({ props }) {
           );
         })
         .catch(async (err) => {
+          setIsLoading(false);
           await handleNewMessage(clientId, {
             type: "text",
             content: "AI has encountered an error. Please try agian.",
@@ -168,10 +181,9 @@ export default function CommandPalette({ props }) {
           console.error(err);
         });
     } else {
-      const dummyLink = `{"name":"The Collection Snowboard: Hydrogen","product_handle":"the-collection-snowboard-hydrogen","image":"https://quickstart-91d3669c.myshopify.com/cdn/shop/products/Main_b9e0da7f-db89-4d41-83f0-7f417b02831d.jpg?v=1695859472&width=1100","variants":[{"title":"Hydrogen","price":299.99,"featured_image":"https://quickstart-91d3669c.myshopify.com/products/the-collection-snowboard-hydrogen"}]}`;
       await handleNewMessage(clientId, {
-        type: "link",
-        content: dummyLink,
+        type: "text",
+        content: "AI has encountered an error. Please try agian.",
         sender: SenderType.SYSTEM,
       } as FormattedMessage);
       console.error("openai not available");
@@ -294,7 +306,7 @@ export default function CommandPalette({ props }) {
               </div>
 
               {/* Chat Column*/}
-              <div className="font-bold mb-2 mt-2 text-center border-t-2 border-black">
+              <div className="font-bold mb-2 mt-2 text-center">
                 Conversation
               </div>
               <div
