@@ -292,12 +292,14 @@ export default function CommandPalette({ props }) {
                   </div>
                 )}
               </div>
-              <div className="h-2 bg-black" />
+
               {/* Chat Column*/}
-              <div className="font-bold mb-2 text-center">Conversation</div>
+              <div className="font-bold mb-2 mt-2 text-center border-t-2 border-black">
+                Conversation
+              </div>
               <div
                 id="chat-column"
-                className="flex-1 min-w-0 p-6 overflow-y-auto">
+                className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4">
                 {messages
                   .filter((message) => message.content !== undefined)
                   .map((message, index) => (
