@@ -50,7 +50,7 @@ export interface ChatMessage {
 }
 
 export interface ChatBubbleProps {
-  key: number;
+  key?: number;
   type: string;
   isAISender: boolean;
   content: string;
