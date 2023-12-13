@@ -1,15 +1,88 @@
 import { createClient } from "@supabase/supabase-js";
-import { getProducts } from "./shopify";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { OPENAI_KEY } from "@/constants/constants";
-import { SenderType } from "@/constants/types";
 
+export enum SenderType {
+  AI = "ai",
+  USER = "user",
+  SYSTEM = "system", // Generated greetings, noninteractive
+}
+
+export const OPENAI_KEY = "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";
 const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+const formatCatalogEntry = (product) => {
+  // Fields we care about
+  const {
+    id,
+    title,
+    body_html: description,
+    handle,
+    images,
+    variants,
+  } = product;
+  // There's a image for each variant if any, otherwise it's an array of a single element
+  const formattedVariants = variants?.map((variant) => {
+    return {
+      id: variant.id,
+      price: variant.price,
+      product_id: variant.product_id,
+      title: variant.title,
+    };
+  });
+  const image_url = images.length > 0 ? images[0].src : "";
+  return {
+    id,
+    title,
+    description,
+    handle,
+    image_url,
+    variants: formattedVariants,
+  };
+};
+
+const shopifyRestQuery = async (storeRoot, endpoint) => {
+  try {
+    return fetch(storeRoot + endpoint)
+      .then((response) => response.json())
+      .then((json) => {
+        return json;
+      });
+  } catch (error) {
+    console.error(
+      `Error fetching endpoint ${endpoint}: with message %s`,
+      error.message
+    );
+    return null;
+  }
+};
+
+export const getProducts = async (storeRoot) => {
+  // TODO: paginate for larger stores
+  const json = await shopifyRestQuery(
+    storeRoot,
+    "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
+  );
+  const formattedProducts = json?.products?.map((product) =>
+    formatCatalogEntry(product)
+  );
+
+  const stringifiedProducts = formattedProducts
+    .map((product) => JSON.stringify(product))
+    .join("\r\n");
+
+  // RAG and embeddings pre-processing
+  const metadataIds = formattedProducts.map((product) => product.id);
+  const strippedProducts = formattedProducts.map((product) => {
+    // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
+    return JSON.stringify(product).replace(/"/g, "").replace(/\n/g, " ");
+  });
+
+  return { stringifiedProducts, metadataIds, strippedProducts };
+};
 // TODO: Update the store column. No way to do it from supabaseVector.
 //TODO: Clean up stripped products to remove ids completely. Right now only the id key itself is removed.
 export const createCatalogEmbeddings = async () => {
@@ -90,23 +163,6 @@ export const getMessages = async (clientId, limit) => {
   }
 };
 
-// TODO
-export const subscribeToMessages = (clientId, handleInserts) => {
-  try {
-    supabase
-      .channel("messages")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        handleInserts
-      )
-      .subscribe();
-  } catch (error) {
-    console.error("Error", error);
-    return { success: false, message: "An unexpected error occurred." };
-  }
-};
-
 export const insertMessage = async (clientId, type, sender, content) => {
   const { error } = await supabase.from("messages").insert([
     {
@@ -124,7 +180,7 @@ export const insertMessage = async (clientId, type, sender, content) => {
   return true;
 };
 
-export const isNewCustomer = async (customerId) => {
+export const isNewCustomer = async (clientId) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -132,7 +188,7 @@ export const isNewCustomer = async (customerId) => {
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .eq("clientId", customerId)
+      .eq("clientId", clientId)
       .gte("timestamp", oneWeekAgo.toISOString());
 
     if (error) {
@@ -153,12 +209,12 @@ export const isNewCustomer = async (customerId) => {
   }
 };
 
-export const hasItemsInCart = async (customerId) => {
+export const hasItemsInCart = async (clientId) => {
   try {
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .eq("clientId", customerId)
+      .eq("clientId", clientId)
       .eq("name", "cart_viewed")
       .order("timestamp", { ascending: false })
       .limit(1);
@@ -194,7 +250,7 @@ export const hasItemsInCart = async (customerId) => {
   }
 };
 
-export const hasViewedProducts = async (customerId, count: number) => {
+export const hasViewedProducts = async (clientId, count: number) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -202,7 +258,7 @@ export const hasViewedProducts = async (customerId, count: number) => {
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .eq("clientId", customerId)
+      .eq("clientId", clientId)
       .eq("name", "product_viewed")
       .gte("timestamp", oneWeekAgo.toISOString())
       .limit(count);
@@ -243,7 +299,7 @@ export const hasViewedProducts = async (customerId, count: number) => {
   }
 };
 
-export const offerCoupon = async (customerId) => {
+export const offerCoupon = async (clientId) => {
   try {
     const thirtyMinutesAgo = new Date();
     thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
@@ -262,7 +318,6 @@ export const offerCoupon = async (customerId) => {
         message: "Error checking if customer has viewed products.",
       };
     }
-
     return { offerCoupon: data.length > 2 };
   } catch (error) {
     console.error("Error", error);
