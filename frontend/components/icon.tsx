@@ -32,7 +32,7 @@ export default function Icon({ props }) {
             .reverse();
           createOpenaiWithHistory(clientId, MessageSource.EMBED, messages).then(
             (res) => {
-              setOpenai(undefined); // Set to undefined to toggle off openai
+              setOpenai(res); // Set to undefined to toggle off openai
             }
           );
         }
