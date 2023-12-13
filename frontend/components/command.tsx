@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import "react-chat-elements/dist/main.css";
-import "@/styles/command.css";
+import { debounce } from "lodash";
 import {
   getSuggestions,
   getGreetingMessage,
@@ -41,6 +40,7 @@ export const formatDBMessage = (messageRow: DBMessage) => {
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
@@ -114,14 +114,18 @@ export default function CommandPalette({ props }) {
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
   };
 
-  const handleInputChange = async (event) => {
+  const handleInputChange = (event) => {
     setUserInput(event.target.value);
-    if (event.target.value != "") {
-      const suggestions = await getSuggestions(event.target.value);
-      setSuggestions(suggestions);
-    } else {
-      setSuggestions([]);
-    }
+    const debouncedGetSuggestions = debounce(async () => {
+      if (event.target.value !== "") {
+        const suggestions = await getSuggestions(event.target.value);
+        setSuggestions(suggestions);
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+
+    debouncedGetSuggestions();
   };
 
   const handleSubmit = async (event) => {
@@ -129,6 +133,7 @@ export default function CommandPalette({ props }) {
     if (userInput === "") {
       return;
     }
+    setIsLoading(true);
     const input = userInput;
     setUserInput("");
     const newUserMessage: FormattedMessage = {
@@ -136,11 +141,21 @@ export default function CommandPalette({ props }) {
       sender: SenderType.USER,
       content: input,
     };
+    const loadingMessage: FormattedMessage = {
+      type: "loading",
+      sender: SenderType.SYSTEM,
+      content: "Loading...",
+    };
     await handleNewMessage(clientId, newUserMessage);
+    setMessages((prevMessages) => [...prevMessages, loadingMessage]);
     if (openai) {
       await openai
         .run(input)
         .then(async (response) => {
+          setIsLoading(false);
+          setMessages((prevMessages) =>
+            prevMessages.filter((message) => message.type !== "loading")
+          );
           const newResponseMessage: FormattedMessage = {
             type: "text",
             sender: SenderType.AI,
@@ -157,6 +172,7 @@ export default function CommandPalette({ props }) {
           );
         })
         .catch(async (err) => {
+          setIsLoading(false);
           await handleNewMessage(clientId, {
             type: "text",
             content: "AI has encountered an error. Please try agian.",
@@ -165,10 +181,9 @@ export default function CommandPalette({ props }) {
           console.error(err);
         });
     } else {
-      const dummyLink = `{"name":"The Collection Snowboard: Hydrogen","product_handle":"the-collection-snowboard-hydrogen","image":"https://quickstart-91d3669c.myshopify.com/cdn/shop/products/Main_b9e0da7f-db89-4d41-83f0-7f417b02831d.jpg?v=1695859472&width=1100","variants":[{"title":"Hydrogen","price":299.99,"featured_image":"https://quickstart-91d3669c.myshopify.com/products/the-collection-snowboard-hydrogen"}]}`;
       await handleNewMessage(clientId, {
-        type: "link",
-        content: dummyLink,
+        type: "text",
+        content: "AI has encountered an error. Please try agian.",
         sender: SenderType.SYSTEM,
       } as FormattedMessage);
       console.error("openai not available");
@@ -181,180 +196,81 @@ export default function CommandPalette({ props }) {
   };
 
   return (
-    <div id="overlay" style={{ height: "70%" }}>
+    <div id="overlay" className="h-[70%]">
       <section
         id={PALETTE_DIV_ID}
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          backgroundSize: "cover",
-        }}>
-        <div
-          style={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "2rem",
-          }}>
-          <div
-            style={{
-              maxWidth: "1200px",
-              width: "100%",
-              margin: "auto",
-              overflow: "hidden",
-              transition: "all",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              backgroundColor: "white",
-              backdropFilter: "blur(10px)",
-              borderRadius: "1rem",
-              borderWidth: "thin",
-            }}>
-            <div style={{ position: "relative" }}>
-              <form onSubmit={handleSubmit}>
+        className="relative overflow-hidden bg-cover">
+        <div className="relative flex items-center justify-center">
+          <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg ">
+            <div className="flex justify-center">
+              <form
+                onSubmit={handleSubmit}
+                className="w-1/2 border-4 border-black m-2 flex">
                 <input
                   type="text"
                   value={userInput}
                   onChange={handleInputChange}
-                  onSubmit={handleSubmit}
-                  style={{
-                    width: "100%",
-                    height: "4rem",
-                    paddingRight: "1rem",
-                    color: "black",
-                    border: "none",
-                    borderRadius: "0.625rem 0.625rem 0 0",
-                    paddingLeft: "2.75rem",
-                  }}
+                  className="w-full h-16 pr-4 text-black border-none rounded-t-lg pl-11 focus:outline-none focus:shadow-none focus:border-none "
                   placeholder="Ask me anything! I am not your typical search bar."
                   role="combobox"
                   aria-expanded="false"
                   aria-controls="options"
                 />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    right: "10px",
-                    transform: "translateY(-50%)",
-                    height: "1.5rem",
-                    width: "1.5rem",
-                    color: "black",
-                  }}>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <button
+                  type="submit"
+                  className="rounded-full bg-blue-600 text-white w-16 h-16 flex items-center m-1 justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="h-6 w-6 transform rotate-90">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </button>
               </form>
             </div>
             {/* Dividing Line */}
             {/* TODO: 1) Add add to cart button for each product. 2) Add button that will show rest of search results.*/}
-            <div
-              style={{
-                display: "flex",
-                borderTop: "1px solid rgba(17, 16, 16, 0.2)",
-                flexDirection: "column",
-                overflowY: "auto",
-                maxHeight: "60rem",
-              }}>
-              <div
-                style={{
-                  flex: "1",
-                  minWidth: "0",
-                  padding: "1.5rem",
-                  position: "relative", // Add this line
-                }}>
+            <div className="flex border-t border-gray-300 flex-col overflow-y-auto max-h-[60rem]">
+              <div className="flex-1 min-w-0 p-6 relative">
                 <button
-                  style={{
-                    position: "absolute",
-                    top: "10px",
-                    right: "10px",
-                    background: "none",
-                    border: "none",
-                    fontSize: "2rem",
-                    cursor: "pointer",
-                  }}
+                  className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
                   onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
                   &times;
                 </button>
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    textAlign: "center",
-                  }}>
+                <div className="font-bold mb-2 text-center">
                   Product Suggestions
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    justifyContent: "space-around",
-                  }}>
+                <div className="flex flex-wrap justify-around">
                   {suggestions && suggestions.length > 0 ? (
                     suggestions.slice(0, 4).map((product, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          flex: "1 0 21%",
-
-                          textAlign: "center",
-                          padding: "0.2em",
-                          margin: "0.2em",
-                        }}>
+                      <div key={index} className="flex-1 text-center p-1 m-1">
                         <a
                           href={product.url}
                           onClick={() => handleDropdownItemClick(product)}
-                          style={{
-                            textDecoration: "none",
-                            color: "inherit",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "space-between", // Distribute space between elements
-                            minHeight: "150px", // Ensure a minimum height
-                          }}>
+                          className="text-decoration-none text-inherit flex flex-col items-center justify-between min-h-[150px]">
                           {/* Product Image */}
                           <img
                             src={product.featured_image.url}
                             alt={product.featured_image.alt}
-                            style={{
-                              width: "80%",
-                              height: "50%",
-                              maxHeight: "150px",
-                              objectFit: "contain",
-                              marginBottom: "8px",
-                            }}
+                            className="w-4/5 h-1/2 max-h-[150px] object-contain mb-2"
                           />
 
                           {/* Product Name */}
-                          <div style={{ marginBottom: "8px", height: "40px" }}>
-                            {product.title}
-                          </div>
+                          <div className="mb-2 h-10">{product.title}</div>
 
                           {/* Product Price */}
                           <div>{product.price}</div>
                           {/* Add to Cart Button */}
                           {product.variants.length > 0 && (
                             <button
-                              style={{
-                                marginTop: "10px",
-                                padding: "0.5rem 1rem",
-                                fontSize: "1rem",
-                                fontFamily: "Verdana",
-                                color: "#000",
-                                background: "#fff",
-                                border: "1px solid #000",
-                                borderRadius: "0.25rem",
-                                cursor: "pointer",
-                              }}
+                              className="mt-2 px-4 py-2 text-sm font-medium text-black bg-white border border-black rounded cursor-pointer"
                               onClick={(e) => {
                                 e.preventDefault();
                                 addToCart(product.variants[0].id, 1).then(
@@ -371,29 +287,15 @@ export default function CommandPalette({ props }) {
                       </div>
                     ))
                   ) : (
-                    <div style={{ textAlign: "center", fontStyle: "italic" }}>
+                    <div className="text-center italic">
                       Type in the search box to see suggestions
                     </div>
                   )}
                 </div>
                 {userInput.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      marginTop: "1rem",
-                    }}>
+                  <div className="flex justify-center mt-4">
                     <button
-                      style={{
-                        padding: "0.5rem 1rem",
-                        fontSize: "1.5rem",
-                        color: "#fff",
-                        background: "#0e0e0e",
-                        border: "none",
-                        borderRadius: "0.25rem",
-                        cursor: "pointer",
-                        fontFamily: "Verdana",
-                      }}
+                      className="px-4 py-2 text-lg text-white bg-black border-none rounded cursor-pointer font-medium"
                       onClick={() =>
                         (window.location.href = `/search?q=${userInput}`)
                       }>
@@ -402,29 +304,14 @@ export default function CommandPalette({ props }) {
                   </div>
                 )}
               </div>
-              <div
-                style={{
-                  height: "2px",
-                  backgroundColor: "black",
-                }}
-              />
+
               {/* Chat Column*/}
-              <div
-                style={{
-                  fontWeight: "bold",
-                  marginBottom: "10px",
-                  textAlign: "center",
-                }}>
+              <div className="font-bold mb-2 mt-2 text-center">
                 Conversation
               </div>
               <div
                 id="chat-column"
-                style={{
-                  flex: "1",
-                  minWidth: "0",
-                  padding: "1.5rem",
-                  overflowY: "auto",
-                }}>
+                className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4">
                 {messages
                   .filter((message) => message.content !== undefined)
                   .map((message, index) => (

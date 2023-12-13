@@ -4,8 +4,18 @@ import type {
   LinkMessageProps,
   TextMessageProps,
 } from "@/constants/types";
+
 import React from "react";
 
+const LoadingMessage = () => {
+  return (
+    <svg className="animate-bounce" width={40} height={8} viewBox="0 0 40 8">
+      <circle cx={4} cy={4} r={4} fill="#6b7280" />
+      <circle cx={20} cy={4} r={4} fill="#6b7280" />
+      <circle cx={36} cy={4} r={4} fill="#6b7280" />
+    </svg>
+  );
+};
 const TextMessage: React.FC<TextMessageProps> = ({ text }) => {
   return <p className="text-md">{text}</p>;
 };
@@ -22,7 +32,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   image,
 }) => {
   return (
-    <div>
+    <div className="w-64">
       <img src={image} alt={name} className="w-full h-48 object-cover" />
       <div className="flex flex-col p-4">
         <h3 className="text-xl font-semibold mb-2">{name}</h3>
@@ -46,6 +56,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 }) => {
   const renderMessage = () => {
     switch (type) {
+      case "loading":
+        return <LoadingMessage />;
       case "text":
         return <TextMessage text={content || ""} />;
       case "img":
@@ -88,7 +100,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       </div>
 
       <div
-        className={`message max-w-3/4 rounded-lg px-4 py-2 ${
+        className={`message max-w-3/4 rounded-lg px-4 py-2 min-h-[25px] ${
           isAISender ? "bg-gray-200 mr-2" : "bg-blue-600 ml-2 text-white"
         }`}>
         <div className="message">{renderMessage()}</div>
