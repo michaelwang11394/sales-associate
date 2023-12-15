@@ -11,10 +11,10 @@ export const callOpenai = async (
   messageIds: string[]
 ) => {
   const res = await HTTPHelper.get<ApiResponse>(VERCEL_URL, [V1, OPENAI_PATH], {
-    input,
+    input: input,
     store: location.origin,
-    clientId,
-    source,
+    clientId: clientId,
+    source: source,
     ids: messageIds,
   });
   return res.body;

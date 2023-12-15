@@ -43,8 +43,8 @@ export default function Icon({ props }) {
           const messages = data
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
-          getLastPixelEvent(clientId).then((data) => {
-            data.data?.forEach(async (event) => {
+          getLastPixelEvent(clientId).then((d) => {
+            d.data?.forEach(async (event) => {
               const greetingPrompt = await getGreetingMessage(event);
               callOpenai(
                 greetingPrompt,

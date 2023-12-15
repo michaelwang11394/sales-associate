@@ -97,7 +97,7 @@ export default function CommandPalette({ props }) {
   };
 
   const handleNewMessage = async (clientId, newUserMessage) => {
-    const success = await insertMessage(
+    const { success, data } = await insertMessage(
       clientId,
       newUserMessage.type,
       newUserMessage.sender,
@@ -106,7 +106,10 @@ export default function CommandPalette({ props }) {
     if (!success) {
       console.error("Messages update failed for supabase table messages");
     }
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { ...newUserMessage, id: data.id },
+    ]);
   };
 
   const handleInputChange = (event) => {

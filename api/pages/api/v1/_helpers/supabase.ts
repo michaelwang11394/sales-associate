@@ -106,7 +106,7 @@ export const insertMessage = async (
   sender: string,
   content: string
 ) => {
-  const { error } = await supabase.from("messages").insert([
+  const { data, error } = await supabase.from("messages").insert([
     {
       clientId,
       type,
@@ -118,9 +118,9 @@ export const insertMessage = async (
 
   if (error) {
     console.error("Error during insert:", error);
-    return false;
+    return { success: false, data: data };
   }
-  return true;
+  return { success: true, data: data };
 };
 
 export const getLastPixelEvent = async (store: string, clientId: string) => {

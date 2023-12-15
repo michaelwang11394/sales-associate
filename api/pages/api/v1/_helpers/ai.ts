@@ -549,12 +549,12 @@ export const callOpenai = async (
   store: string,
   clientId: string,
   source: MessageSource,
-  messageIds: string[]
+  messageIds: string[] | undefined
 ) => {
   // Some weird Typescript issue where I can't use lambda, convert with for loop
   const numberArray: number[] = [];
 
-  for (let i = 0; i < messageIds.length; i++) {
+  for (let i = 0; messageIds !== undefined && i < messageIds?.length; i++) {
     numberArray.push(parseInt(messageIds[i], 10));
   }
 
@@ -564,7 +564,7 @@ export const callOpenai = async (
     clientId,
     numberArray
   );
-  if (!success || !data || data?.length !== messageIds.length) {
+  if (!success || !data) {
     throw new Error(
       "message history could not be retrieved or not all ids could be matched"
     );
@@ -575,6 +575,6 @@ export const callOpenai = async (
     store,
     clientId,
     source,
-    data.slice(1)
+    data.slice(1).reverse()
   );
 };
