@@ -50,7 +50,9 @@ export default function Icon({ props }) {
                 greetingPrompt,
                 clientId!,
                 MessageSource.EMBED,
-                messages.slice(MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
+                messages
+                  .slice(-1 * MESSAGES_HISTORY_LIMIT)
+                  .map((m) => String(m.id!))
               )
                 .then((response) => {
                   if (response.show) {

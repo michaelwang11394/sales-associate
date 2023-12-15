@@ -65,7 +65,9 @@ export default function CommandPalette({ props }) {
             greetingPrompt,
             clientId!,
             MessageSource.CHAT,
-            messages.slice(MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
+            messages
+              .slice(-1 * MESSAGES_HISTORY_LIMIT)
+              .map((m) => String(m.id!))
           )
             .then(async (response) => {
               if (!response.show) {
