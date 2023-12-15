@@ -575,6 +575,6 @@ export const callOpenai = async (
     store,
     clientId,
     source,
-    data.slice(1).reverse()
+    data.slice(0, MESSAGES_HISTORY_LIMIT)
   );
 };
