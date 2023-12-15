@@ -1,11 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { SenderType } from "../types";
 
-export const OPENAI_KEY = "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";
-const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
-export const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl!, supabaseKey!);
 
 export const getCatalogProducts = async (store: string, limit: number) => {
   try {

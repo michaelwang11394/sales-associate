@@ -5,7 +5,7 @@ export const RECENTLY_VIEWED_PRODUCTS_COUNT = 5;
 /* CHATS 
 // HACK: Replace key after migration to serverless
 */
-export const OPENAI_KEY = "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";
+export const OPENAI_KEY = process.env.OPENAI_API_KEY;
 export const OPENAI_RETRIES = 3;
 
 // API endpoints
