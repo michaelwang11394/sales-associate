@@ -73,6 +73,56 @@ export default function Index() {
             </Text>
           </BlockStack>
         );
+      case 1:
+        // TODO: Add deep link backend https://shopify.dev/docs/apps/online-store/theme-app-extensions/extensions-framework#deep-linking
+
+        return (
+          <BlockStack>
+            <Text variant="heading2xl" as="h3" alignment="center">
+              Add app to store.
+            </Text>
+            <Text variant="bodyLg" as="p">
+              We're going to add the Sales Associate app to your store via a
+              deep link. The app consists of two parts. The first part is a
+              traditional search icon that will replace your current search. The
+              second part will be an embed in your shops bottom right corner
+              that will show floaty messages.{" "}
+            </Text>
+            <BlockStack inlineAlign="center" align="center">
+              <Button variant="primary">Add App</Button>
+            </BlockStack>
+          </BlockStack>
+        );
+      case 2:
+        return (
+          <BlockStack>
+            <Text variant="heading2xl" as="h3" alignment="center">
+              Add Sales tactics
+            </Text>
+            <Text variant="bodyLg" as="p">
+              In the below form, you can teach your sales associate best tactics
+              to convert sales on your shop. For example, if you're a jewelry
+              store, complimenting how nice the ring would look on the
+              customer's hand is a great way to convert sales.
+            </Text>
+          </BlockStack>
+        );
+      case 3:
+        return (
+          <BlockStack>
+            <Text variant="heading2xl" as="h3" alignment="center">
+              Add store catalog
+            </Text>
+            <Text variant="bodyLg" as="p">
+              Let's now add your stores catalog so your sales associate will
+              know what products are available.
+            </Text>
+            <BlockStack inlineAlign="center" align="center">
+              <Button variant="primary">Add Catalog</Button>
+            </BlockStack>
+          </BlockStack>
+        );
+
       default:
         return null;
     }
