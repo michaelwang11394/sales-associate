@@ -73,7 +73,6 @@ export default function Index() {
             </Text>
           </BlockStack>
         );
-      // ... handle other steps ...
       default:
         return null;
     }
