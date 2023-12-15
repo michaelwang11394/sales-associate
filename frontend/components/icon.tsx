@@ -4,11 +4,13 @@ import "@/styles/chat.css";
 import { getGreetingMessage } from "@/helper/shopify";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import {
+  MESSAGES_HISTORY_LIMIT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
-import type { DBMessage } from "@/constants/types";
+import { MessageSource, type DBMessage } from "@/constants/types";
 import { formatDBMessage } from "./command";
+import { callOpenai } from "@/helper/ai";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
@@ -19,17 +21,6 @@ export default function Icon({ props }) {
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
-    if (clientId) {
-      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
-        if (!data) {
-          console.error("Message history could not be fetched");
-        } else {
-          const messages = data
-            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
-            .reverse();
-        }
-      });
-    }
     // Add event listener to close overlay when clicking outside of it
     const handleClickOutside = (event) => {
       const clickTarget = document.getElementById(PALETTE_DIV_ID);
@@ -45,16 +36,31 @@ export default function Icon({ props }) {
 
     document.addEventListener("click", handleClickOutside);
     if (clientId && props.mountDiv === "embed") {
-      getLastPixelEvent(clientId).then((data) => {
-        data.data?.forEach(async (event) => {
-          const greetingPrompt = await getGreetingMessage(event);
-          await openai
-            .run(greetingPrompt)
-            .then((response) => {
-              setGreeting(response.plainText);
-            })
-            .catch((err) => console.error(err));
-        });
+      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
+        if (!data) {
+          console.error("Message history could not be fetched");
+        } else {
+          const messages = data
+            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
+            .reverse();
+          getLastPixelEvent(clientId).then((data) => {
+            data.data?.forEach(async (event) => {
+              const greetingPrompt = await getGreetingMessage(event);
+              callOpenai(
+                greetingPrompt,
+                clientId!,
+                MessageSource.EMBED,
+                messages.slice(MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
+              )
+                .then((response) => {
+                  if (response.show) {
+                    setGreeting(response.openai.plainText);
+                  }
+                })
+                .catch((err) => console.error(err));
+            });
+          });
+        }
       });
     }
     return () => {

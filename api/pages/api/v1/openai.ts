@@ -11,7 +11,7 @@ export default async function handler(
   const store = request.query.store as string;
   const clientId = request.query.clientId as string;
   const source = request.query.source as MessageSource;
-  const ids = request.query.ids as string[];
+  const messageIds = request.query.ids as string[];
 
   try {
     return httpResponse(
@@ -19,7 +19,7 @@ export default async function handler(
       response,
       200,
       "Openai call finished with",
-      await callOpenai(input, store, clientId, source, ids)
+      await callOpenai(input, store, clientId, source, messageIds)
     );
   } catch (error: any) {
     return httpResponse(request, response, 404, error.message);

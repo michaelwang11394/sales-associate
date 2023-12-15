@@ -17,7 +17,7 @@ import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 
 import {
-  BACK_FORTH_MEMORY_LIMIT,
+  MESSAGES_HISTORY_LIMIT,
   OPENAI_RETRIES,
   OPENAI_KEY,
   RETURN_TOP_N_SIMILARITY_DOCS,
@@ -31,10 +31,12 @@ import {
   SenderType,
 } from "../types";
 import {
+  getCatalogProducts,
   getMessagesFromIds,
   hasItemsInCart,
   hasViewedProducts,
   isNewCustomer,
+  isRealProductSupabase,
   supabase,
 } from "./supabase";
 
@@ -68,9 +70,9 @@ const formatCatalogEntry = (product: any) => {
   };
 };
 
+/*
 const shopifyRestQuery = async (storeRoot: string, endpoint: string) => {
   try {
-    console.log("BOI try shopify fetch", storeRoot + "/" + endpoint);
     return fetch(storeRoot + "/" + endpoint, {
       headers: {
         Accept: "application/json",
@@ -91,16 +93,23 @@ const shopifyRestQuery = async (storeRoot: string, endpoint: string) => {
     return null;
   }
 };
+*/
 
-export const getProducts = async (store: string) => {
+export const getProducts = async (store: string, limit = 250) => {
   // TODO: paginate for larger stores
-  console.log("BOI getting products", store);
+  /*
   const json = await shopifyRestQuery(
     store,
     "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
   );
-  console.log("BOI gotshopify products", json);
-  const formattedProducts = json?.products?.map((product: any) =>
+  */
+  const res = await getCatalogProducts(store, limit);
+  return { stringifiedProducts: [], metadataIds: [], strippedProducts: [] };
+  if (!res.success || res.data === undefined) {
+    console.error("No catalog exists");
+    // throw new Error("No catalog exists")
+  }
+  const formattedProducts = res.data!.map((product: any) =>
     formatCatalogEntry(product)
   );
 
@@ -118,13 +127,12 @@ export const getProducts = async (store: string) => {
   return { stringifiedProducts, metadataIds, strippedProducts };
 };
 
-export const isValidProduct = async (store: string, handle: string) => {
-  // TODO: paginate for larger stores
-  const json = await shopifyRestQuery(
-    store,
-    `products.json?limit=1&handle=${handle}`
-  );
-  return json?.products.length > 0;
+export const isValidProduct = async (
+  store: string,
+  handle: string
+): Promise<boolean> => {
+  const res = await isRealProductSupabase(store, handle);
+  return res.data?.length !== undefined && res.data?.length > 0;
 };
 
 interface LLMConfigType {
@@ -300,6 +308,7 @@ const chatProductModel = new ChatOpenAI({
 
 // TODO: Move createCatalogEmbeddings to app home once we create that.
 const runEmbeddingsAndSearch = async (
+  store: string,
   query: string,
   document: string[],
   uids: string[]
@@ -314,6 +323,7 @@ const runEmbeddingsAndSearch = async (
         client: supabase,
         tableName: "vector_catalog",
         queryName: "search_catalog",
+        filter: { store: { $eq: store } },
       }
     );
   } catch (error) {
@@ -371,13 +381,12 @@ const createSimpleSearchRunnable = async (store: string) => {
 };
 
 const createEmbedRunnable = async (store: string) => {
-  console.log("BOI embed");
   const { metadataIds, strippedProducts } = await getProducts(store);
-  console.log("BOI got products");
   return RunnableSequence.from([
     {
       catalog: async (input) =>
         await runEmbeddingsAndSearch(
+          store,
           input.input,
           strippedProducts,
           metadataIds
@@ -404,7 +413,6 @@ const createFinalRunnable = async (
   const formattedSystemMessagePrompt = await systemMessagePrompt.format({
     context: context,
   });
-  console.log("BOI1");
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
     formattedSystemMessagePrompt,
@@ -424,7 +432,6 @@ const createFinalRunnable = async (
     ],
     function_call: { name: "output_formatter" },
   });
-  console.log("BOI2");
 
   const outputParser = new JsonOutputFunctionsParser();
 
@@ -446,7 +453,6 @@ const createFinalRunnable = async (
     },
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
-  console.log("BOI3");
 
   return previous_chain ? previous_chain.pipe(salesChain) : salesChain;
 };
@@ -492,7 +498,6 @@ const createOpenaiWithHistory = async (
       : new AIMessage(m.content)
   );
 
-  console.log("BOI end of history", customerContext);
   return await createOpenai(
     input,
     store,
@@ -511,18 +516,16 @@ const createOpenai = async (
 ) => {
   const llmConfig = LLMConfig[messageSource];
 
-  console.log("BOI about to memory buffer");
   // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
   const memory = new BufferWindowMemory({
     chatHistory: new ChatMessageHistory(history),
     inputKey: "input",
     outputKey: "output",
-    k: BACK_FORTH_MEMORY_LIMIT / 2, // Note this is k back and forth (naively assumes that human and ai have one message each) so its double the number here
+    k: MESSAGES_HISTORY_LIMIT / 2, // Note this is k back and forth (naively assumes that human and ai have one message each) so its double the number here
     memoryKey: "history",
     returnMessages: true,
   });
 
-  console.log("BOI creating chain");
   const finalChain = await createFinalRunnable(
     context,
     llmConfig,
@@ -532,13 +535,11 @@ const createOpenai = async (
       : await createSimpleSearchRunnable(store)
   );
 
-  console.log("BOI creating runnable");
   const runnable = new RunnableWithMemory(
     finalChain,
     memory,
     llmConfig.validate_hallucination
   );
-  console.log("BOI about to run");
   const response = await runnable.run(input, store);
   return { show: true, openai: response };
 };
@@ -548,13 +549,13 @@ export const callOpenai = async (
   store: string,
   clientId: string,
   source: MessageSource,
-  messagesFromIds: string[]
+  messageIds: string[]
 ) => {
   // Some weird Typescript issue where I can't use lambda, convert with for loop
   const numberArray: number[] = [];
 
-  for (let i = 0; i < messagesFromIds.length; i++) {
-    numberArray.push(parseInt(messagesFromIds[i], 10));
+  for (let i = 0; i < messageIds.length; i++) {
+    numberArray.push(parseInt(messageIds[i], 10));
   }
 
   // At this point user input should already be in messages, hence the + 1
@@ -563,12 +564,11 @@ export const callOpenai = async (
     clientId,
     numberArray
   );
-  if (!success || !data || data?.length !== messagesFromIds.length) {
+  if (!success || !data || data?.length !== messageIds.length) {
     throw new Error(
       "message history could not be retrieved or not all ids could be matched"
     );
   }
-  console.log("BOI data", data);
 
   return await createOpenaiWithHistory(
     input,

@@ -112,7 +112,7 @@ export const getProducts = async () => {
 
 export const getGreetingMessage = async (event) => {
   return (
-    getEventSpecificMessage(event.name) +
+    (await getEventSpecificMessage(event.name)) +
     "The entire response should fit in 150 characters, nothing in products field."
   );
 };

@@ -2,7 +2,7 @@ export class HTTPHelper {
   static assembleUrl = (
     base: string,
     path: string | string[],
-    params?: Record<string, string>
+    params?: Record<string, string | string[]>
   ): string => {
     let url = base;
 
@@ -16,10 +16,15 @@ export class HTTPHelper {
 
     if (params) {
       const queryParams = Object.entries(params)
-        .map(
-          ([key, value]) =>
-            `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
-        )
+        .map(([key, value]) => {
+          if (Array.isArray(value)) {
+            return value
+              .map((v) => `${encodeURIComponent(key)}=${encodeURIComponent(v)}`)
+              .join("&");
+          } else {
+            return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+          }
+        })
         .join("&");
 
       url += "?" + queryParams;
@@ -31,7 +36,7 @@ export class HTTPHelper {
   static async get<T>(
     baseUrl: string,
     resourcePath: string | string[],
-    queryParams?: Record<string, string>
+    queryParams?: Record<string, string | string[]>
   ): Promise<T> {
     try {
       const url = this.assembleUrl(baseUrl, resourcePath, queryParams);

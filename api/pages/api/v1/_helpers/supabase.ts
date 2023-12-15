@@ -7,6 +7,46 @@ const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+export const getCatalogProducts = async (store: string, limit: number) => {
+  try {
+    const { data, error } = await supabase
+      .from("catalog")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .eq("store", store)
+      .limit(limit);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting catalog." };
+    }
+    return { success: true, data: data };
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const isRealProductSupabase = async (store: string, handle: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("catalog")
+      .select("*")
+      .eq("handle", handle)
+      .eq("store", store)
+      .limit(1);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting product with handle." };
+    }
+    return { success: true, data: data };
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
 export const getMessages = async (
   store: string,
   clientId: string,
