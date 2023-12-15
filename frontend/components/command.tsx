@@ -108,7 +108,7 @@ export default function CommandPalette({ props }) {
     }
     setMessages((prevMessages) => [
       ...prevMessages,
-      { ...newUserMessage, id: data.id },
+      { ...newUserMessage, id: data[0].id },
     ]);
   };
 

@@ -106,15 +106,18 @@ export const insertMessage = async (
   sender: string,
   content: string
 ) => {
-  const { data, error } = await supabase.from("messages").insert([
-    {
-      clientId,
-      type,
-      sender,
-      content,
-      store,
-    },
-  ]);
+  const { data, error } = await supabase
+    .from("messages")
+    .insert([
+      {
+        clientId,
+        type,
+        sender,
+        content,
+        store,
+      },
+    ])
+    .select();
 
   if (error) {
     console.error("Error during insert:", error);
