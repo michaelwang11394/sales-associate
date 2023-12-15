@@ -1,6 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 
 export enum SenderType {
   AI = "ai",
@@ -83,8 +81,8 @@ export const getProducts = async (storeRoot) => {
 
   return { stringifiedProducts, metadataIds, strippedProducts };
 };
-// TODO: Update the store column. No way to do it from supabaseVector.
-//TODO: Clean up stripped products to remove ids completely. Right now only the id key itself is removed.
+
+/*
 export const createCatalogEmbeddings = async () => {
   const { metadataIds, strippedProducts } = await getProducts();
   try {
@@ -95,7 +93,7 @@ export const createCatalogEmbeddings = async () => {
       {
         client: supabase,
         tableName: "vector_catalog",
-        queryName: "match_documents",
+        queryName: "search_catalog",
       }
     );
     return { success: true, vectorStore };
@@ -120,8 +118,9 @@ export const getProductEmbedding = async (store) => {
     };
   }
 };
+*/
 
-export const getLastPixelEvent = async (clientId) => {
+export const getLastPixelEvent = async (store, clientId) => {
   try {
     const { data, error } = await supabase
       .from("events")
@@ -142,7 +141,7 @@ export const getLastPixelEvent = async (clientId) => {
   }
 };
 
-export const getMessages = async (clientId, limit) => {
+export const getMessages = async (store, clientId, limit) => {
   try {
     const { data, error } = await supabase
       .from("messages")
@@ -163,7 +162,7 @@ export const getMessages = async (clientId, limit) => {
   }
 };
 
-export const insertMessage = async (clientId, type, sender, content) => {
+export const insertMessage = async (store, clientId, type, sender, content) => {
   const { error } = await supabase.from("messages").insert([
     {
       clientId,
@@ -180,7 +179,7 @@ export const insertMessage = async (clientId, type, sender, content) => {
   return true;
 };
 
-export const isNewCustomer = async (clientId) => {
+export const isNewCustomer = async (store, clientId) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -209,7 +208,7 @@ export const isNewCustomer = async (clientId) => {
   }
 };
 
-export const hasItemsInCart = async (clientId) => {
+export const hasItemsInCart = async (store, clientId) => {
   try {
     const { data, error } = await supabase
       .from("events")
@@ -250,7 +249,7 @@ export const hasItemsInCart = async (clientId) => {
   }
 };
 
-export const hasViewedProducts = async (clientId, count: number) => {
+export const hasViewedProducts = async (store, clientId, count: number) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -299,7 +298,7 @@ export const hasViewedProducts = async (clientId, count: number) => {
   }
 };
 
-export const offerCoupon = async (clientId) => {
+export const offerCoupon = async (store, clientId) => {
   try {
     const thirtyMinutesAgo = new Date();
     thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
@@ -307,7 +306,7 @@ export const offerCoupon = async (clientId) => {
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .eq("clientId", customerId)
+      .eq("clientId", clientId)
       .eq("name", "cart_viewed")
       .gte("timestamp", thirtyMinutesAgo.toISOString());
 
