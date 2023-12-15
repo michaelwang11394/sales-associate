@@ -10,12 +10,11 @@ import {
   SUPABASE_MESSAGES_TABLE,
   SUPABASE_PATH,
   V1,
+  VERCEL_URL,
 } from "@/constants/constants";
 import { HTTPHelper } from "./http";
 import type { ApiResponse } from "@/constants/types";
 const store = location.origin;
-// TODO: Configure based on dev or prod env
-const VERCEL_URL = "http://localhost:3000";
 
 export const getMessages = async (clientId, limit) => {
   try {

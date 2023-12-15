@@ -1,8 +1,6 @@
-import { OPENAI_PATH, V1 } from "@/constants/constants";
+import { OPENAI_PATH, V1, VERCEL_URL } from "@/constants/constants";
 import { HTTPHelper } from "./http";
 import type { ApiResponse } from "@/constants/types";
-
-const VERCEL_URL = "http://localhost:3000";
 
 export const callOpenai = async (
   input: string,
