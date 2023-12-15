@@ -7,8 +7,6 @@ import {
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
-import type { RunnableWithMemory } from "@/helper/ai";
-import { createOpenaiWithHistory, MessageSource } from "@/helper/ai";
 import type { DBMessage } from "@/constants/types";
 import { formatDBMessage } from "./command";
 
@@ -16,7 +14,6 @@ export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
     "Welcome to the store, click me to start chatting with your AI sales assistant!"
   );
-  const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const iconRef = useRef(null);
   const iconSize = props.iconSize;
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
@@ -30,11 +27,6 @@ export default function Icon({ props }) {
           const messages = data
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
-          createOpenaiWithHistory(clientId, MessageSource.EMBED, messages).then(
-            (res) => {
-              setOpenai(undefined); // Set to undefined to toggle off openai
-            }
-          );
         }
       });
     }
@@ -52,13 +44,7 @@ export default function Icon({ props }) {
     };
 
     document.addEventListener("click", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (clientId && openai && props.mountDiv === "embed") {
+    if (clientId && props.mountDiv === "embed") {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
@@ -71,8 +57,10 @@ export default function Icon({ props }) {
         });
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openai]);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
 
   const handleIconClick = (event) => {
     event.stopPropagation();

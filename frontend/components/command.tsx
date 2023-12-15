@@ -5,10 +5,7 @@ import {
   getGreetingMessage,
   addToCart,
 } from "@/helper/shopify";
-import type { RunnableWithMemory } from "@/helper/ai";
-import { MessageSource, createOpenaiWithHistory } from "@/helper/ai";
 import {
-  subscribeToMessages,
   getLastPixelEvent,
   insertMessage,
   getMessages,
@@ -42,7 +39,6 @@ export default function CommandPalette({ props }) {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
-  const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
@@ -55,21 +51,10 @@ export default function CommandPalette({ props }) {
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
           setMessages((prevMessages) => messages.concat(prevMessages));
-          createOpenaiWithHistory(clientId, MessageSource.CHAT, messages).then(
-            (res) => {
-              setOpenai(res); // Set to undefined to toggle off openai
-            }
-          );
         }
       });
-      subscribeToMessages(clientId, (message) => {
-        console.log("message inserted", JSON.stringify(message));
-      });
     }
-  }, []);
-
-  useEffect(() => {
-    if (clientId && openai) {
+    if (clientId) {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
@@ -88,7 +73,7 @@ export default function CommandPalette({ props }) {
         });
       });
     }
-  }, [openai]);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();

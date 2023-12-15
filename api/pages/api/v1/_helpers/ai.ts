@@ -11,13 +11,6 @@ import type { BufferMemory } from "langchain/memory";
 import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
 import { HumanMessage, AIMessage } from "langchain/schema";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
-import {
-  hasItemsInCart,
-  hasViewedProducts,
-  isNewCustomer,
-  supabase,
-} from "./supabase";
-import { getProducts, isValidProduct } from "./shopify";
 import { RunnableSequence } from "langchain/schema/runnable";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
@@ -28,16 +21,111 @@ import {
   OPENAI_RETRIES,
   OPENAI_KEY,
   RETURN_TOP_N_SIMILARITY_DOCS,
-} from "@/constants/constants";
-import { SenderType, HallucinationError } from "@/constants/types";
+  RECENTLY_VIEWED_PRODUCTS_COUNT,
+} from "../constants";
 import {
   HalluctinationCheckSeverity,
   type FormattedMessage,
-} from "@/constants/types";
-export enum MessageSource {
-  EMBED, // Pop up greeting in app embed
-  CHAT, // Conversation/thread with customer
-}
+  MessageSource,
+  HallucinationError,
+  SenderType,
+} from "../types";
+import {
+  getMessagesFromIds,
+  hasItemsInCart,
+  hasViewedProducts,
+  isNewCustomer,
+  supabase,
+} from "./supabase";
+
+const formatCatalogEntry = (product: any) => {
+  // Fields we care about
+  const {
+    id,
+    title,
+    body_html: description,
+    handle,
+    images,
+    variants,
+  } = product;
+  // There's a image for each variant if any, otherwise it's an array of a single element
+  const formattedVariants = variants?.map((variant: any) => {
+    return {
+      id: variant.id,
+      price: variant.price,
+      product_id: variant.product_id,
+      title: variant.title,
+    };
+  });
+  const image_url = images.length > 0 ? images[0].src : "";
+  return {
+    id,
+    title,
+    description,
+    handle,
+    image_url,
+    variants: formattedVariants,
+  };
+};
+
+const shopifyRestQuery = async (storeRoot: string, endpoint: string) => {
+  try {
+    console.log("BOI try shopify fetch", storeRoot + "/" + endpoint);
+    return fetch(storeRoot + "/" + endpoint, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        return response.json();
+      })
+      .then((json) => {
+        return json;
+      });
+  } catch (error: any) {
+    console.error(
+      `Error fetching endpoint ${endpoint}: with message %s`,
+      error.message
+    );
+    return null;
+  }
+};
+
+export const getProducts = async (store: string) => {
+  // TODO: paginate for larger stores
+  console.log("BOI getting products", store);
+  const json = await shopifyRestQuery(
+    store,
+    "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
+  );
+  console.log("BOI gotshopify products", json);
+  const formattedProducts = json?.products?.map((product: any) =>
+    formatCatalogEntry(product)
+  );
+
+  const stringifiedProducts = formattedProducts
+    .map((product: any) => JSON.stringify(product))
+    .join("\r\n");
+
+  // RAG and embeddings pre-processing
+  const metadataIds = formattedProducts.map((product: any) => product.id);
+  const strippedProducts = formattedProducts.map((product: any) => {
+    // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
+    return JSON.stringify(product).replace(/"/g, "").replace(/\n/g, " ");
+  });
+
+  return { stringifiedProducts, metadataIds, strippedProducts };
+};
+
+export const isValidProduct = async (store: string, handle: string) => {
+  // TODO: paginate for larger stores
+  const json = await shopifyRestQuery(
+    store,
+    `products.json?limit=1&handle=${handle}`
+  );
+  return json?.products.length > 0;
+};
 
 interface LLMConfigType {
   prompt: string;
@@ -56,7 +144,11 @@ export class RunnableWithMemory {
     this.hallucinationSeverity = hallucinationSeverity;
   }
 
-  private runPrivate = async (input: string, retry_left: number) => {
+  private runPrivate = async (
+    input: string,
+    store: string,
+    retry_left: number
+  ): Promise<{ valid: string; product: string }> => {
     if (retry_left === 0) {
       throw new Error("openai retries exceeded");
     }
@@ -68,7 +160,7 @@ export class RunnableWithMemory {
         res.products?.length > 0
       ) {
         const filtered = await Promise.all(
-          res.products.map(async (product) => {
+          res.products.map(async (product: any) => {
             // Check image field
             const imageUrl = product.image;
             const fileExtension = (
@@ -83,7 +175,7 @@ export class RunnableWithMemory {
                 fileExtension === "jpeg" ||
                 fileExtension === "png" ||
                 fileExtension === "gif") &&
-              (await isValidProduct(product.product_handle));
+              (await isValidProduct(store, product.product_handle));
             return { valid: valid, product: product };
           })
         );
@@ -126,7 +218,7 @@ export class RunnableWithMemory {
           case HalluctinationCheckSeverity.RETRY:
             // Means openai function parsing or hallucination failed, retry
             console.log("OpenAI hallucination detected, trying again");
-            return this.runPrivate(input, retry_left - 1);
+            return this.runPrivate(input, store, retry_left - 1);
           case HalluctinationCheckSeverity.FILTER:
           case HalluctinationCheckSeverity.NONE:
             throw new Error("Hallucination is not handled correctly");
@@ -134,15 +226,15 @@ export class RunnableWithMemory {
       } else if (error instanceof SyntaxError) {
         // Means openai function parsing or hallucination failed, retry
         console.log("OpenAI function parsing failed, trying again");
-        return this.runPrivate(input, retry_left - 1);
+        return this.runPrivate(input, store, retry_left - 1);
       } else {
         throw error;
       }
     }
   };
 
-  public run = async (input: string) => {
-    return await this.runPrivate(input, OPENAI_RETRIES);
+  public run = async (input: string, store: string) => {
+    return await this.runPrivate(input, store, OPENAI_RETRIES);
   };
 }
 
@@ -207,7 +299,11 @@ const chatProductModel = new ChatOpenAI({
 });
 
 // TODO: Move createCatalogEmbeddings to app home once we create that.
-const runEmbeddingsAndSearch = async (query, document, uids) => {
+const runEmbeddingsAndSearch = async (
+  query: string,
+  document: string[],
+  uids: string[]
+) => {
   // const res = await createCatalogEmbeddings();
   // console.log(res);
   let vectorStore;
@@ -241,8 +337,8 @@ const runEmbeddingsAndSearch = async (query, document, uids) => {
 };
 
 // Narrow down relevant products by asking LLM directly
-const createSimpleSearchRunnable = async () => {
-  const { strippedProducts } = await getProducts();
+const createSimpleSearchRunnable = async (store: string) => {
+  const { strippedProducts } = await getProducts(store);
 
   const productChain = RunnableSequence.from([
     {
@@ -274,8 +370,10 @@ const createSimpleSearchRunnable = async () => {
   return productChain;
 };
 
-const createEmbedRunnable = async () => {
-  const { metadataIds, strippedProducts } = await getProducts();
+const createEmbedRunnable = async (store: string) => {
+  console.log("BOI embed");
+  const { metadataIds, strippedProducts } = await getProducts(store);
+  console.log("BOI got products");
   return RunnableSequence.from([
     {
       catalog: async (input) =>
@@ -297,7 +395,7 @@ const createFinalRunnable = async (
   context: string[],
   llmConfig: LLMConfigType,
   memory: BufferMemory,
-  previous_chain? // If chaining, what is the previous chain
+  previous_chain?: RunnableSequence // If chaining, what is the previous chain
 ) => {
   const systemTemplate = llmConfig.prompt;
 
@@ -306,6 +404,7 @@ const createFinalRunnable = async (
   const formattedSystemMessagePrompt = await systemMessagePrompt.format({
     context: context,
   });
+  console.log("BOI1");
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
     formattedSystemMessagePrompt,
@@ -325,6 +424,7 @@ const createFinalRunnable = async (
     ],
     function_call: { name: "output_formatter" },
   });
+  console.log("BOI2");
 
   const outputParser = new JsonOutputFunctionsParser();
 
@@ -346,12 +446,14 @@ const createFinalRunnable = async (
     },
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
+  console.log("BOI3");
 
   return previous_chain ? previous_chain.pipe(salesChain) : salesChain;
 };
 
-/* CALLING FUNCTION */
-export const createOpenaiWithHistory = async (
+const createOpenaiWithHistory = async (
+  input: string,
+  store: string,
   clientId: string,
   messageSource: MessageSource,
   messages: FormattedMessage[] = []
@@ -360,13 +462,17 @@ export const createOpenaiWithHistory = async (
   let customerContext: string[] = [];
 
   // Check if the customer is new
-  const newCustomer = await isNewCustomer(clientId);
+  const newCustomer = await isNewCustomer(store, clientId);
   customerContext.push(newCustomer.message);
 
   // If customer is not new, check their cart history and product_viewed history. Add relevant links
   if (newCustomer.isNew === false) {
-    const itemsInCart = await hasItemsInCart(clientId);
-    const productsViewed = await hasViewedProducts(clientId, 5);
+    const itemsInCart = await hasItemsInCart(store, clientId);
+    const productsViewed = await hasViewedProducts(
+      store,
+      clientId,
+      RECENTLY_VIEWED_PRODUCTS_COUNT
+    );
 
     // Check if the customer has items in their cart
     if (itemsInCart.hasItems === true) {
@@ -386,38 +492,89 @@ export const createOpenaiWithHistory = async (
       : new AIMessage(m.content)
   );
 
-  return await createOpenai(customerContext, messageSource, history);
+  console.log("BOI end of history", customerContext);
+  return await createOpenai(
+    input,
+    store,
+    customerContext,
+    messageSource,
+    history
+  );
 };
 
 const createOpenai = async (
+  input: string,
+  store: string,
   context: string[],
   messageSource: MessageSource,
   history: (HumanMessage | AIMessage)[] = []
 ) => {
   const llmConfig = LLMConfig[messageSource];
 
+  console.log("BOI about to memory buffer");
   // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
   const memory = new BufferWindowMemory({
     chatHistory: new ChatMessageHistory(history),
     inputKey: "input",
     outputKey: "output",
-    k: BACK_FORTH_MEMORY_LIMIT, // Note this is k back and forth (naively assumes that human and ai have one message each) so its double the number here
+    k: BACK_FORTH_MEMORY_LIMIT / 2, // Note this is k back and forth (naively assumes that human and ai have one message each) so its double the number here
     memoryKey: "history",
     returnMessages: true,
   });
 
+  console.log("BOI creating chain");
   const finalChain = await createFinalRunnable(
     context,
     llmConfig,
     memory,
     llmConfig.include_embeddings
-      ? await createEmbedRunnable()
-      : await createSimpleSearchRunnable()
+      ? await createEmbedRunnable(store)
+      : await createSimpleSearchRunnable(store)
   );
 
-  return new RunnableWithMemory(
+  console.log("BOI creating runnable");
+  const runnable = new RunnableWithMemory(
     finalChain,
     memory,
     llmConfig.validate_hallucination
+  );
+  console.log("BOI about to run");
+  const response = await runnable.run(input, store);
+  return { show: true, openai: response };
+};
+
+export const callOpenai = async (
+  input: string,
+  store: string,
+  clientId: string,
+  source: MessageSource,
+  messagesFromIds: string[]
+) => {
+  // Some weird Typescript issue where I can't use lambda, convert with for loop
+  const numberArray: number[] = [];
+
+  for (let i = 0; i < messagesFromIds.length; i++) {
+    numberArray.push(parseInt(messagesFromIds[i], 10));
+  }
+
+  // At this point user input should already be in messages, hence the + 1
+  const { success, data } = await getMessagesFromIds(
+    store,
+    clientId,
+    numberArray
+  );
+  if (!success || !data || data?.length !== messagesFromIds.length) {
+    throw new Error(
+      "message history could not be retrieved or not all ids could be matched"
+    );
+  }
+  console.log("BOI data", data);
+
+  return await createOpenaiWithHistory(
+    input,
+    store,
+    clientId,
+    source,
+    data.slice(1)
   );
 };

@@ -1,21 +1,42 @@
 export class HTTPHelper {
+  static assembleUrl = (
+    base: string,
+    path: string | string[],
+    params?: Record<string, string>
+  ): string => {
+    let url = base;
+
+    if (Array.isArray(path)) {
+      // If path is an array, join its elements with '/'
+      url += "/" + path.join("/");
+    } else {
+      // If path is a string, append it directly
+      url += "/" + path;
+    }
+
+    if (params) {
+      const queryParams = Object.entries(params)
+        .map(
+          ([key, value]) =>
+            `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+        )
+        .join("&");
+
+      url += "?" + queryParams;
+    }
+
+    return url;
+  };
+
   static async get<T>(
-    url: string,
-    queryParams?: Record<string, string | number>
+    baseUrl: string,
+    resourcePath: string | string[],
+    queryParams?: Record<string, string>
   ): Promise<T> {
     try {
-      const queryString = queryParams
-        ? Object.entries(queryParams)
-            .map(
-              ([key, value]) =>
-                `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
-            )
-            .join("&")
-        : "";
+      const url = this.assembleUrl(baseUrl, resourcePath, queryParams);
 
-      const fullUrl = queryString ? `${url}?${queryString}` : url;
-
-      const response = await fetch(fullUrl);
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);

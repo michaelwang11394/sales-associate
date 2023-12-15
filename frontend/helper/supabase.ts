@@ -1,106 +1,35 @@
-import { createClient } from "@supabase/supabase-js";
-import { getProducts } from "./shopify";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { OPENAI_KEY } from "@/constants/constants";
-import { SenderType } from "@/constants/types";
-
-const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
-export const supabase = createClient(supabaseUrl, supabaseKey);
-
-// TODO: Update the store column. No way to do it from supabaseVector.
-//TODO: Clean up stripped products to remove ids completely. Right now only the id key itself is removed.
-export const createCatalogEmbeddings = async () => {
-  const { metadataIds, strippedProducts } = await getProducts();
-  try {
-    const vectorStore = await SupabaseVectorStore.fromTexts(
-      strippedProducts,
-      metadataIds,
-      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
-      {
-        client: supabase,
-        tableName: "vector_catalog",
-        queryName: "search_catalog",
-      }
-    );
-    return { success: true, vectorStore };
-  } catch (error) {
-    console.error("Error with creating product embedding:", error);
-    return { success: false };
-  }
-};
-
-export const getProductEmbedding = async (store) => {
-  try {
-    const { data } = await supabase
-      .from("vector_catalog")
-      .select("*")
-      .eq("store", store);
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error", error);
-    return {
-      success: false,
-      message: "An unexpected error with retreiving store embedding occurred.",
-    };
-  }
-};
-
-export const getLastPixelEvent = async (clientId) => {
-  try {
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .order("timestamp", { ascending: false })
-      .eq("clientId", clientId)
-      .limit(1);
-
-    if (error) {
-      console.error("Error", error);
-      return { success: false, message: "Error subscribing to events." };
-    }
-
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error", error);
-    return { success: false, message: "An unexpected error occurred." };
-  }
-};
+import {
+  SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
+  SUPABASE_EVENTS_LAST_EVENT_ENDPOINT,
+  SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
+  SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT,
+  SUPABASE_EVENTS_TABLE,
+  SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
+  SUPABASE_MESSAGES_HISTORY_ENDPOINT,
+  SUPABASE_MESSAGES_INSERT_ENDPOINT,
+  SUPABASE_MESSAGES_TABLE,
+  SUPABASE_PATH,
+  V1,
+} from "@/constants/constants";
+import { HTTPHelper } from "./http";
+import type { ApiResponse } from "@/constants/types";
+const store = location.origin;
+// TODO: Configure based on dev or prod env
+const VERCEL_URL = "http://localhost:3000";
 
 export const getMessages = async (clientId, limit) => {
   try {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .order("timestamp", { ascending: false })
-      .eq("clientId", clientId)
-      .neq("sender", SenderType.SYSTEM)
-      .limit(limit);
-
-    if (error) {
-      console.error("Error", error);
-      return { success: false, message: "Error getting messages." };
-    }
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error", error);
-    return { success: false, message: "An unexpected error occurred." };
-  }
-};
-
-// TODO
-export const subscribeToMessages = (clientId, handleInserts) => {
-  try {
-    supabase
-      .channel("messages")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        handleInserts
-      )
-      .subscribe();
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_MESSAGES_TABLE,
+        SUPABASE_MESSAGES_HISTORY_ENDPOINT,
+      ],
+      { store: store, clientId: clientId, limit: String(limit) }
+    );
+    return res.body;
   } catch (error) {
     console.error("Error", error);
     return { success: false, message: "An unexpected error occurred." };
@@ -108,162 +37,114 @@ export const subscribeToMessages = (clientId, handleInserts) => {
 };
 
 export const insertMessage = async (clientId, type, sender, content) => {
-  const { error } = await supabase.from("messages").insert([
+  const res = await HTTPHelper.get<ApiResponse>(
+    VERCEL_URL,
+    [
+      V1,
+      SUPABASE_PATH,
+      SUPABASE_MESSAGES_TABLE,
+      SUPABASE_MESSAGES_INSERT_ENDPOINT,
+    ],
     {
-      clientId,
-      type,
-      sender,
-      content,
-    },
-  ]);
-
-  if (error) {
-    console.error("Error during insert:", error);
-    return false;
-  }
-  return true;
+      store: store,
+      clientId: clientId,
+      type: type,
+      sender: sender,
+      content: content,
+    }
+  );
+  return res.body;
 };
 
-export const isNewCustomer = async (customerId) => {
+export const getLastPixelEvent = async (clientId) => {
   try {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_EVENTS_TABLE,
+        SUPABASE_EVENTS_LAST_EVENT_ENDPOINT,
+      ],
+      { store: store, clientId: clientId }
+    );
+    return res.body;
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
 
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .eq("clientId", customerId)
-      .gte("timestamp", oneWeekAgo.toISOString());
-
-    if (error) {
-      console.error("Error", error);
-      return { isNew: false, message: "Error checking if customer is new." };
-    }
-
-    return {
-      isNew: data.length <= 1,
-      message:
-        data.length <= 1
-          ? "This is the first time the customer has visited the store."
-          : "This customer has visited the store before.",
-    };
+export const isNewCustomer = async (clientId) => {
+  try {
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_EVENTS_TABLE,
+        SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
+      ],
+      { store: store, clientId: clientId }
+    );
+    return res.body;
   } catch (error) {
     console.error("Error", error);
     return { isNew: false, message: "An unexpected error occurred." };
   }
 };
 
-export const hasItemsInCart = async (customerId) => {
+export const hasItemsInCart = async (clientId) => {
   try {
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .eq("clientId", customerId)
-      .eq("name", "cart_viewed")
-      .order("timestamp", { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error("Error", error);
-      return { hasItems: false, message: "Error checking cart items." };
-    }
-
-    if (data.length > 0 && data[0]?.detail?.cart) {
-      const cartProductTitles = data[0].detail.cart.lines.map(
-        (line) => line.merchandise.product.title
-      );
-
-      const cartURL = data[0].context.document.location.href;
-
-      return {
-        hasItems: true,
-        message: `This customer has the following items in their cart: ${cartProductTitles.join(
-          ", "
-        )}`,
-        cartURL: `The customer can go to their cart by clicking this link: ${cartURL}`,
-      };
-    } else {
-      return {
-        hasItems: false,
-        message: "This customer does not have items in their cart.",
-      };
-    }
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_EVENTS_TABLE,
+        SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
+      ],
+      { store: store, clientId: clientId }
+    );
+    return res.body;
   } catch (error) {
     console.error("Error", error);
     return { hasItems: false, message: "An unexpected error occurred." };
   }
 };
 
-export const hasViewedProducts = async (customerId, count: number) => {
+export const hasViewedProducts = async (clientId, count: number) => {
   try {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .eq("clientId", customerId)
-      .eq("name", "product_viewed")
-      .gte("timestamp", oneWeekAgo.toISOString())
-      .limit(count);
-
-    if (error) {
-      console.error("Error", error);
-      return {
-        hasViewed: false,
-        message: "Error checking if customer has viewed products.",
-      };
-    }
-
-    if (data.length > 0) {
-      const productTitles = data.map(
-        (item) => item.detail.productVariant.product.title
-      );
-      const productURLs = data.map(
-        (item) => item.context.document.location.href
-      );
-      return {
-        hasViewed: true,
-        message: `This customer has viewed the following products: ${productTitles.join(
-          ", "
-        )}`,
-        productURLs: `The customer can revisit these products by clicking these links: ${productURLs.join(
-          ", "
-        )}`,
-      };
-    } else {
-      return {
-        hasViewed: false,
-        message: "This customer has not viewed any products.",
-      };
-    }
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_EVENTS_TABLE,
+        SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
+      ],
+      { store: store, clientId: clientId, count: String(count) }
+    );
+    return res.body;
   } catch (error) {
     console.error("Error", error);
     return { hasViewed: false, message: "An unexpected error occurred." };
   }
 };
 
-export const offerCoupon = async (customerId) => {
+export const offerCoupon = async (clientId) => {
   try {
-    const thirtyMinutesAgo = new Date();
-    thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
-
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .eq("clientId", customerId)
-      .eq("name", "cart_viewed")
-      .gte("timestamp", thirtyMinutesAgo.toISOString());
-
-    if (error) {
-      console.error("Error", error);
-      return {
-        offerCoupon: false,
-        message: "Error checking if customer has viewed products.",
-      };
-    }
-
-    return { offerCoupon: data.length > 2 };
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_EVENTS_TABLE,
+        SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT,
+      ],
+      { store: store, clientId: clientId }
+    );
+    return res.body;
   } catch (error) {
     console.error("Error", error);
     return { offerCoupon: false, message: "An unexpected error occurred." };

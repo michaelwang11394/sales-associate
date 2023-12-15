@@ -1,10 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-
-export enum SenderType {
-  AI = "ai",
-  USER = "user",
-  SYSTEM = "system", // Generated greetings, noninteractive
-}
+import { SenderType } from "../types";
 
 export const OPENAI_KEY = "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";
 const supabaseUrl = "https://xrxqgzrdxkvoszkhvnzg.supabase.co";
@@ -12,121 +7,90 @@ const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyeHFnenJkeGt2b3N6a2h2bnpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTYxMDY2NDgsImV4cCI6MjAxMTY4MjY0OH0.7wQAVyg2lK41GxRae6B-lmEYR1ahWCHBDWoS09aiOnw";
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-const formatCatalogEntry = (product) => {
-  // Fields we care about
-  const {
-    id,
-    title,
-    body_html: description,
-    handle,
-    images,
-    variants,
-  } = product;
-  // There's a image for each variant if any, otherwise it's an array of a single element
-  const formattedVariants = variants?.map((variant) => {
-    return {
-      id: variant.id,
-      price: variant.price,
-      product_id: variant.product_id,
-      title: variant.title,
-    };
-  });
-  const image_url = images.length > 0 ? images[0].src : "";
-  return {
-    id,
-    title,
-    description,
-    handle,
-    image_url,
-    variants: formattedVariants,
-  };
-};
-
-const shopifyRestQuery = async (storeRoot, endpoint) => {
+export const getMessages = async (
+  store: string,
+  clientId: string,
+  filterSystem: boolean,
+  limit: number
+) => {
   try {
-    return fetch(storeRoot + endpoint)
-      .then((response) => response.json())
-      .then((json) => {
-        return json;
-      });
-  } catch (error) {
-    console.error(
-      `Error fetching endpoint ${endpoint}: with message %s`,
-      error.message
-    );
-    return null;
-  }
-};
-
-export const getProducts = async (storeRoot) => {
-  // TODO: paginate for larger stores
-  const json = await shopifyRestQuery(
-    storeRoot,
-    "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
-  );
-  const formattedProducts = json?.products?.map((product) =>
-    formatCatalogEntry(product)
-  );
-
-  const stringifiedProducts = formattedProducts
-    .map((product) => JSON.stringify(product))
-    .join("\r\n");
-
-  // RAG and embeddings pre-processing
-  const metadataIds = formattedProducts.map((product) => product.id);
-  const strippedProducts = formattedProducts.map((product) => {
-    // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
-    return JSON.stringify(product).replace(/"/g, "").replace(/\n/g, " ");
-  });
-
-  return { stringifiedProducts, metadataIds, strippedProducts };
-};
-
-/*
-export const createCatalogEmbeddings = async () => {
-  const { metadataIds, strippedProducts } = await getProducts();
-  try {
-    const vectorStore = await SupabaseVectorStore.fromTexts(
-      strippedProducts,
-      metadataIds,
-      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
-      {
-        client: supabase,
-        tableName: "vector_catalog",
-        queryName: "search_catalog",
-      }
-    );
-    return { success: true, vectorStore };
-  } catch (error) {
-    console.error("Error with creating product embedding:", error);
-    return { success: false };
-  }
-};
-
-export const getProductEmbedding = async (store) => {
-  try {
-    const { data } = await supabase
-      .from("vector_catalog")
+    const { data, error } = await supabase
+      .from("messages")
       .select("*")
-      .eq("store", store);
-    return { success: true, data };
+      .order("timestamp", { ascending: false })
+      .eq("clientId", clientId)
+      .eq("store", store)
+      .neq("sender", filterSystem ? SenderType.SYSTEM : null)
+      .limit(limit);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting messages." };
+    }
+    return { success: true, data: data };
   } catch (error) {
     console.error("Error", error);
-    return {
-      success: false,
-      message: "An unexpected error with retreiving store embedding occurred.",
-    };
+    return { success: false, message: "An unexpected error occurred." };
   }
 };
-*/
 
-export const getLastPixelEvent = async (store, clientId) => {
+export const getMessagesFromIds = async (
+  store: string,
+  clientId: string,
+  ids: number[]
+) => {
+  try {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .eq("clientId", clientId)
+      .eq("store", store)
+      .in("id", ids);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting messages." };
+    }
+    return { success: true, data: data };
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const insertMessage = async (
+  store: string,
+  clientId: string,
+  type: string,
+  sender: string,
+  content: string
+) => {
+  const { error } = await supabase.from("messages").insert([
+    {
+      clientId,
+      type,
+      sender,
+      content,
+      store,
+    },
+  ]);
+
+  if (error) {
+    console.error("Error during insert:", error);
+    return false;
+  }
+  return true;
+};
+
+export const getLastPixelEvent = async (store: string, clientId: string) => {
   try {
     const { data, error } = await supabase
       .from("events")
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
+      .eq("store", store)
       .limit(1);
 
     if (error) {
@@ -141,45 +105,7 @@ export const getLastPixelEvent = async (store, clientId) => {
   }
 };
 
-export const getMessages = async (store, clientId, limit) => {
-  try {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .order("timestamp", { ascending: false })
-      .eq("clientId", clientId)
-      .neq("sender", SenderType.SYSTEM)
-      .limit(limit);
-
-    if (error) {
-      console.error("Error", error);
-      return { success: false, message: "Error getting messages." };
-    }
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error", error);
-    return { success: false, message: "An unexpected error occurred." };
-  }
-};
-
-export const insertMessage = async (store, clientId, type, sender, content) => {
-  const { error } = await supabase.from("messages").insert([
-    {
-      clientId,
-      type,
-      sender,
-      content,
-    },
-  ]);
-
-  if (error) {
-    console.error("Error during insert:", error);
-    return false;
-  }
-  return true;
-};
-
-export const isNewCustomer = async (store, clientId) => {
+export const isNewCustomer = async (store: string, clientId: string) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -188,6 +114,7 @@ export const isNewCustomer = async (store, clientId) => {
       .from("events")
       .select("*")
       .eq("clientId", clientId)
+      .eq("store", store)
       .gte("timestamp", oneWeekAgo.toISOString());
 
     if (error) {
@@ -208,12 +135,13 @@ export const isNewCustomer = async (store, clientId) => {
   }
 };
 
-export const hasItemsInCart = async (store, clientId) => {
+export const hasItemsInCart = async (store: string, clientId: string) => {
   try {
     const { data, error } = await supabase
       .from("events")
       .select("*")
       .eq("clientId", clientId)
+      .eq("store", store)
       .eq("name", "cart_viewed")
       .order("timestamp", { ascending: false })
       .limit(1);
@@ -225,7 +153,7 @@ export const hasItemsInCart = async (store, clientId) => {
 
     if (data.length > 0 && data[0]?.detail?.cart) {
       const cartProductTitles = data[0].detail.cart.lines.map(
-        (line) => line.merchandise.product.title
+        (line: any) => line.merchandise.product.title
       );
 
       const cartURL = data[0].context.document.location.href;
@@ -249,7 +177,11 @@ export const hasItemsInCart = async (store, clientId) => {
   }
 };
 
-export const hasViewedProducts = async (store, clientId, count: number) => {
+export const hasViewedProducts = async (
+  store: string,
+  clientId: string,
+  count: number
+) => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -259,6 +191,7 @@ export const hasViewedProducts = async (store, clientId, count: number) => {
       .select("*")
       .eq("clientId", clientId)
       .eq("name", "product_viewed")
+      .eq("store", store)
       .gte("timestamp", oneWeekAgo.toISOString())
       .limit(count);
 
@@ -298,7 +231,7 @@ export const hasViewedProducts = async (store, clientId, count: number) => {
   }
 };
 
-export const offerCoupon = async (store, clientId) => {
+export const offerCoupon = async (store: string, clientId: string) => {
   try {
     const thirtyMinutesAgo = new Date();
     thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
@@ -306,6 +239,7 @@ export const offerCoupon = async (store, clientId) => {
     const { data, error } = await supabase
       .from("events")
       .select("*")
+      .eq("store", store)
       .eq("clientId", clientId)
       .eq("name", "cart_viewed")
       .gte("timestamp", thirtyMinutesAgo.toISOString());
