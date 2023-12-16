@@ -14,14 +14,19 @@ import {
 } from "@shopify/polaris";
 
 import { authenticate } from "../shopify.server";
+import { useLoaderData } from "@remix-run/react";
 export async function loader({ request }) {
-  await authenticate.admin(request);
-
-  return json({ apiKey: process.env.SHOPIFY_API_KEY });
+  const { admin, session } = await authenticate.admin(request);
+  const res = await admin.rest.resources.Shop.all({
+    session: session,
+  });
+  return json({ res, session });
 }
 
 export default function Index() {
   const [step, setStep] = useState(0);
+  const { res, session } = useLoaderData();
+  console.log("from index", res, session);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   const steps = [
