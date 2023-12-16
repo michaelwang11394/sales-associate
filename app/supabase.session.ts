@@ -10,7 +10,7 @@ export const supabase = createClient(supabaseUrl!, supabaseKey!);
 export class SupabaseSessionStorage implements SessionStorage {
   public async storeSession(session: Session): Promise<boolean> {
     const { error } = await supabase
-      .from("merchants")
+      .from("sessions")
       .upsert([
         {
           id: session.id,
@@ -28,7 +28,7 @@ export class SupabaseSessionStorage implements SessionStorage {
 
   public async loadSession(id: string): Promise<Session | undefined> {
     const { data, error } = await supabase
-      .from("merchants")
+      .from("sessions")
       .select("*")
       .eq("id", id);
 
@@ -42,18 +42,18 @@ export class SupabaseSessionStorage implements SessionStorage {
   }
 
   public async deleteSession(id: string): Promise<boolean> {
-    const { error } = await supabase.from("merchants").delete().eq("id", id);
+    const { error } = await supabase.from("sessions").delete().eq("id", id);
     return !error;
   }
 
   public async deleteSessions(ids: string[]): Promise<boolean> {
-    const { error } = await supabase.from("merchants").delete().in("id", ids);
+    const { error } = await supabase.from("sessions").delete().in("id", ids);
     return !error;
   }
 
   public async findSessionsByShop(shop: string): Promise<Session[]> {
     const { data, error } = await supabase
-      .from("merchants")
+      .from("sessions")
       .select("*")
       .eq("shop", shop);
     if (error || !data) {

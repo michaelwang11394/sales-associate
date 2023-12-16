@@ -12,7 +12,7 @@ export const action = async ({ request }) => {
     case "APP_UNINSTALLED":
       if (session) {
         const { error } = await supabase
-          .from("merchants")
+          .from("sessions")
           .delete()
           .eq("shop", shop);
         if (error) {
