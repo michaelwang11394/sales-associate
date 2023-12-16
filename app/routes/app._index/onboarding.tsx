@@ -13,7 +13,8 @@ import {
   ButtonGroup,
 } from "@shopify/polaris";
 
-import { authenticate } from "../shopify.server";
+import { useLoaderData } from "@remix-run/react";
+import { authenticate } from "~/shopify.server";
 export async function loader({ request }) {
   await authenticate.admin(request);
 
@@ -22,7 +23,8 @@ export async function loader({ request }) {
 
 export default function Index() {
   const [step, setStep] = useState(0);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const { apiKey } = useLoaderData();
+  console.log("onboarding", apiKey);
 
   const steps = [
     "Introduction",
@@ -131,46 +133,28 @@ export default function Index() {
   };
 
   return (
-    <Page title="Home">
-      <Layout>
-        <Layout.Section>
-          {!onboardingCompleted && (
-            <>
-              <ProgressBar
-                progress={(step + 1) * (100 / steps.length)}
-                size="small"
-              />
-              <BlockStack inlineAlign="center" align="center">
-                <Box width="500px">
-                  <Card>
-                    <BlockStack inlineAlign="center">
-                      {renderContent()}
-                      <ButtonGroup gap="loose">
-                        <Button onClick={handleBack} disabled={step === 0}>
-                          Back
-                        </Button>
-                        <Button
-                          variant="primary"
-                          onClick={handleNext}
-                          disabled={step === steps.length - 1}>
-                          Next
-                        </Button>
-                      </ButtonGroup>
-                    </BlockStack>
-                  </Card>
-                </Box>
-              </BlockStack>
-            </>
-          )}
-
-          <Text variant="heading2xl" as="h2" alignment="center">
-            Welcome to our platform!
-          </Text>
-          <Text variant="bodyLg" as="p" alignment="center">
-            We're glad to have you here. Let's boost your sales together.
-          </Text>
-        </Layout.Section>
-      </Layout>
-    </Page>
+    <>
+      <ProgressBar progress={(step + 1) * (100 / steps.length)} size="small" />
+      <BlockStack inlineAlign="center" align="center">
+        <Box width="500px">
+          <Card>
+            <BlockStack inlineAlign="center">
+              {renderContent()}
+              <ButtonGroup gap="loose">
+                <Button onClick={handleBack} disabled={step === 0}>
+                  Back
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleNext}
+                  disabled={step === steps.length - 1}>
+                  Next
+                </Button>
+              </ButtonGroup>
+            </BlockStack>
+          </Card>
+        </Box>
+      </BlockStack>
+    </>
   );
 }
