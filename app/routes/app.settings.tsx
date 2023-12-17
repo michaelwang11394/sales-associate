@@ -1,9 +1,26 @@
+import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Card, Button, TextContainer } from "@shopify/polaris";
+import { authenticate } from "~/shopify.server";
+import { supabase } from "~/utils/supabase";
 
+export async function loader({ request }) {
+  const { admin, session } = await authenticate.admin(request);
+  const shopData = await admin.rest.resources.Shop.all({
+    session: session,
+  });
+  // Deeplink request
+  const domain = shopData.data[0].domain;
+
+  return json({ shopData, domain });
+}
 function SettingsPage() {
-  const handleDelete = () => {
-    // Placeholder for backend deletion function
-    console.log("All data deleted");
+  const { domain } = useLoaderData();
+  const handleDelete = async () => {
+    // Delete merchant row, and subsequently cascade away all data
+    const { data, error } = await supabase.from("merchants").delete(domain);
+    if (error) console.error("Error deleting data", error);
+    console.log("All data deleted", data);
   };
 
   return (
