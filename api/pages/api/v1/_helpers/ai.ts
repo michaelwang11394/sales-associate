@@ -15,6 +15,7 @@ import { RunnableSequence } from "langchain/schema/runnable";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import "@shopify/shopify-api/adapters/node";
 
 import {
   MESSAGES_HISTORY_LIMIT,
@@ -31,14 +32,35 @@ import {
   SenderType,
 } from "../types";
 import {
-  getCatalogProducts,
   getMessagesFromIds,
   hasItemsInCart,
   hasViewedProducts,
   isNewCustomer,
-  isRealProductSupabase,
   supabase,
 } from "./supabase";
+import { LATEST_API_VERSION, shopifyApi } from "@shopify/shopify-api";
+import { SupabaseSessionStorage } from "./supabase.session";
+
+const shopify = shopifyApi({
+  apiKey: process.env.SHOPIFY_API_KEY!,
+  apiSecretKey: process.env.SHOPIFY_API_SECRET!,
+  apiVersion: LATEST_API_VERSION,
+  scopes: ["read_products"],
+  hostName: "sales-associate-backend.vercel.app",
+  hostScheme: "https",
+  isEmbeddedApp: false,
+});
+
+const createClient = async (store: string) => {
+  const session = (
+    await new SupabaseSessionStorage().findSessionsByShop(stripHttps(store))
+  )[0];
+  const client = new shopify.clients.Rest({
+    session,
+    apiVersion: LATEST_API_VERSION,
+  });
+  return client;
+};
 
 const formatCatalogEntry = (product: any) => {
   // Fields we care about
@@ -70,46 +92,27 @@ const formatCatalogEntry = (product: any) => {
   };
 };
 
-/*
-const shopifyRestQuery = async (storeRoot: string, endpoint: string) => {
-  try {
-    return fetch(storeRoot + "/" + endpoint, {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((json) => {
-        return json;
-      });
-  } catch (error: any) {
-    console.error(
-      `Error fetching endpoint ${endpoint}: with message %s`,
-      error.message
-    );
-    return null;
+// Session storage's store column does not have this
+function stripHttps(url: string): string {
+  if (url.startsWith("https://")) {
+    return url.slice("https://".length);
   }
-};
-*/
+  return url;
+}
 
 export const getProducts = async (store: string, limit = 250) => {
-  // TODO: paginate for larger stores
-  /*
-  const json = await shopifyRestQuery(
-    store,
-    "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
-  );
-  */
-  const res = await getCatalogProducts(store, limit);
-  return { stringifiedProducts: [], metadataIds: [], strippedProducts: [] };
-  if (!res.success || res.data === undefined) {
+  const data = (
+    await (
+      await createClient(store)
+    ).get<any>({
+      path: "products",
+    })
+  ).body;
+  if (data.products === undefined) {
     console.error("No catalog exists");
     // throw new Error("No catalog exists")
   }
-  const formattedProducts = res.data!.map((product: any) =>
+  const formattedProducts = data.products.map((product: any) =>
     formatCatalogEntry(product)
   );
 
@@ -131,8 +134,15 @@ export const isValidProduct = async (
   store: string,
   handle: string
 ): Promise<boolean> => {
-  const res = await isRealProductSupabase(store, handle);
-  return res.data?.length !== undefined && res.data?.length > 0;
+  const data = (
+    await (
+      await createClient(store)
+    ).get<any>({
+      path: "products",
+      query: { store: store, handle: handle },
+    })
+  ).body;
+  return data.products.length > 0;
 };
 
 interface LLMConfigType {
@@ -322,8 +332,8 @@ const runEmbeddingsAndSearch = async (
       {
         client: supabase,
         tableName: "vector_catalog",
-        queryName: "search_catalog",
-        filter: { store: { $eq: store } },
+        queryName: "match_documents",
+        filter: { metadata: { $eq: store } },
       }
     );
   } catch (error) {

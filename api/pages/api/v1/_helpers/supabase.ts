@@ -1,50 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { SenderType } from "../types";
+import { getProducts } from "./ai";
+import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
-
-export const getCatalogProducts = async (store: string, limit: number) => {
-  try {
-    const { data, error } = await supabase
-      .from("catalog")
-      .select("*")
-      .order("updated_at", { ascending: false })
-      .eq("store", store)
-      .limit(limit);
-
-    if (error) {
-      console.error("Error", error);
-      return { success: false, message: "Error getting catalog." };
-    }
-    return { success: true, data: data };
-  } catch (error) {
-    console.error("Error", error);
-    return { success: false, message: "An unexpected error occurred." };
-  }
-};
-
-export const isRealProductSupabase = async (store: string, handle: string) => {
-  try {
-    const { data, error } = await supabase
-      .from("catalog")
-      .select("*")
-      .eq("handle", handle)
-      .eq("store", store)
-      .limit(1);
-
-    if (error) {
-      console.error("Error", error);
-      return { success: false, message: "Error getting product with handle." };
-    }
-    return { success: true, data: data };
-  } catch (error) {
-    console.error("Error", error);
-    return { success: false, message: "An unexpected error occurred." };
-  }
-};
 
 export const getMessages = async (
   store: string,
@@ -297,5 +260,35 @@ export const offerCoupon = async (store: string, clientId: string) => {
   } catch (error) {
     console.error("Error", error);
     return { offerCoupon: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const createEmbeddings = async (store: string) => {
+  try {
+    const { strippedProducts } = await getProducts(store);
+    // Delete existing indices first
+    const { error } = await supabase
+      .from("vector_catalog")
+      .delete()
+      .eq("metadata", store);
+    if (strippedProducts.length === 0 || error) {
+      console.error("Store has no products");
+      return { succes: false };
+    }
+
+    const vectorStore = await SupabaseVectorStore.fromTexts(
+      strippedProducts,
+      Array(strippedProducts.length).fill(store),
+      new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_KEY }),
+      {
+        client: supabase,
+        tableName: "vector_catalog",
+        queryName: "match_documents",
+      }
+    );
+    return { success: true, vectorStore };
+  } catch (error) {
+    console.error("Error with creating product embedding:", error);
+    return { success: false };
   }
 };
