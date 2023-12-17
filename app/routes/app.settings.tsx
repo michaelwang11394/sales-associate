@@ -18,7 +18,10 @@ function SettingsPage() {
   const { domain } = useLoaderData();
   const handleDelete = async () => {
     // Delete merchant row, and subsequently cascade away all data
-    const { data, error } = await supabase.from("merchants").delete(domain);
+    const { data, error } = await supabase
+      .from("sessions")
+      .delete()
+      .eq("shop", domain);
     if (error) console.error("Error deleting data", error);
     console.log("All data deleted", data);
   };
