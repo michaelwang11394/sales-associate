@@ -4,6 +4,9 @@ import { Page, Text, Layout } from "@shopify/polaris";
 
 import { authenticate } from "~/shopify.server";
 import Onboarding from "./onboarding";
+import { supabase } from "~/utils/supabase";
+import { useLoaderData } from "@remix-run/react";
+
 export async function loader({ request }) {
   const { admin, session } = await authenticate.admin(request);
   const shopData = await admin.rest.resources.Shop.all({
@@ -11,10 +14,27 @@ export async function loader({ request }) {
   });
   // Deeplink request
   const domain = shopData.data[0].domain;
-  return json({ shopData, domain });
+  // supabase request
+  // TODO: Add a check to see if merchant exists in supabase. Upsert suffices for now
+
+  const { data: merchantInsert } = await supabase.from("merchants").upsert([
+    {
+      id: shopData.data[0].id,
+      domain: shopData.data[0].domain,
+      name: shopData.data[0].name,
+      plan_name: shopData.data[0].plan_name,
+      shop_owner: shopData.data[0].shop_owner,
+      customer_email: shopData.data[0].customer_email,
+      checkout_api_supported: shopData.data[0].checkout_api_supported,
+    },
+  ]);
+
+  return json({ shopData, domain, merchantInsert });
 }
 
 export default function Index() {
+  const { shopData, merchantInsert } = useLoaderData();
+  console.log("data", shopData, merchantInsert);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   return (
