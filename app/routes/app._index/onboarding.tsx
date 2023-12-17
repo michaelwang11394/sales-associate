@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { json } from "@remix-run/node";
 import {
-  Page,
   Card,
   Button,
   ProgressBar,
@@ -9,25 +8,27 @@ import {
   Text,
   List,
   Box,
-  Layout,
   ButtonGroup,
 } from "@shopify/polaris";
 
-import { authenticate } from "../shopify.server";
 import { useLoaderData } from "@remix-run/react";
+import { authenticate } from "~/shopify.server";
 export async function loader({ request }) {
+  // Authenticate the request
   const { admin, session } = await authenticate.admin(request);
-  const res = await admin.rest.resources.Shop.all({
+  // Get Store Shopify Domain
+  const shopData = await admin.rest.resources.Shop.all({
     session: session,
   });
-  return json({ res, session });
-}
+  // Deeplink request domain
+  const domain = shopData.data[0].domain;
 
+  return json({ shopData, domain });
+}
 export default function Index() {
   const [step, setStep] = useState(0);
-  const { res, session } = useLoaderData();
-  console.log("from index", res, session);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const { shopData, domain } = useLoaderData();
+  console.log("from onboarding", shopData, domain);
 
   const steps = [
     "Introduction",
@@ -47,6 +48,22 @@ export default function Index() {
       setStep(step - 1);
     }
   };
+
+  const handleDeepLink = (type: string) => {
+    const shopifyDomain = domain;
+    // TODO: Currently this is Client ID of sales-associate-DEV. We'd need to change this to accept env variables and uuid of production app
+    const uuid = "6ce842a9-f05d-4c3a-9c1e-d39e82be3f07";
+    const handle = type === "embed" ? "embed" : "section"; // embed.liquid file in blokcs
+    let url;
+    if (type === "embed") {
+      url = `https://${shopifyDomain}/admin/themes/current/editor?context=apps&activateAppId=${uuid}/${handle}`;
+    } else {
+      //TODO: Asset API to replace any default search
+      url = `https://${shopifyDomain}/admin/themes/current/editor?addAppBlockId=${uuid}/${handle}&target=sectionGroup:header`;
+    }
+    window.open(url, "_blank");
+  };
+
   const renderContent = () => {
     switch (step) {
       case 0:
@@ -81,8 +98,6 @@ export default function Index() {
           </BlockStack>
         );
       case 1:
-        // TODO: Add deep link backend https://shopify.dev/docs/apps/online-store/theme-app-extensions/extensions-framework#deep-linking
-
         return (
           <BlockStack>
             <Text variant="heading2xl" as="h3" alignment="center">
@@ -96,7 +111,14 @@ export default function Index() {
               that will show floaty messages.{" "}
             </Text>
             <BlockStack inlineAlign="center" align="center">
-              <Button variant="primary">Add App</Button>
+              <Button
+                variant="primary"
+                onClick={() => handleDeepLink("section")}>
+                Add Block App
+              </Button>
+              <Button variant="primary" onClick={() => handleDeepLink("embed")}>
+                Add Embeded App
+              </Button>
             </BlockStack>
           </BlockStack>
         );
@@ -136,46 +158,28 @@ export default function Index() {
   };
 
   return (
-    <Page title="Home">
-      <Layout>
-        <Layout.Section>
-          {!onboardingCompleted && (
-            <>
-              <ProgressBar
-                progress={(step + 1) * (100 / steps.length)}
-                size="small"
-              />
-              <BlockStack inlineAlign="center" align="center">
-                <Box width="500px">
-                  <Card>
-                    <BlockStack inlineAlign="center">
-                      {renderContent()}
-                      <ButtonGroup gap="loose">
-                        <Button onClick={handleBack} disabled={step === 0}>
-                          Back
-                        </Button>
-                        <Button
-                          variant="primary"
-                          onClick={handleNext}
-                          disabled={step === steps.length - 1}>
-                          Next
-                        </Button>
-                      </ButtonGroup>
-                    </BlockStack>
-                  </Card>
-                </Box>
-              </BlockStack>
-            </>
-          )}
-
-          <Text variant="heading2xl" as="h2" alignment="center">
-            Welcome to our platform!
-          </Text>
-          <Text variant="bodyLg" as="p" alignment="center">
-            We're glad to have you here. Let's boost your sales together.
-          </Text>
-        </Layout.Section>
-      </Layout>
-    </Page>
+    <>
+      <ProgressBar progress={(step + 1) * (100 / steps.length)} size="small" />
+      <BlockStack inlineAlign="center" align="center">
+        <Box width="500px">
+          <Card>
+            <BlockStack inlineAlign="center">
+              {renderContent()}
+              <ButtonGroup gap="loose">
+                <Button onClick={handleBack} disabled={step === 0}>
+                  Back
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleNext}
+                  disabled={step === steps.length - 1}>
+                  Next
+                </Button>
+              </ButtonGroup>
+            </BlockStack>
+          </Card>
+        </Box>
+      </BlockStack>
+    </>
   );
 }
