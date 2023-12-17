@@ -24,4 +24,6 @@ export const SUPABASE_EVENTS_CART_ITEMS_ENDPOINT = "cart-items";
 export const SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT = "viewed-products";
 export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
 
+export const SUPABASE_EMBEDDINGS_CREATE_ENDPOINT = "create";
+
 export const OPENAI_PATH = "openai";
