@@ -4,40 +4,23 @@ import "@/styles/chat.css";
 import { getGreetingMessage } from "@/helper/shopify";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import {
+  MESSAGES_HISTORY_LIMIT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
-import type { RunnableWithMemory } from "@/helper/ai";
-import { createOpenaiWithHistory, MessageSource } from "@/helper/ai";
-import type { DBMessage } from "@/constants/types";
+import { MessageSource, type DBMessage } from "@/constants/types";
 import { formatDBMessage } from "./command";
+import { callOpenai } from "@/helper/ai";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
     "Welcome to the store, click me to start chatting with your AI sales assistant!"
   );
-  const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const iconRef = useRef(null);
   const iconSize = props.iconSize;
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
-    if (clientId) {
-      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
-        if (!data) {
-          console.error("Message history could not be fetched");
-        } else {
-          const messages = data
-            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
-            .reverse();
-          createOpenaiWithHistory(clientId, MessageSource.EMBED, messages).then(
-            (res) => {
-              setOpenai(res); // Set to undefined to toggle off openai
-            }
-          );
-        }
-      });
-    }
     // Add event listener to close overlay when clicking outside of it
     const handleClickOutside = (event) => {
       const clickTarget = document.getElementById(PALETTE_DIV_ID);
@@ -52,27 +35,40 @@ export default function Icon({ props }) {
     };
 
     document.addEventListener("click", handleClickOutside);
+    if (clientId && props.mountDiv === "embed") {
+      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
+        if (!data) {
+          console.error("Message history could not be fetched");
+        } else {
+          const messages = data
+            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
+            .reverse();
+          getLastPixelEvent(clientId).then((d) => {
+            d.data?.forEach(async (event) => {
+              const greetingPrompt = await getGreetingMessage(event);
+              callOpenai(
+                greetingPrompt,
+                clientId!,
+                MessageSource.EMBED,
+                messages
+                  .slice(-1 * MESSAGES_HISTORY_LIMIT)
+                  .map((m) => String(m.id!))
+              )
+                .then((response) => {
+                  if (response.show) {
+                    setGreeting(response.openai.plainText);
+                  }
+                })
+                .catch((err) => console.error(err));
+            });
+          });
+        }
+      });
+    }
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, []);
-
-  useEffect(() => {
-    if (clientId && openai && props.mountDiv === "embed") {
-      getLastPixelEvent(clientId).then((data) => {
-        data.data?.forEach(async (event) => {
-          const greetingPrompt = await getGreetingMessage(event);
-          await openai
-            .run(greetingPrompt)
-            .then((response) => {
-              setGreeting(response.plainText);
-            })
-            .catch((err) => console.error(err));
-        });
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openai]);
 
   const handleIconClick = (event) => {
     event.stopPropagation();

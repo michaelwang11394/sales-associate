@@ -11,6 +11,7 @@ exclude_categories: []
 ignore:
   - node_modules/*
   - extensions/chat-interface/snippets/*
+  - api/*
 
 ConvertIncludeToRender:
   enabled: true

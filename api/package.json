@@ -1,0 +1,30 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@shopify/shopify-api": "^8.1.1",
+    "@shopify/shopify-app-session-storage": "^2.0.2",
+    "@supabase/supabase-js": "^2.39.0",
+    "langchain": "^0.0.208",
+    "next": "14.0.4",
+    "react": "^18",
+    "react-dom": "^18",
+    "supabase": "^1.123.4",
+    "vercel": "^32.7.1",
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.22.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  }
+}

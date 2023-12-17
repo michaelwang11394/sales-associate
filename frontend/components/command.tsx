@@ -5,15 +5,13 @@ import {
   getGreetingMessage,
   addToCart,
 } from "@/helper/shopify";
-import type { RunnableWithMemory } from "@/helper/ai";
-import { MessageSource, createOpenaiWithHistory } from "@/helper/ai";
 import {
-  subscribeToMessages,
   getLastPixelEvent,
   insertMessage,
   getMessages,
 } from "@/helper/supabase";
 import {
+  MESSAGES_HISTORY_LIMIT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
@@ -23,8 +21,10 @@ import {
   type DBMessage,
   type Product,
   SenderType,
+  MessageSource,
 } from "@/constants/types";
 import { ChatBubble } from "./chat";
+import { callOpenai } from "@/helper/ai";
 
 export const formatDBMessage = (messageRow: DBMessage) => {
   const { id, type, content, sender } = messageRow;
@@ -42,7 +42,6 @@ export default function CommandPalette({ props }) {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
-  const [openai, setOpenai] = useState<RunnableWithMemory | undefined>();
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
 
   useEffect(() => {
@@ -55,40 +54,38 @@ export default function CommandPalette({ props }) {
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
           setMessages((prevMessages) => messages.concat(prevMessages));
-          createOpenaiWithHistory(clientId, MessageSource.CHAT, messages).then(
-            (res) => {
-              setOpenai(res); // Set to undefined to toggle off openai
-            }
-          );
         }
       });
-      subscribeToMessages(clientId, (message) => {
-        console.log("message inserted", JSON.stringify(message));
-      });
     }
-  }, []);
-
-  useEffect(() => {
-    if (clientId && openai) {
+    if (clientId) {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
-          await openai
-            .run(greetingPrompt)
-            .then((response) => {
-              console.log(response.plainText);
+          callOpenai(
+            greetingPrompt,
+            clientId!,
+            MessageSource.CHAT,
+            messages
+              .slice(-1 * MESSAGES_HISTORY_LIMIT)
+              .map((m) => String(m.id!))
+          )
+            .then(async (response) => {
+              if (!response.show) {
+                return;
+              }
+              console.log(response.openai.plainText);
               const newResponseMessage: FormattedMessage = {
                 type: "text",
                 sender: SenderType.SYSTEM,
-                content: response.plainText,
+                content: response.openai.plainText,
               };
-              handleNewMessage(clientId, newResponseMessage);
+              await handleNewMessage(clientId, newResponseMessage);
             })
             .catch((err) => console.error(err));
         });
       });
     }
-  }, [openai]);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -102,7 +99,7 @@ export default function CommandPalette({ props }) {
   };
 
   const handleNewMessage = async (clientId, newUserMessage) => {
-    const success = await insertMessage(
+    const { success, data } = await insertMessage(
       clientId,
       newUserMessage.type,
       newUserMessage.sender,
@@ -111,7 +108,10 @@ export default function CommandPalette({ props }) {
     if (!success) {
       console.error("Messages update failed for supabase table messages");
     }
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { ...newUserMessage, id: data[0].id },
+    ]);
   };
 
   const handleInputChange = (event) => {
@@ -148,46 +148,49 @@ export default function CommandPalette({ props }) {
     };
     await handleNewMessage(clientId, newUserMessage);
     setMessages((prevMessages) => [...prevMessages, loadingMessage]);
-    if (openai) {
-      await openai
-        .run(input)
-        .then(async (response) => {
-          setIsLoading(false);
-          setMessages((prevMessages) =>
-            prevMessages.filter((message) => message.type !== "loading")
-          );
-          const newResponseMessage: FormattedMessage = {
-            type: "text",
-            sender: SenderType.AI,
-            content: response.plainText,
-          };
-          await handleNewMessage(clientId, newResponseMessage);
-          response.products?.forEach(
-            async (product) =>
-              await handleNewMessage(clientId, {
-                type: "link",
-                sender: SenderType.AI,
-                content: JSON.stringify(product),
-              } as FormattedMessage)
-          );
-        })
-        .catch(async (err) => {
-          setIsLoading(false);
+    callOpenai(
+      input,
+      clientId!,
+      MessageSource.CHAT,
+      messages.slice(-1 - MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
+    )
+      .then(async (response) => {
+        setIsLoading(false);
+        setMessages((prevMessages) =>
+          prevMessages.filter((message) => message.type !== "loading")
+        );
+        if (!response.show) {
           await handleNewMessage(clientId, {
             type: "text",
             content: "AI has encountered an error. Please try agian.",
             sender: SenderType.SYSTEM,
           } as FormattedMessage);
-          console.error(err);
-        });
-    } else {
-      await handleNewMessage(clientId, {
-        type: "text",
-        content: "AI has encountered an error. Please try agian.",
-        sender: SenderType.SYSTEM,
-      } as FormattedMessage);
-      console.error("openai not available");
-    }
+          return;
+        }
+        const newResponseMessage: FormattedMessage = {
+          type: "text",
+          sender: SenderType.AI,
+          content: response.openai.plainText,
+        };
+        await handleNewMessage(clientId, newResponseMessage);
+        response.openai.products?.forEach(
+          async (product) =>
+            await handleNewMessage(clientId, {
+              type: "link",
+              sender: SenderType.AI,
+              content: JSON.stringify(product),
+            } as FormattedMessage)
+        );
+      })
+      .catch(async (err) => {
+        setIsLoading(false);
+        await handleNewMessage(clientId, {
+          type: "text",
+          content: "AI has encountered an error. Please try agian.",
+          sender: SenderType.SYSTEM,
+        } as FormattedMessage);
+        console.error(err);
+      });
   };
 
   const handleDropdownItemClick = (item) => {
