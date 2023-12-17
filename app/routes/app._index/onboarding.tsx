@@ -33,7 +33,7 @@ export default function Index() {
   const steps = [
     "Introduction",
     "Deep Linking",
-    "Prompt Settings",
+    // "Prompt Settings",
     "Embedding",
   ];
 
@@ -52,7 +52,7 @@ export default function Index() {
   const handleDeepLink = (type: string) => {
     const shopifyDomain = domain;
     // TODO: Currently this is Client ID of sales-associate-DEV. We'd need to change this to accept env variables and uuid of production app
-    const uuid = "6ce842a9-f05d-4c3a-9c1e-d39e82be3f07";
+    const uuid = "5ad052c5180f45582abe299b3bbe69b8";
     const handle = type === "embed" ? "embed" : "section"; // embed.liquid file in blokcs
     let url;
     if (type === "embed") {
@@ -122,21 +122,22 @@ export default function Index() {
             </BlockStack>
           </BlockStack>
         );
+      //TODO: Add Prompt Settings
+      //   case 2:
+      //     return (
+      //       <BlockStack>
+      //         <Text variant="heading2xl" as="h3" alignment="center">
+      //           Add Sales tactics
+      //         </Text>
+      //         <Text variant="bodyLg" as="p">
+      //           In the below form, you can teach your sales associate best tactics
+      //           to convert sales on your shop. For example, if you're a jewelry
+      //           store, complimenting how nice the ring would look on the
+      //           customer's hand is a great way to convert sales.
+      //         </Text>
+      //       </BlockStack>
+      //     );
       case 2:
-        return (
-          <BlockStack>
-            <Text variant="heading2xl" as="h3" alignment="center">
-              Add Sales tactics
-            </Text>
-            <Text variant="bodyLg" as="p">
-              In the below form, you can teach your sales associate best tactics
-              to convert sales on your shop. For example, if you're a jewelry
-              store, complimenting how nice the ring would look on the
-              customer's hand is a great way to convert sales.
-            </Text>
-          </BlockStack>
-        );
-      case 3:
         return (
           <BlockStack>
             <Text variant="heading2xl" as="h3" alignment="center">
