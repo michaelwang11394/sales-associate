@@ -332,7 +332,7 @@ const runEmbeddingsAndSearch = async (
       {
         client: supabase,
         tableName: "vector_catalog",
-        queryName: "search_catalog",
+        queryName: "match_documents",
         filter: { metadata: { $eq: store } },
       }
     );
