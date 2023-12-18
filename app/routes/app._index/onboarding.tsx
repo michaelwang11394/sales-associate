@@ -64,6 +64,10 @@ export default function Index() {
     window.open(url, "_blank");
   };
 
+  const handleAddCatalog = () => {
+    console.log("catalog added");
+  };
+
   const renderContent = () => {
     switch (step) {
       case 0:
@@ -148,7 +152,9 @@ export default function Index() {
               know what products are available.
             </Text>
             <BlockStack inlineAlign="center" align="center">
-              <Button variant="primary">Add Catalog</Button>
+              <Button variant="primary" onClick={() => handleAddCatalog()}>
+                Add Catalog
+              </Button>
             </BlockStack>
           </BlockStack>
         );

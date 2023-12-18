@@ -34,7 +34,7 @@ export default async function handler(
   const table = request.query.slug[0];
   const queryType = request.query.slug[1];
 
-  const store = request.query.store as string;
+  const store = request.query.store as string; // TODO: Change this to domain
   const clientId = request.query.clientId as string;
 
   if (table === SUPABASE_MESSAGES_TABLE) {
