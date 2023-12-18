@@ -8,7 +8,9 @@ export const RECENTLY_VIEWED_PRODUCTS_COUNT = 5;
 /*
 CAUTION: KEEP THIS SECTION IN SYNC WITH frontend/constants/constants.ts
 */
-export const VERCEL_URL = "https://sales-associate-backend.vercel.app";
+export const VERCEL_URL =
+  import.meta.env.VITE_VERCEL_LOCATION ??
+  "https://sales-associate-backend.vercel.app";
 export const V1 = "api/v1";
 export const SUPABASE_PATH = "supabase";
 export const SUPABASE_MESSAGES_TABLE = "messages";

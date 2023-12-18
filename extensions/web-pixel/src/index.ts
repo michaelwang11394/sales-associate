@@ -11,7 +11,7 @@ register(async ({ analytics, browser, settings }) => {
     const detail = (event as any).data;
 
     const pathname = context.document.location.pathname;
-    const origin = context.document.location.origin;
+    const host = context.document.location.host;
     // Only log the home page for now
     if (name == "page_viewed" && pathname !== "/") {
       return;
@@ -25,7 +25,7 @@ register(async ({ analytics, browser, settings }) => {
             clientId: clientId,
             context: context, // convert context object to JSON string
             name: name,
-            store: origin,
+            store: host,
           },
         ]);
 

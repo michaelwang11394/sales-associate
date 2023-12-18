@@ -14,7 +14,7 @@ import {
 } from "@/constants/constants";
 import { HTTPHelper } from "./http";
 import type { ApiResponse } from "@/constants/types";
-const store = location.origin;
+const store = location.host;
 
 export const getMessages = async (clientId, limit) => {
   try {
