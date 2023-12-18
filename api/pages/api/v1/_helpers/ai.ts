@@ -46,8 +46,8 @@ const shopify = shopifyApi({
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: LATEST_API_VERSION,
   scopes: ["read_products"],
-  hostName: "sales-associate-backend.vercel.app",
-  hostScheme: "https",
+  hostName: process.env.VERCEL_HOST ?? "sales-associate-backend.vercel.app",
+  hostScheme: process.env.VERCEL_HOST === undefined ? "https" : "http",
   isEmbeddedApp: false,
 });
 
@@ -326,6 +326,7 @@ const runEmbeddingsAndSearch = async (
   // const res = await createCatalogEmbeddings();
   // console.log(res);
   let vectorStore;
+  let relevantDocs;
   try {
     vectorStore = new SupabaseVectorStore(
       new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
@@ -336,6 +337,41 @@ const runEmbeddingsAndSearch = async (
         filter: { metadata: { $eq: store } },
       }
     );
+    relevantDocs = await vectorStore.similaritySearch(
+      query,
+      RETURN_TOP_N_SIMILARITY_DOCS
+    );
+
+    // If no docs are returned, means that we need to create embeddings
+    if (relevantDocs.length === 0) {
+      const { strippedProducts } = await getProducts(store);
+      // Delete existing indices first
+      const { error } = await supabase
+        .from("vector_catalog")
+        .delete()
+        .eq("metadata", store);
+      if (error) {
+        throw new Error("error updating vector table in supabase");
+      }
+
+      vectorStore = await SupabaseVectorStore.fromTexts(
+        strippedProducts,
+        Array(strippedProducts.length).fill(store),
+        new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_KEY }),
+        {
+          client: supabase,
+          tableName: "vector_catalog",
+          queryName: "match_documents",
+        }
+      );
+      relevantDocs = await vectorStore.similaritySearch(
+        query,
+        RETURN_TOP_N_SIMILARITY_DOCS
+      );
+      if (relevantDocs.length === 0) {
+        throw new Error("Search after index creation returned 0 results");
+      }
+    }
   } catch (error) {
     console.log(error);
     console.log("memory vector");
@@ -346,12 +382,11 @@ const runEmbeddingsAndSearch = async (
         openAIApiKey: OPENAI_KEY,
       })
     );
+    relevantDocs = await vectorStore.similaritySearch(
+      query,
+      RETURN_TOP_N_SIMILARITY_DOCS
+    );
   }
-
-  const relevantDocs = await vectorStore.similaritySearch(
-    query,
-    RETURN_TOP_N_SIMILARITY_DOCS
-  );
 
   return relevantDocs.map((doc) => doc.pageContent);
 };

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "run-p -sr vite:dev shopify:dev",
+    "dev:vercel": "VITE_VERCEL_LOCATION=http://localhost:3000 run-p -sr vite:dev shopify:dev",
     "build": "run-s vite:build shopify:build",
     "deploy": "run-s vite:build cleanup shopify:deploy",
     "shopify": "shopify",
@@ -20,7 +21,9 @@
     "docker-start": "npm run setup && npm run start",
     "setup": "prisma generate && prisma migrate deploy",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
-    "prisma": "prisma"
+    "prisma": "prisma",
+    "dev:vercel-api": "cd api && VERCEL_HOST=localhost:3000 vercel dev",
+    "dev:run-full-stack": "run-p -rs dev:vercel-api dev:vercel"
   },
   "dependencies": {
     "@remix-run/node": "^1.19.1",

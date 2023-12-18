@@ -22,9 +22,9 @@ register(async ({ analytics, browser, settings }) => {
             id: id,
             timestamp: timestamp,
             detail: detail, // convert data object to JSON string
-            clientId,
-            context, // convert context object to JSON string
-            name,
+            clientId: clientId,
+            context: context, // convert context object to JSON string
+            name: name,
             store: host,
           },
         ]);
