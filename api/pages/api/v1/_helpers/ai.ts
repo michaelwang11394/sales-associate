@@ -46,8 +46,8 @@ const shopify = shopifyApi({
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: LATEST_API_VERSION,
   scopes: ["read_products"],
-  hostName: "sales-associate-backend.vercel.app",
-  hostScheme: "https",
+  hostName: process.env.VERCEL_HOST ?? "sales-associate-backend.vercel.app",
+  hostScheme: process.env.VERCEL_HOST === undefined ? "https" : "http",
   isEmbeddedApp: false,
 });
 
