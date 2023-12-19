@@ -1,9 +1,9 @@
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { OPENAI_KEY, RETURN_TOP_N_SIMILARITY_DOCS } from "../constants";
-import { getProducts } from "./shopify";
-import { supabase } from "./supabase";
+import { OPENAI_KEY, RETURN_TOP_N_SIMILARITY_DOCS } from "../../constants";
+import { getProducts } from "../shopify";
+import { supabase } from "../supabase_queries";
 
 // TODO: Move createCatalogEmbeddings to app home once we create that.
 export const runEmbeddingsAndSearch = async (

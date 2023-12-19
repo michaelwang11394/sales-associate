@@ -5,22 +5,20 @@ import { AIMessage, HumanMessage } from "langchain/schema";
 import {
   MESSAGES_HISTORY_LIMIT,
   RECENTLY_VIEWED_PRODUCTS_COUNT,
-} from "../constants";
-import type { FormattedMessage, MessageSource } from "../types";
-import { SenderType } from "../types";
-import { LLMConfig } from "./llmConfig";
-import {
-  RunnableWithMemory,
-  createEmbedRunnable,
-  createFinalRunnable,
-  createSimpleSearchRunnable,
-} from "./runnables";
+} from "../../constants";
+import type { FormattedMessage, MessageSource } from "../../types";
+import { SenderType } from "../../types";
 import {
   getMessagesFromIds,
   hasItemsInCart,
   hasViewedProducts,
   isNewCustomer,
-} from "./supabase";
+} from "../supabase_queries";
+import { LLMConfig } from "./llmConfig";
+import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
+import { createFinalRunnable } from "./runnables/createFinalRunnable";
+import { createEmbedRunnable } from "./runnables/embedRunnable";
+import { RunnableWithMemory } from "./runnables/types";
 
 const createOpenaiWithHistory = async (
   input: string,

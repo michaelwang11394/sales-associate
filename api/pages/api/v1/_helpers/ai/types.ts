@@ -1,7 +1,7 @@
-import type { HalluctinationCheckSeverity } from "../types";
+import type { HalluctinationCheckSeverity } from "../../types";
 
-export interface LLMConfigType {
+export type LLMConfigType = {
   prompt: string;
   include_embeddings: boolean;
   validate_hallucination: HalluctinationCheckSeverity;
-}
+};

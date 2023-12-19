@@ -82,7 +82,7 @@ export const insertMessage = async (
     .select();
 
   if (error) {
-    console.error("Error during insert:", error);
+    console.error("Error during message insert:", error);
     return { success: false, data: data };
   }
   return { success: true, data: data };
@@ -291,4 +291,30 @@ export const createEmbeddings = async (store: string) => {
     console.error("Error with creating product embedding:", error);
     return { success: false };
   }
+};
+
+export type LlmProfilingFields = {
+  id: string; // uuid
+  input: any;
+  output?: any;
+  duration: number; // null if error
+  parent?: string; // parent Runnables uuid if any
+  store: string; // url of store
+  clientId: string;
+  alias: string; // the name given to runnable
+  error?: string; // null if success, error message if any
+  start: number;
+  end: number;
+};
+
+export const logRunnablesInfo = async (fields: LlmProfilingFields) => {
+  const { error, data } = await supabase
+    .from("runnables")
+    .insert(fields)
+    .select();
+  if (error) {
+    console.error("Error during runnables insert:", error);
+    return { success: false, data: data };
+  }
+  return { success: true, data: data };
 };

@@ -1,7 +1,7 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { z } from "zod";
-import { OPENAI_KEY } from "../constants";
-import { HalluctinationCheckSeverity, MessageSource } from "../types";
+import { OPENAI_KEY } from "../../constants";
+import { HalluctinationCheckSeverity, MessageSource } from "../../types";
 import type { LLMConfigType } from "./types";
 
 export const LLMConfig: Record<MessageSource, LLMConfigType> = {
