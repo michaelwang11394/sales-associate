@@ -5,7 +5,7 @@ import {
   shopifyApp,
   LATEST_API_VERSION,
 } from "@shopify/shopify-app-remix/server";
-import { restResources } from "@shopify/shopify-api/rest/admin/2023-07";
+import { restResources } from "@shopify/shopify-api/rest/admin/2023-10";
 
 import { SupabaseSessionStorage } from "./supabase.session";
 
