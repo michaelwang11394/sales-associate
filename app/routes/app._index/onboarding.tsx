@@ -1,14 +1,14 @@
-import { useState } from "react";
 import { json } from "@remix-run/node";
 import {
-  Card,
-  Button,
-  ProgressBar,
   BlockStack,
-  Text,
   Box,
+  Button,
   ButtonGroup,
+  Card,
+  ProgressBar,
+  Text,
 } from "@shopify/polaris";
+import { useState } from "react";
 
 import { useLoaderData } from "@remix-run/react";
 import { authenticate } from "~/shopify.server";
@@ -118,7 +118,7 @@ export default function Index(props: OnboardingProps) {
                 <Button
                   variant="primary"
                   onClick={() => handleDeepLink("embed")}>
-                  Add Embeded App
+                  Add Embedded App
                 </Button>
               </ButtonGroup>
             </BlockStack>
