@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-import { SenderType } from "../types";
-import { getProducts } from "./ai";
-import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
+import { SenderType } from "../types";
+import { getProducts } from "./shopify";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;

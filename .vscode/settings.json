@@ -3,6 +3,9 @@
   "editor.formatOnPaste": true, // required 
   "editor.formatOnType": false, // required
   "editor.formatOnSave": true, // optional 
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
   "editor.formatOnSaveMode": "file", // required to format on save
   "prettier.semi": true,
   "files.autoSave": "onFocusChange", // optional but recommended
