@@ -6,7 +6,6 @@ import {
   ProgressBar,
   BlockStack,
   Text,
-  List,
   Box,
   ButtonGroup,
 } from "@shopify/polaris";
@@ -64,10 +63,6 @@ export default function Index() {
     window.open(url, "_blank");
   };
 
-  const handleAddCatalog = () => {
-    console.log("catalog added");
-  };
-
   const renderContent = () => {
     switch (step) {
       case 0:
@@ -77,27 +72,9 @@ export default function Index() {
               Begin Onboarding
             </Text>
             <Text variant="bodyLg" as="p">
-              Welcome! You're only 3 steps away from boosting your sales with
-              your own online Sales Associate. Here's what we're going to do in
-              the next 3 steps:
-              <List type="bullet">
-                <List.Item>
-                  We're going to add the Sales Associate app to your store via a
-                  deep link. The app consists of two parts. The first part is a
-                  traditional search icon that will replace your current search.
-                  The second part will be an embed in your shops bottom right
-                  corner that will show floaty messages.{" "}
-                </List.Item>
-                <List.Item>
-                  Next, we'll add your store's catalog so your sales associate
-                  will know what products are available.{" "}
-                </List.Item>
-                <List.Item>
-                  Lastly, you're going to teach your Sales Associate best
-                  tactics to convert sales on your shop.{" "}
-                </List.Item>
-              </List>
-              Let's get started!
+              Welcome! Let's add the Sales Associate app to your store in the
+              next step. This app will help you boost your sales by interacting
+              with your customers in real time.
             </Text>
           </BlockStack>
         );
@@ -141,23 +118,23 @@ export default function Index() {
       //         </Text>
       //       </BlockStack>
       //     );
-      case 2:
-        return (
-          <BlockStack>
-            <Text variant="heading2xl" as="h3" alignment="center">
-              Add store catalog
-            </Text>
-            <Text variant="bodyLg" as="p">
-              Let's now add your stores catalog so your sales associate will
-              know what products are available.
-            </Text>
-            <BlockStack inlineAlign="center" align="center">
-              <Button variant="primary" onClick={() => handleAddCatalog()}>
-                Add Catalog
-              </Button>
-            </BlockStack>
-          </BlockStack>
-        );
+      // case 2:
+      //   return (
+      //     <BlockStack>
+      //       <Text variant="heading2xl" as="h3" alignment="center">
+      //         Add store catalog
+      //       </Text>
+      //       <Text variant="bodyLg" as="p">
+      //         Let's now add your stores catalog so your sales associate will
+      //         know what products are available.
+      //       </Text>
+      //       <BlockStack inlineAlign="center" align="center">
+      //         <Button variant="primary" onClick={() => handleAddCatalog()}>
+      //           Add Catalog
+      //         </Button>
+      //       </BlockStack>
+      //     </BlockStack>
+      //   );
 
       default:
         return null;
