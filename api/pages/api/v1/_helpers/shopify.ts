@@ -1,4 +1,5 @@
 import { LATEST_API_VERSION, shopifyApi } from "@shopify/shopify-api";
+import "@shopify/shopify-api/adapters/node";
 import { SupabaseSessionStorage } from "./supabase.session";
 
 const shopify_client = shopifyApi({
