@@ -63,6 +63,10 @@ export default function Index() {
     window.open(url, "_blank");
   };
 
+  const handleAddCatalog = () => {
+    console.log("catalog added");
+  };
+
   const renderContent = () => {
     switch (step) {
       case 0:
