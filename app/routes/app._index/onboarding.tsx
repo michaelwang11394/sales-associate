@@ -66,8 +66,7 @@ export default function Index(props: OnboardingProps) {
 
   const handleDeepLink = (type: string) => {
     const shopifyDomain = domain;
-    // TODO: Currently this is Client ID of sales-associate-DEV. We'd need to change this to accept env variables and uuid of production app
-    const uuid = "5ad052c5180f45582abe299b3bbe69b8";
+    const uuid = "d0b1c87b-c74c-4822-9416-ab1260d60fd9";
     const handle = type === "embed" ? "embed" : "section"; // embed.liquid file in blokcs
     let url;
     if (type === "embed") {
