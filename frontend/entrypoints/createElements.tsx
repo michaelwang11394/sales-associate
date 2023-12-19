@@ -5,7 +5,7 @@ import CommandPalette from "@/components/command";
 import "./section.css";
 import "@/styles/chat.css";
 
-export function createIcon(home, mountDiv, overlayDiv, iconSize = 2) {
+export function createIcon(home, mountDiv, overlayDiv, iconSize) {
   const element = document.getElementById(mountDiv);
   if (!element) {
     throw new Error(`Element with id "${mountDiv}" not found`);
