@@ -12,6 +12,11 @@ import {
 
 import { useLoaderData } from "@remix-run/react";
 import { authenticate } from "~/shopify.server";
+import { supabase } from "~/utils/supabase";
+
+interface OnboardingProps {
+  setOnboardingCompleted: (value: boolean) => void;
+}
 export async function loader({ request }) {
   // Authenticate the request
   const { admin, session } = await authenticate.admin(request);
@@ -24,21 +29,32 @@ export async function loader({ request }) {
 
   return json({ shopData, domain });
 }
-export default function Index() {
+export default function Index(props: OnboardingProps) {
   const [step, setStep] = useState(0);
+  const [blockAppAdded, setBlockAppAdded] = useState(false);
+  const [embedAppAdded, setEmbedAppAdded] = useState(false);
   const { shopData, domain } = useLoaderData();
   console.log("from onboarding", shopData, domain);
 
-  const steps = [
-    "Introduction",
-    "Deep Linking",
-    // "Prompt Settings",
-    "Embedding",
-  ];
+  const steps = ["Introduction", "Deep Linking"];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < steps.length - 1) {
       setStep(step + 1);
+    } else if (step === steps.length - 1) {
+      // Update onboarding_complete field in merchants table
+      console.log("shopData", domain);
+      try {
+        const { data } = await supabase
+          .from("merchants")
+          .update({ onboarding_completed: true })
+          .eq("domain", domain);
+
+        console.log("data", data);
+      } catch (error) {
+        console.log("error", error);
+      }
+      props.setOnboardingCompleted(true);
     }
   };
 
@@ -55,16 +71,14 @@ export default function Index() {
     const handle = type === "embed" ? "embed" : "section"; // embed.liquid file in blokcs
     let url;
     if (type === "embed") {
+      setEmbedAppAdded(true);
       url = `https://${shopifyDomain}/admin/themes/current/editor?context=apps&activateAppId=${uuid}/${handle}`;
     } else {
+      setBlockAppAdded(true);
       //TODO: Asset API to replace any default search
       url = `https://${shopifyDomain}/admin/themes/current/editor?addAppBlockId=${uuid}/${handle}&target=sectionGroup:header`;
     }
     window.open(url, "_blank");
-  };
-
-  const handleAddCatalog = () => {
-    console.log("catalog added");
   };
 
   const renderContent = () => {
@@ -107,38 +121,6 @@ export default function Index() {
             </BlockStack>
           </BlockStack>
         );
-      //TODO: Add Prompt Settings
-      //   case 2:
-      //     return (
-      //       <BlockStack>
-      //         <Text variant="heading2xl" as="h3" alignment="center">
-      //           Add Sales tactics
-      //         </Text>
-      //         <Text variant="bodyLg" as="p">
-      //           In the below form, you can teach your sales associate best tactics
-      //           to convert sales on your shop. For example, if you're a jewelry
-      //           store, complimenting how nice the ring would look on the
-      //           customer's hand is a great way to convert sales.
-      //         </Text>
-      //       </BlockStack>
-      //     );
-      // case 2:
-      //   return (
-      //     <BlockStack>
-      //       <Text variant="heading2xl" as="h3" alignment="center">
-      //         Add store catalog
-      //       </Text>
-      //       <Text variant="bodyLg" as="p">
-      //         Let's now add your stores catalog so your sales associate will
-      //         know what products are available.
-      //       </Text>
-      //       <BlockStack inlineAlign="center" align="center">
-      //         <Button variant="primary" onClick={() => handleAddCatalog()}>
-      //           Add Catalog
-      //         </Button>
-      //       </BlockStack>
-      //     </BlockStack>
-      //   );
 
       default:
         return null;
@@ -160,8 +142,11 @@ export default function Index() {
                 <Button
                   variant="primary"
                   onClick={handleNext}
-                  disabled={step === steps.length - 1}>
-                  Next
+                  disabled={
+                    step === steps.length - 1 &&
+                    (!blockAppAdded || !embedAppAdded)
+                  }>
+                  {step === steps.length - 1 ? "Finish" : "Next"}
                 </Button>
               </ButtonGroup>
             </BlockStack>
