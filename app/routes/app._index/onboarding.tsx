@@ -110,14 +110,18 @@ export default function Index(props: OnboardingProps) {
               that will show floaty messages.{" "}
             </Text>
             <BlockStack inlineAlign="center" align="center">
-              <Button
-                variant="primary"
-                onClick={() => handleDeepLink("section")}>
-                Add Block App
-              </Button>
-              <Button variant="primary" onClick={() => handleDeepLink("embed")}>
-                Add Embeded App
-              </Button>
+              <ButtonGroup>
+                <Button
+                  variant="primary"
+                  onClick={() => handleDeepLink("section")}>
+                  Add Block App
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => handleDeepLink("embed")}>
+                  Add Embeded App
+                </Button>
+              </ButtonGroup>
             </BlockStack>
           </BlockStack>
         );
