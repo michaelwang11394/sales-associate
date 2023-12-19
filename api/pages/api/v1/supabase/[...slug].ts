@@ -1,5 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
+  createEmbeddings,
+  getLastPixelEvent,
+  getMessages,
+  hasItemsInCart,
+  hasViewedProducts,
+  insertMessage,
+  isNewCustomer,
+  offerCoupon,
+} from "../_helpers/supabase_queries";
+import {
   RECENTLY_VIEWED_PRODUCTS_COUNT,
   SUPABASE_EMBEDDINGS_TABLE,
   SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
@@ -12,16 +22,6 @@ import {
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_TABLE,
 } from "../constants";
-import {
-  createEmbeddings,
-  getLastPixelEvent,
-  getMessages,
-  hasItemsInCart,
-  hasViewedProducts,
-  insertMessage,
-  isNewCustomer,
-  offerCoupon,
-} from "../_helpers/supabase";
 import { httpResponse } from "../http";
 
 export default async function handler(

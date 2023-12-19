@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { callOpenai } from "./_helpers/ai/ai";
 import { httpResponse } from "./http";
 import type { MessageSource } from "./types";
-import { callOpenai } from "./_helpers/ai";
 
 export default async function handler(
   request: NextApiRequest,
