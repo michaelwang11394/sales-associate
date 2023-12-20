@@ -12,6 +12,7 @@
     "@shopify/shopify-api": "^8.1.1",
     "@shopify/shopify-app-session-storage": "^2.0.2",
     "@supabase/supabase-js": "^2.39.0",
+    "crypto": "^1.0.1",
     "langchain": "^0.0.209",
     "next": "14.0.4",
     "react": "^18",
