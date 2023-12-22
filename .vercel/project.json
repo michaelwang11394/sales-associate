@@ -1,0 +1,15 @@
+{
+  "projectId": "prj_Qjg4T0fcLHDpWiXO4Fi4HCN0opQw",
+  "orgId": "team_77jOox0T4AOeUAhrVDiyLwkU",
+  "settings": {
+    "createdAt": 1703039246027,
+    "framework": "remix",
+    "devCommand": "npm run dev",
+    "installCommand": "npm install",
+    "buildCommand": "npm run remix-build",
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "18.x"
+  }
+}

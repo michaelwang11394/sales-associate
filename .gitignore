@@ -15,3 +15,5 @@ database.sqlite
 package-lock.json
 yarn.lock
 shopify.app.toml
+.vercel/output
+.vercel/.env*
