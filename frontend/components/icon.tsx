@@ -1,16 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
-import { getLastPixelEvent, getMessages } from "@/helper/supabase";
-import "@/styles/chat.css";
-import { getGreetingMessage } from "@/helper/shopify";
-import { toggleOverlayVisibility } from "@/helper/animations";
 import {
   MESSAGES_HISTORY_LIMIT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
 import { MessageSource, type DBMessage } from "@/constants/types";
-import { formatDBMessage } from "./command";
 import { callOpenai } from "@/helper/ai";
+import { toggleOverlayVisibility } from "@/helper/animations";
+import { getGreetingMessage } from "@/helper/shopify";
+import { getLastPixelEvent, getMessages } from "@/helper/supabase";
+import "@/styles/chat.css";
+import { useEffect, useRef, useState } from "react";
+import { formatDBMessage } from "./command";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
@@ -84,9 +84,7 @@ export default function Icon({ props }) {
       {/* Icon */}
       <div ref={iconRef}>
         <img
-          src={
-            "https://cdn.shopify.com/s/files/applications/7e5628d9a123d4cd1a055719e949d6a3_200x200.png?1702946915"
-          }
+          src="https://cdn.shopify.com/s/files/1/0847/3011/8437/files/icon12001200.png?v=1703370084"
           alt="Chat Icon"
           width={iconSize + "px"}
           style={{
