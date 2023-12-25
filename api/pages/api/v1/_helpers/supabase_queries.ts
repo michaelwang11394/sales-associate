@@ -293,27 +293,24 @@ export const createEmbeddings = async (store: string) => {
   }
 };
 
-export type LlmProfilingFields = {
-  id: string; // uuid
-  input: any;
-  output?: any;
-  duration: number; // null if error
-  parent?: string; // parent Runnables uuid if any
-  store: string; // url of store
-  clientId: string;
-  alias: string; // the name given to runnable
-  error?: string; // null if success, error message if any
-  start: number;
-  end: number;
+export type ModelLoggingFields = {
+  success: boolean;
+  input: string;
+  platform: string;
+  model: string;
+  run_id?: string;
+  timestamp?: number;
+  input_cost?: number;
+  output_cost?: number;
+  rate_type?: string;
+  duration?: number;
+  output?: string;
 };
 
-export const logRunnablesInfo = async (fields: LlmProfilingFields) => {
-  const { error, data } = await supabase
-    .from("runnables")
-    .insert(fields)
-    .select();
+export const logModelRun = async (fields: ModelLoggingFields) => {
+  const { error, data } = await supabase.from("models").insert(fields).select();
   if (error) {
-    console.error("Error during runnables insert:", error);
+    console.error("Error during models insert:", error);
     return { success: false, data: data };
   }
   return { success: true, data: data };

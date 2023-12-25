@@ -1,4 +1,3 @@
-import { ConsoleCallbackHandler } from "langchain/callbacks";
 import type { BufferMemory } from "langchain/memory";
 import type { RunnableSequence } from "langchain/schema/runnable";
 import { OPENAI_RETRIES } from "../../../constants";
@@ -28,10 +27,7 @@ export class RunnableWithMemory {
       throw new Error("openai retries exceeded");
     }
     try {
-      const res = await this.runnable.invoke(
-        { input: input },
-        { callbacks: [new ConsoleCallbackHandler()] }
-      );
+      const res = await this.runnable.invoke({ input: input });
       // Check with the zod schema if products returned
       if (
         this.hallucinationSeverity > HalluctinationCheckSeverity.NONE &&
