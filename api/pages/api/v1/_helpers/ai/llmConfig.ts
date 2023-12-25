@@ -2,6 +2,12 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { z } from "zod";
 import { OPENAI_KEY } from "../../constants";
 import { HalluctinationCheckSeverity, MessageSource } from "../../types";
+import {
+  GPT_3_5_TURBO_16K_MODEL,
+  GPT_3_5_TURBO_MODEL,
+  Platforms,
+} from "./constants";
+import { SupabaseCallbackHandler } from "./logging/SupabaseCallbackHandler";
 import type { LLMConfigType } from "./types";
 
 export const LLMConfig: Record<MessageSource, LLMConfigType> = {
@@ -55,11 +61,17 @@ export const zodSchema = z.object({
 export const chatSalesModel = new ChatOpenAI({
   openAIApiKey: OPENAI_KEY,
   temperature: 0.7,
-  modelName: "gpt-3.5-turbo",
+  modelName: GPT_3_5_TURBO_MODEL,
+  callbacks: [
+    new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_MODEL),
+  ],
 });
 
 export const chatProductModel = new ChatOpenAI({
   openAIApiKey: OPENAI_KEY,
   temperature: 1.0,
-  modelName: "gpt-3.5-turbo-16k",
+  modelName: GPT_3_5_TURBO_16K_MODEL,
+  callbacks: [
+    new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_16K_MODEL),
+  ],
 });
