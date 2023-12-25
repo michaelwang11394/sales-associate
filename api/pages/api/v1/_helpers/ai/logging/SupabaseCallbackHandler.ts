@@ -49,7 +49,7 @@ export class SupabaseCallbackHandler extends BaseCallbackHandler {
       output_cost: output?.llmOutput?.tokenUsage?.completionTokens,
       rate_type: PLATFORM_UNIT_TYPES[this.platform],
       duration: Date.now() - this.startTimestamp!,
-      output: output.generations[0][0].text,
+      output: JSON.stringify(output.generations[0][0].message),
     });
     this.input = "";
     this.startTimestamp = undefined;
