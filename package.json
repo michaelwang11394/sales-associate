@@ -54,6 +54,7 @@
     "react": "^18.2.0",
     "react-chat-elements": "^12.0.11",
     "react-dom": "^18.2.0",
+    "replicate": "^0.18.1",
     "ruby": "^0.6.1",
     "sort-by": "^1.2.0",
     "tailwindcss": "^3.3.3",

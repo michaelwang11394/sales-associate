@@ -2,11 +2,11 @@ export const MESSAGES_HISTORY_LIMIT = 8;
 export const SUPABASE_MESSAGES_RETRIEVED = 20;
 export const RETURN_TOP_N_SIMILARITY_DOCS = 5;
 export const RECENTLY_VIEWED_PRODUCTS_COUNT = 5;
-/* CHATS 
-// HACK: Replace key after migration to serverless
-*/
+
+// LLM related
 export const OPENAI_KEY = process.env.OPENAI_API_KEY;
 export const OPENAI_RETRIES = 3;
+export const REPLICATE_KEY = process.env.REPLICATE_KEY;
 
 // API endpoints
 /*

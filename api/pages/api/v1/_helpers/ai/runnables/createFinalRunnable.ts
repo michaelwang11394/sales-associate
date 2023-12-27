@@ -32,6 +32,7 @@ export const createFinalRunnable = async (
 
   // Binding "function_call" below makes the model always call the specified function.
   // If you want to allow the model to call functions selectively, omit it.
+  // If using replicate, bind will NOT work. So find alternate way for structured output
   const functionCallingModel = chatSalesModel.bind({
     functions: [
       {

@@ -1,6 +1,8 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
+import { Replicate } from "langchain/llms/replicate";
 import { z } from "zod";
-import { OPENAI_KEY } from "../../constants";
+
+import { OPENAI_KEY, REPLICATE_KEY } from "../../constants";
 import { HalluctinationCheckSeverity, MessageSource } from "../../types";
 import {
   GPT_3_5_TURBO_16K_MODEL,
@@ -74,4 +76,10 @@ export const chatProductModel = new ChatOpenAI({
   callbacks: [
     new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_16K_MODEL),
   ],
+});
+
+export const replicateMistralModel = new Replicate({
+  apiKey: REPLICATE_KEY,
+  model:
+    "mistralai/mixtral-8x7b-instruct-v0.1:7b3212fbaf88310cfef07a061ce94224e82efc8403c26fc67e8f6c065de51f21",
 });
