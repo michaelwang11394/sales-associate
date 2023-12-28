@@ -1,11 +1,11 @@
 import "@shopify/shopify-api/adapters/node";
-import { BufferWindowMemory, ChatMessageHistory } from "langchain/memory";
+import {
+  ChatMessageHistory,
+  ConversationSummaryBufferMemory,
+} from "langchain/memory";
 import { AIMessage, HumanMessage } from "langchain/schema";
 
-import {
-  MESSAGES_HISTORY_LIMIT,
-  RECENTLY_VIEWED_PRODUCTS_COUNT,
-} from "../../constants";
+import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
 import type { FormattedMessage, MessageSource } from "../../types";
 import { SenderType } from "../../types";
 import {
@@ -14,7 +14,8 @@ import {
   hasViewedProducts,
   isNewCustomer,
 } from "../supabase_queries";
-import { LLMConfig } from "./llmConfig";
+import { MESSAGE_SUMMARY_FLUSH_THRESHOLD } from "./constants";
+import { LLMConfig, chatSalesModel } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
@@ -80,14 +81,15 @@ const createOpenai = async (
   const llmConfig = LLMConfig[messageSource];
 
   // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
-  const memory = new BufferWindowMemory({
+  const memory = new ConversationSummaryBufferMemory({
     chatHistory: new ChatMessageHistory(history),
-    inputKey: "input",
-    outputKey: "output",
-    k: MESSAGES_HISTORY_LIMIT / 2, // Note this is k back and forth (naively assumes that human and ai have one message each) so its double the number here
-    memoryKey: "history",
+    maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
+    llm: chatSalesModel, // Use same model as sales model for now
     returnMessages: true,
   });
+
+  // Langchain quirk, the summarization and threshold enforce only happens on saveContext. Since we instantiate memory on every request, we need to prune here
+  await memory.prune();
 
   const finalChain = await createFinalRunnable(
     context,
@@ -138,6 +140,6 @@ export const callOpenai = async (
     store,
     clientId,
     source,
-    data.slice(0, MESSAGES_HISTORY_LIMIT)
+    data // Pass in all messages for summary
   );
 };
