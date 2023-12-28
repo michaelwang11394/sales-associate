@@ -48,19 +48,20 @@ export async function loader({ request }) {
   } else {
     // merchant does not exist so insert data
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { data: merchantInsert } = await supabase.from("merchants").upsert([
-      {
-        id: shopData.data[0].id,
-        domain: shopData.data[0].domain, // FK to events[store], messages[store], vector_catalog[metadata] tables
-        name: shopData.data[0].name,
-        plan_name: shopData.data[0].plan_name,
-        myshopify_domain: shopData.data[0].myshopify_domain, //FK to sessions[store] table
-        shop_owner: shopData.data[0].shop_owner,
-        customer_email: shopData.data[0].customer_email,
-        checkout_api_supported: shopData.data[0].checkout_api_supported,
-        onboarding_completed: false,
-      },
-    ]);
+    const { data: merchantInsert, error: insertError } = await supabase
+      .from("merchants")
+      .insert([
+        {
+          id: shopData.data[0].id,
+          domain: shopData.data[0].domain, // FK to events[store], messages[store], vector_catalog[metadata] tables
+          name: shopData.data[0].name,
+          plan_name: shopData.data[0].plan_name,
+          shop_owner: shopData.data[0].shop_owner,
+          customer_email: shopData.data[0].customer_email,
+          checkout_api_supported: shopData.data[0].checkout_api_supported,
+          onboarding_completed: false,
+        },
+      ]);
   }
 
   return json({ shopData, domain, onboardingState, merchant });
