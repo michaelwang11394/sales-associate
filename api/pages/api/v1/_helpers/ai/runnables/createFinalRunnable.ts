@@ -53,6 +53,7 @@ export const createFinalRunnable = async (
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
       memory: () => memory.loadMemoryVariables({}),
+      products: (input) => input.products ?? "No relevant products",
     }),
     RunnablePassthrough.assign({
       history: (previousOutput) => {
