@@ -19,7 +19,7 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.EMBED]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}\n. Keep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },

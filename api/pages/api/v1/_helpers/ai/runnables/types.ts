@@ -78,10 +78,6 @@ export class RunnableWithMemory {
           .map((product) => product.product);
       }
 
-      await this.memory.saveContext(
-        { input: input },
-        { output: res.plainText + JSON.stringify(res.products) }
-      );
       return res;
     } catch (error: any) {
       if (error instanceof HallucinationError) {

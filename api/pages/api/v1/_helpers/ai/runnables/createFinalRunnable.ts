@@ -5,7 +5,10 @@ import {
   MessagesPlaceholder,
   SystemMessagePromptTemplate,
 } from "langchain/prompts";
-import { RunnableSequence } from "langchain/schema/runnable";
+import {
+  RunnablePassthrough,
+  RunnableSequence,
+} from "langchain/schema/runnable";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { chatSalesModel, zodSchema } from "../llmConfig";
 import type { LLMConfigType } from "../types";
@@ -27,6 +30,7 @@ export const createFinalRunnable = async (
   const chatPrompt = ChatPromptTemplate.fromMessages([
     formattedSystemMessagePrompt,
     new MessagesPlaceholder("history"),
+    ["system", "{products}"],
     ["user", "{input}"],
   ]);
 
@@ -47,21 +51,17 @@ export const createFinalRunnable = async (
   const outputParser = new JsonOutputFunctionsParser();
 
   const salesChain = RunnableSequence.from([
-    {
-      input: (initialInput) => {
-        return initialInput.input;
-      },
+    RunnablePassthrough.assign({
       memory: () => memory.loadMemoryVariables({}),
-    },
-    {
-      input: (previousOutput) => {
-        return previousOutput.input;
-      },
+      products: (input) => input.products ?? "No relevant products",
+    }),
+    RunnablePassthrough.assign({
       history: (previousOutput) => {
+        // @ts-ignore
         const mem = previousOutput.memory.history;
         return mem;
       },
-    },
+    }),
     chatPrompt.pipe(functionCallingModel).pipe(outputParser),
   ]);
 
