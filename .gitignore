@@ -12,7 +12,8 @@ node_modules
 database.sqlite
 
 /extensions/chat-interface/snippets
-/extensions/chat-interface/assets/.vite/manifest.json
+/extensions/chat-interface/assets/
+/extensions/chat-interface/assets
 
 .env
 package-lock.json
