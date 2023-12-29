@@ -10,7 +10,9 @@ node_modules
 /prisma/dev.sqlite-journal
 /extensions/web-pixel/dist/
 database.sqlite
+
 /extensions/chat-interface/snippets
+/extensions/chat-interface/assets/.vite/manifest.json
 
 .env
 package-lock.json
