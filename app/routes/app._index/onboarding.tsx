@@ -147,7 +147,8 @@ export default function Index(props: OnboardingProps) {
                   onClick={handleNext}
                   disabled={
                     step === steps.length - 1 &&
-                    (!blockAppAdded || !embedAppAdded)
+                    !blockAppAdded &&
+                    !embedAppAdded
                   }>
                   {step === steps.length - 1 ? "Finish" : "Next"}
                 </Button>
