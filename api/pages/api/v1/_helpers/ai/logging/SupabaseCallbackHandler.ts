@@ -36,8 +36,6 @@ export class SupabaseCallbackHandler extends BaseCallbackHandler {
     parentRunId?: string | undefined,
     tags?: string[] | undefined
   ) {
-    console.log("output", JSON.stringify(output.generations[0][0]));
-    console.log("runId", runId);
     await logModelRun({
       success: true,
       input: this.input,

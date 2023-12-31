@@ -5,6 +5,7 @@ import {
 } from "langchain/memory";
 import { AIMessage, HumanMessage } from "langchain/schema";
 
+import type { EventEmitter } from "events";
 import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
 import type { FormattedMessage, MessageSource } from "../../types";
 import { SenderType } from "../../types";
@@ -26,7 +27,8 @@ const createOpenaiWithHistory = async (
   store: string,
   clientId: string,
   messageSource: MessageSource,
-  messages: FormattedMessage[] = []
+  messages: FormattedMessage[],
+  streamWriter: EventEmitter
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext: string[] = [];
@@ -67,7 +69,8 @@ const createOpenaiWithHistory = async (
     store,
     customerContext,
     messageSource,
-    history
+    history,
+    streamWriter
   );
 };
 
@@ -76,7 +79,8 @@ const createOpenai = async (
   store: string,
   context: string[],
   messageSource: MessageSource,
-  history: (HumanMessage | AIMessage)[] = []
+  history: (HumanMessage | AIMessage)[],
+  streamWriter: EventEmitter
 ) => {
   const llmConfig = LLMConfig[messageSource];
 
@@ -102,8 +106,8 @@ const createOpenai = async (
 
   const runnable = new RunnableWithMemory(
     finalChain,
-    memory,
-    llmConfig.validate_hallucination
+    llmConfig.validate_hallucination,
+    streamWriter
   );
   const response = await runnable.run(input, store);
   return { show: true, openai: response };
@@ -114,7 +118,8 @@ export const callOpenai = async (
   store: string,
   clientId: string,
   source: MessageSource,
-  messageIds: string[] | undefined
+  messageIds: string[] | undefined,
+  streamWriter: EventEmitter
 ) => {
   // Some weird Typescript issue where I can't use lambda, convert with for loop
   const numberArray: number[] = [];
@@ -140,6 +145,7 @@ export const callOpenai = async (
     store,
     clientId,
     source,
-    data // Pass in all messages for summary
+    data, // Pass in all messages for summary
+    streamWriter
   );
 };

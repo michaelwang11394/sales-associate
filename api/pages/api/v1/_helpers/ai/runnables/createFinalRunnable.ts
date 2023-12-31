@@ -1,5 +1,4 @@
 import type { BufferMemory } from "langchain/memory";
-import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
@@ -48,7 +47,7 @@ export const createFinalRunnable = async (
     function_call: { name: "output_formatter" },
   });
 
-  const outputParser = new JsonOutputFunctionsParser();
+  // const outputParser = new JsonOutputFunctionsParser();
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
@@ -62,7 +61,7 @@ export const createFinalRunnable = async (
         return mem;
       },
     }),
-    chatPrompt.pipe(functionCallingModel).pipe(outputParser),
+    chatPrompt.pipe(functionCallingModel),
   ]);
 
   return previous_chain ? previous_chain.pipe(salesChain) : salesChain;

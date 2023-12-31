@@ -1,30 +1,30 @@
-import { useEffect, useState } from "react";
-import { debounce } from "lodash";
-import {
-  getSuggestions,
-  getGreetingMessage,
-  addToCart,
-} from "@/helper/shopify";
-import {
-  getLastPixelEvent,
-  insertMessage,
-  getMessages,
-} from "@/helper/supabase";
 import {
   MESSAGES_HISTORY_LIMIT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
+import {
+  MessageSource,
+  SenderType,
+  type DBMessage,
+  type FormattedMessage,
+  type Product,
+} from "@/constants/types";
+import { callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import {
-  type FormattedMessage,
-  type DBMessage,
-  type Product,
-  SenderType,
-  MessageSource,
-} from "@/constants/types";
+  addToCart,
+  getGreetingMessage,
+  getSuggestions,
+} from "@/helper/shopify";
+import {
+  getLastPixelEvent,
+  getMessages,
+  insertMessage,
+} from "@/helper/supabase";
+import { debounce } from "lodash";
+import { useEffect, useState } from "react";
 import { ChatBubble } from "./chat";
-import { callOpenai } from "@/helper/ai";
 
 export const formatDBMessage = (messageRow: DBMessage) => {
   const { id, type, content, sender } = messageRow;
@@ -69,7 +69,8 @@ export default function CommandPalette({ props }) {
               .slice(-1 * MESSAGES_HISTORY_LIMIT)
               .map((m) => String(m.id!))
           )
-            .then(async (response) => {
+            .then(async () => {
+              /*
               if (!response.show) {
                 return;
               }
@@ -80,6 +81,7 @@ export default function CommandPalette({ props }) {
                 content: response.openai.plainText,
               };
               await handleNewMessage(clientId, newResponseMessage);
+              */
             })
             .catch((err) => console.error(err));
         });
@@ -154,7 +156,8 @@ export default function CommandPalette({ props }) {
       MessageSource.CHAT,
       messages.slice(-1 - MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
     )
-      .then(async (response) => {
+      .then(async () => {
+        /*
         setIsLoading(false);
         setMessages((prevMessages) =>
           prevMessages.filter((message) => message.type !== "loading")
@@ -181,6 +184,7 @@ export default function CommandPalette({ props }) {
               content: JSON.stringify(product),
             } as FormattedMessage)
         );
+        */
       })
       .catch(async (err) => {
         setIsLoading(false);

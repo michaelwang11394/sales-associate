@@ -1,33 +1,63 @@
-import type { BufferMemory } from "langchain/memory";
+import type EventEmitter from "events";
 import type { RunnableSequence } from "langchain/schema/runnable";
 import { OPENAI_RETRIES } from "../../../constants";
-import {
-  HallucinationError,
-  HalluctinationCheckSeverity,
-} from "../../../types";
-import { isValidProduct } from "../../shopify";
+import type { HalluctinationCheckSeverity } from "../../../types";
 
 export class RunnableWithMemory {
   constructor(
     private runnable: RunnableSequence,
-    private memory: BufferMemory,
-    private hallucinationSeverity: HalluctinationCheckSeverity
+    private hallucinationSeverity: HalluctinationCheckSeverity,
+    private stream: EventEmitter
   ) {
     this.runnable = runnable;
-    this.memory = memory;
     this.hallucinationSeverity = hallucinationSeverity;
+    this.stream = stream;
   }
 
   private runPrivate = async (
     input: string,
     store: string,
     retry_left: number
-  ): Promise<{ valid: string; product: string }> => {
+  ) => {
     if (retry_left === 0) {
       throw new Error("openai retries exceeded");
     }
     try {
-      const res = await this.runnable.invoke({ input: input });
+      const res = await this.runnable.stream({ input: input });
+
+      // Create an array to store chunks
+      const chunks: string[] = [];
+
+      let fullResponse = "";
+
+      for await (const chunk of res) {
+        // Collect each chunk
+        chunks.push(JSON.stringify(chunk));
+        fullResponse += chunk?.additional_kwargs?.function_call?.arguments;
+        this.stream.emit(
+          "channel",
+          "chunk",
+          chunk?.additional_kwargs?.function_call?.arguments
+        );
+      }
+
+      const concatenatedChunks = chunks.join("\n");
+
+      // Write the concatenated data to the file
+      /*
+      await fs.writeFile(
+        "/Users/oniken/output-" + Date.now(),
+        concatenatedChunks,
+        {
+          flag: "a",
+        }
+      );
+      */
+
+      this.stream.emit("channel", "end", "");
+      return { valid: "yup", product: fullResponse };
+
+      /*
       // Check with the zod schema if products returned
       if (
         this.hallucinationSeverity > HalluctinationCheckSeverity.NONE &&
@@ -78,8 +108,9 @@ export class RunnableWithMemory {
           .map((product) => product.product);
       }
 
-      return res;
+      */
     } catch (error: any) {
+      /* TODO: If we're streaming cannot check entire response before returning. So FAIL and RETRY are not feasible
       if (error instanceof HallucinationError) {
         switch (this.hallucinationSeverity) {
           case HalluctinationCheckSeverity.FAIL:
@@ -97,6 +128,7 @@ export class RunnableWithMemory {
       } else {
         throw error;
       }
+      */
     }
   };
 
