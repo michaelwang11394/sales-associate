@@ -16,11 +16,15 @@ const LoadingMessage = () => {
     </svg>
   );
 };
-const TextMessage: React.FC<TextMessageProps> = ({ text }) => {
+const TextMessage: React.FC<TextMessageProps> = ({
+  text,
+}): React.JSX.Element => {
   return <p className="text-md">{text}</p>;
 };
 
-const ImageMessage: React.FC<ImageMessageProps> = ({ src }) => {
+const ImageMessage: React.FC<ImageMessageProps> = ({
+  src,
+}): React.JSX.Element => {
   // eslint-disable-next-line jsx-a11y/alt-text
   return <img src={src} className="w-40 h-40 rounded-lg object-cover" />;
 };
@@ -30,7 +34,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   handle,
   price,
   image,
-}) => {
+}): React.JSX.Element => {
   return (
     <div className="w-64">
       <img src={image} alt={name} className="w-full h-48 object-cover" />
@@ -53,7 +57,7 @@ export const ChatBubble = ({
   type,
   isAISender,
   content,
-}: ChatBubbleProps): React.ReactElement => {
+}: ChatBubbleProps): React.JSX.Element => {
   const renderMessage = () => {
     switch (type) {
       case "loading":
