@@ -260,7 +260,7 @@ export default function CommandPalette({ props }) {
               </form>
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
-            {/* TODO: 1) Add add to cart button for each product.*/}
+
             <div className="flex flex-col border-t border-gray-300 overflow-y-auto max-h-[60rem]">
               <div className="flex">
                 <div className="flex-1 min-w-0 p-6 relative">
