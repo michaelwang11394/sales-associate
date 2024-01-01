@@ -36,6 +36,29 @@ export const getMessages = async (
   }
 };
 
+export const getProductsMentioned = async (store: string, clientId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("content")
+      .order("timestamp", { ascending: false })
+      .eq("clientId", clientId)
+      .eq("store", store)
+      .eq("type", "link")
+      .limit(3);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting messages." };
+    }
+
+    return { success: true, data: data.map((item) => item.content) };
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
 export const getMessagesFromIds = async (
   store: string,
   clientId: string,

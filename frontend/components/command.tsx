@@ -9,6 +9,7 @@ import {
   getLastPixelEvent,
   insertMessage,
   getMessages,
+  getProductMentions,
 } from "@/helper/supabase";
 import {
   MESSAGES_HISTORY_LIMIT,
@@ -40,6 +41,7 @@ export const formatDBMessage = (messageRow: DBMessage) => {
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [mentionedProducts, setMentionedProducts] = useState<Product[]>([]);
   const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
@@ -54,6 +56,30 @@ export default function CommandPalette({ props }) {
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
           setMessages((prevMessages) => messages.concat(prevMessages));
+        }
+      });
+      getProductMentions(clientId).then((data) => {
+        if (!data) {
+          console.error("Product mentions could not be fetched");
+        } else {
+          const products = data.data!;
+          const productList = products.map((product) => {
+            const productJson = JSON.parse(product);
+            return {
+              featured_image: {
+                url: productJson.variants[0].featured_image,
+                alt: "",
+              },
+              title: productJson.name,
+              price: productJson.variants[0].price,
+              variants: {
+                id: "", // Doesn't exist in current DB
+              },
+              url: "", // Doesn't exist in current DB
+            };
+          });
+          setMentionedProducts(productList);
+          setSuggestions(productList);
         }
       });
     }
@@ -118,10 +144,10 @@ export default function CommandPalette({ props }) {
     setUserInput(event.target.value);
     const debouncedGetSuggestions = debounce(async () => {
       if (event.target.value !== "") {
-        const suggestions = await getSuggestions(event.target.value);
-        setSuggestions(suggestions);
+        const newSuggestions = await getSuggestions(event.target.value);
+        setSuggestions(newSuggestions); // Only set the new suggestions, don't mix with mentioned products
       } else {
-        setSuggestions([]);
+        setSuggestions(mentionedProducts); // If search is empty, show the mentioned products
       }
     }, 300);
 
@@ -193,11 +219,6 @@ export default function CommandPalette({ props }) {
       });
   };
 
-  const handleDropdownItemClick = (item) => {
-    // Handle the selection of suggestions if needed
-    console.log("Selected suggestion:", item);
-  };
-
   return (
     <div id="overlay" className="h-[70%]">
       <section
@@ -238,93 +259,101 @@ export default function CommandPalette({ props }) {
                 </button>
               </form>
             </div>
-            {/* Dividing Line */}
-            {/* TODO: 1) Add add to cart button for each product. 2) Add button that will show rest of search results.*/}
-            <div className="flex border-t border-gray-300 flex-col overflow-y-auto max-h-[60rem]">
-              <div className="flex-1 min-w-0 p-6 relative">
-                <button
-                  className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
-                  onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
-                  &times;
-                </button>
-                <div className="font-bold mb-2 text-center">
-                  Product Suggestions
-                </div>
-                <div className="flex flex-wrap justify-around">
-                  {suggestions && suggestions.length > 0 ? (
-                    suggestions.slice(0, 4).map((product, index) => (
-                      <div key={index} className="flex-1 text-center p-1 m-1">
-                        <a
-                          href={product.url}
-                          onClick={() => handleDropdownItemClick(product)}
-                          className="text-decoration-none text-inherit flex flex-col items-center justify-between min-h-[150px]">
-                          {/* Product Image */}
-                          <img
-                            src={product.featured_image.url}
-                            alt={product.featured_image.alt}
-                            className="w-4/5 h-1/2 max-h-[150px] object-contain mb-2"
-                          />
-
-                          {/* Product Name */}
-                          <div className="mb-2 h-10">{product.title}</div>
-
-                          {/* Product Price */}
-                          <div>{product.price}</div>
-                          {/* Add to Cart Button */}
-                          {product.variants.length > 0 && (
-                            <button
-                              className="mt-2 px-4 py-2 text-sm font-medium text-black bg-white border border-black rounded cursor-pointer"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                addToCart(product.variants[0].id, 1).then(
-                                  (response) =>
-                                    alert(
-                                      product.title + " has been added to cart"
-                                    )
-                                );
-                              }}>
-                              Add to Cart
-                            </button>
-                          )}
-                        </a>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center italic">
-                      Type in the search box to see suggestions
-                    </div>
-                  )}
-                </div>
-                {userInput.length > 0 && (
-                  <div className="flex justify-center mt-4">
-                    <button
-                      className="px-4 py-2 text-lg text-white bg-black border-none rounded cursor-pointer font-medium"
-                      onClick={() =>
-                        (window.location.href = `/search?q=${userInput}`)
-                      }>
-                      View all Items
-                    </button>
+            {/* Dividing Line. Beginning of product suggestions*/}
+            {/* TODO: 1) Add add to cart button for each product.*/}
+            <div className="flex flex-col border-t border-gray-300 overflow-y-auto max-h-[60rem]">
+              <div className="flex">
+                <div className="flex-1 min-w-0 p-6 relative">
+                  <div className="font-bold mb-2 text-center">
+                    Product Suggestions
                   </div>
-                )}
-              </div>
+                  <div className="flex">
+                    <div className="flex-1 min-w-0 p-6 relative">
+                      {suggestions && suggestions.length > 0 ? (
+                        suggestions.slice(0, 3).map((product, index) => (
+                          <div key={index} className="flex p-1 m-1">
+                            {/* Product Image */}
+                            <div className="w-1/3">
+                              <img
+                                src={product.featured_image.url}
+                                alt={product.featured_image.alt}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
 
-              {/* Chat Column*/}
-              <div className="font-bold mb-2 mt-2 text-center">
-                Conversation
-              </div>
-              <div
-                id="chat-column"
-                className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4">
-                {messages
-                  .filter((message) => message.content !== undefined)
-                  .map((message, index) => (
-                    <ChatBubble
-                      key={index}
-                      type={message.type}
-                      isAISender={message.sender !== SenderType.USER}
-                      content={message.content}
-                    />
-                  ))}
+                            {/* Product Details */}
+                            <div className="w-2/3 flex flex-col p-2 space-y-1">
+                              {/* Product Name */}
+                              <div className="h-10 overflow-hidden line-clamp-2">
+                                {product.title}
+                              </div>
+
+                              {/* Product Price */}
+                              <div>{product.price}</div>
+
+                              {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
+
+                              <button
+                                className="w-1/2 mt-2 px-4 py-2 text-sm font-medium text-white bg-black border border-black rounded cursor-pointer"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  addToCart(product.variants[0].id, 1).then(
+                                    (response) =>
+                                      alert(
+                                        product.title +
+                                          " has been added to cart"
+                                      )
+                                  );
+                                }}>
+                                Add to Cart
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center italic">
+                          Type in the search box to see suggestions
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    {userInput.length > 0 && (
+                      <button
+                        className="px-4 py-2 text-lg text-white bg-black border-none rounded cursor-pointer font-medium"
+                        onClick={() =>
+                          (window.location.href = `/search?q=${userInput}`)
+                        }>
+                        View all Items
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Chat Column*/}
+                <div
+                  id="chat-column"
+                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4">
+                  <div className="font-bold mb-2 mt-2 text-center">
+                    Conversation
+                  </div>
+                  <button
+                    className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
+                    onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
+                    &times;
+                  </button>
+
+                  {messages
+                    .filter((message) => message.content !== undefined)
+                    .map((message, index) => (
+                      <ChatBubble
+                        key={index}
+                        type={message.type}
+                        isAISender={message.sender !== SenderType.USER}
+                        content={message.content}
+                      />
+                    ))}
+                </div>
               </div>
             </div>
           </div>

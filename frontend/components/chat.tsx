@@ -49,11 +49,11 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   );
 };
 
-export const ChatBubble: React.FC<ChatBubbleProps> = ({
+export const ChatBubble = ({
   type,
   isAISender,
   content,
-}) => {
+}: ChatBubbleProps): React.ReactElement => {
   const renderMessage = () => {
     switch (type) {
       case "loading":

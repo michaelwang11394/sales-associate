@@ -3,6 +3,7 @@ import {
   createEmbeddings,
   getLastPixelEvent,
   getMessages,
+  getProductsMentioned,
   hasItemsInCart,
   hasViewedProducts,
   insertMessage,
@@ -19,6 +20,7 @@ import {
   SUPABASE_EVENTS_TABLE,
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
+  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_TABLE,
 } from "../constants";
@@ -51,6 +53,14 @@ export default async function handler(
             true,
             Number(request.query.limit as string)
           )
+        );
+      case SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT:
+        return httpResponse(
+          request,
+          response,
+          200,
+          "Messages products mentioned query completed",
+          await getProductsMentioned(store, clientId)
         );
       case SUPABASE_MESSAGES_INSERT_ENDPOINT:
         return httpResponse(

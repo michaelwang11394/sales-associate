@@ -18,7 +18,6 @@ export enum HalluctinationCheckSeverity {
 }
 
 export interface Product {
-  url: string;
   featured_image: {
     url: string;
     alt: string;
@@ -28,6 +27,7 @@ export interface Product {
   variants: {
     id: string;
   }[];
+  url?: string;
 }
 
 // Props related to chat
