@@ -20,23 +20,6 @@ interface OnboardingProps {
 export async function loader({ request }) {
   // Authenticate the request
   const { admin, session } = await authenticate.admin(request);
-  await admin.graphql(
-    `#graphql
-      mutation {
-  webPixelCreate(webPixel: { settings: {accountID: "234"} }) {
-    userErrors {
-      code
-      field
-      message
-    }
-    webPixel {
-      settings
-      id
-    }
-  }
-}
-`
-  );
   // Get Store Shopify Domain
   const shopData = await admin.rest.resources.Shop.all({
     session: session,

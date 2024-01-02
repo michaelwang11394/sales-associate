@@ -6,6 +6,7 @@ import type { MessageSource } from "./types";
 const stream = new EventEmitter();
 
 export const config = {
+  maxDuration: 60,
   api: {
     externalResolver: true,
   },
