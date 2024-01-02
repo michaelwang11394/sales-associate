@@ -272,9 +272,9 @@ export default function CommandPalette({ props }) {
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col border-t border-gray-300 overflow-y-auto max-h-[60rem]">
+            <div className="flex flex-col h-full border-t border-gray-300 max-h-[60rem]">
               <div className="flex">
-                <div className="flex-1 min-w-0 p-6 relative">
+                <div className="flex-1 min-w-0 p-6 relative h-[55rem]">
                   <div className="font-bold mb-2 text-center">
                     Product Suggestions
                   </div>
@@ -282,7 +282,7 @@ export default function CommandPalette({ props }) {
                     <div className="flex-1 min-w-0 p-6 relative">
                       {suggestions && suggestions.length > 0 ? (
                         suggestions.slice(0, 3).map((product, index) => (
-                          <div key={index} className="flex p-1 m-1">
+                          <div key={index} className="flex p-1 m-1 h-[15rem]">
                             {/* Product Image */}
                             <div className="w-1/3">
                               <img
@@ -305,7 +305,7 @@ export default function CommandPalette({ props }) {
                               {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
 
                               <button
-                                className="w-1/2 mt-2 px-4 py-2 text-sm font-medium text-white bg-black border border-black rounded cursor-pointer"
+                                className="w-1/3 mt-2 px-2 py-1 text-md font-medium text-white bg-blue-600 border border-black rounded cursor-pointer"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   addToCart(product.variants[0].id, 1).then(
@@ -326,25 +326,26 @@ export default function CommandPalette({ props }) {
                           Type in the search box to see suggestions
                         </div>
                       )}
+
+                      <div className="h-[3rem] flex justify-center mt-4">
+                        {suggestions.length > 0 && (
+                          <button
+                            className="px-2 py-1 text-md text-white bg-blue-600 border-none rounded cursor-pointer font-medium"
+                            onClick={() =>
+                              (window.location.href = `/search?q=${userInput}`)
+                            }>
+                            View All Items
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex justify-center mt-4">
-                    {userInput.length > 0 && (
-                      <button
-                        className="px-4 py-2 text-lg text-white bg-black border-none rounded cursor-pointer font-medium"
-                        onClick={() =>
-                          (window.location.href = `/search?q=${userInput}`)
-                        }>
-                        View all Items
-                      </button>
-                    )}
                   </div>
                 </div>
 
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4">
+                  className="flex-1 min-w-0 p-6 h-[60rem] overflow-y-auto border-2 p-4">
                   <div className="font-bold mb-2 mt-2 text-center">
                     Conversation
                   </div>
