@@ -1,15 +1,32 @@
 import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css";
-import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
+import { boundary } from "@shopify/shopify-app-remix/server";
 
 import { authenticate } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export async function loader({ request }) {
-  await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
+  const response = await admin.graphql(
+    `#graphql
+      mutation {
+  webPixelCreate(webPixel: { settings: {accountID: "234"} }) {
+    userErrors {
+      code
+      field
+      message
+    }
+    webPixel {
+      settings
+      id
+    }
+  }
+}
+`
+  );
 
   return json({ apiKey: process.env.SHOPIFY_API_KEY });
 }
