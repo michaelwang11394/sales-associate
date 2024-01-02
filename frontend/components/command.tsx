@@ -58,30 +58,6 @@ export default function CommandPalette({ props }) {
           setMessages((prevMessages) => messages.concat(prevMessages));
         }
       });
-      getProductMentions(clientId).then((data) => {
-        if (!data) {
-          console.error("Product mentions could not be fetched");
-        } else {
-          const products = data.data!;
-          const productList = products.map((product) => {
-            const productJson = JSON.parse(product);
-            return {
-              featured_image: {
-                url: productJson.variants[0].featured_image,
-                alt: "",
-              },
-              title: productJson.name,
-              price: productJson.variants[0].price,
-              variants: {
-                id: "", // Doesn't exist in current DB
-              },
-              url: "", // Doesn't exist in current DB
-            };
-          });
-          setMentionedProducts(productList);
-          setSuggestions(productList);
-        }
-      });
     }
     if (clientId) {
       getLastPixelEvent(clientId).then((data) => {
@@ -113,6 +89,39 @@ export default function CommandPalette({ props }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(
+    () => {
+      if (clientId) {
+        getProductMentions(clientId).then((data) => {
+          if (!data) {
+            console.error("Product mentions could not be fetched");
+          } else {
+            const products = data.data!;
+            const productList = products.map((product) => {
+              const productJson = JSON.parse(product);
+              return {
+                featured_image: {
+                  url: productJson.variants[0].featured_image,
+                  alt: "",
+                },
+                title: productJson.name,
+                price: productJson.variants[0].price,
+                variants: {
+                  id: "", // Doesn't exist in current DB
+                },
+                url: "", // Doesn't exist in current DB
+              };
+            });
+            setMentionedProducts(productList);
+            setSuggestions(productList);
+          }
+        });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [messages]
+  );
 
   useEffect(() => {
     scrollToBottom();
