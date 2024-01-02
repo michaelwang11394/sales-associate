@@ -100,9 +100,10 @@ export default function CommandPalette({ props }) {
             const products = data.data!;
             const productList = products.map((product) => {
               const productJson = JSON.parse(product);
+              console.log(productJson);
               return {
                 featured_image: {
-                  url: productJson.variants[0].featured_image,
+                  url: productJson.image,
                   alt: "",
                 },
                 title: productJson.name,
