@@ -9,24 +9,7 @@ import { authenticate } from "../shopify.server";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export async function loader({ request }) {
-  const { admin } = await authenticate.admin(request);
-  const response = await admin.graphql(
-    `#graphql
-      mutation {
-  webPixelCreate(webPixel: { settings: {accountID: "234"} }) {
-    userErrors {
-      code
-      field
-      message
-    }
-    webPixel {
-      settings
-      id
-    }
-  }
-}
-`
-  );
+  await authenticate.admin(request);
 
   return json({ apiKey: process.env.SHOPIFY_API_KEY });
 }
