@@ -17,6 +17,12 @@ export default async function handler(
   response: NextApiResponse
 ) {
   console.log("received request");
+
+  if (request.method === "OPTIONS") {
+    console.log("preflight");
+    return response.status(200).send("ok");
+  }
+
   response.writeHead(200, {
     Connection: "keep-alive",
     "Content-Encoding": "none",
