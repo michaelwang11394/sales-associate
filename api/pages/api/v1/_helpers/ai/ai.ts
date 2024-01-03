@@ -15,7 +15,7 @@ import {
   isNewCustomer,
 } from "../supabase_queries";
 import { MESSAGE_SUMMARY_FLUSH_THRESHOLD } from "./constants";
-import { LLMConfig, chatSalesModel } from "./llmConfig";
+import { LLMConfig, chat_35_Model } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
@@ -84,7 +84,7 @@ const createOpenai = async (
   const memory = new ConversationSummaryBufferMemory({
     chatHistory: new ChatMessageHistory(history),
     maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
-    llm: chatSalesModel, // Use same model as sales model for now
+    llm: chat_35_Model, // Use same model as sales model for now
     returnMessages: true,
   });
 
