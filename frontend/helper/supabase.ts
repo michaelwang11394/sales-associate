@@ -6,6 +6,7 @@ import {
   SUPABASE_EVENTS_TABLE,
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
+  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_TABLE,
   SUPABASE_PATH,
@@ -27,6 +28,25 @@ export const getMessages = async (clientId, limit) => {
         SUPABASE_MESSAGES_HISTORY_ENDPOINT,
       ],
       { store: store, clientId: clientId, limit: String(limit) }
+    );
+    return res.body;
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const getProductMentions = async (clientId) => {
+  try {
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_MESSAGES_TABLE,
+        SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
+      ],
+      { store: store, clientId: clientId }
     );
     return res.body;
   } catch (error) {
