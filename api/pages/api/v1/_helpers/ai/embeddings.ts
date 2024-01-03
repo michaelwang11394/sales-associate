@@ -22,7 +22,7 @@ export const runEmbeddingsAndSearch = async (
         client: supabase,
         tableName: "vector_catalog",
         queryName: "match_documents",
-        filter: { metadata: { $eq: store } },
+        filter: (rpc) => rpc.filter("metadata::text", "eq", store),
       }
     );
     relevantDocs = await vectorStore.similaritySearch(
