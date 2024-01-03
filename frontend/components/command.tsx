@@ -235,7 +235,7 @@ export default function CommandPalette({ props }) {
       <section
         id={PALETTE_DIV_ID}
         className="relative overflow-hidden bg-cover flex-grow">
-        <div className="relative flex items-center justify-center flex-grow flex-shrink h-full">
+        <div className="relative flex justify-center flex-grow flex-shrink h-full">
           <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg flex-grow">
             <div className="flex justify-center">
               <form
@@ -273,80 +273,76 @@ export default function CommandPalette({ props }) {
             {/* Dividing Line. Beginning of product suggestions*/}
 
             <div className="flex flex-col h-full border-t border-gray-300 max-h-[calc(70vh-50px)]">
-              <div className="flex">
-                <div className="flex-1 min-w-0 p-6 relative h-[55rem]">
-                  <div className="font-bold mb-2 text-center">
+              <div className="flex h-full">
+                <div
+                  id="product-column"
+                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
+                  <div className="font-bold mb-2 mt-2 text-center">
                     Product Suggestions
                   </div>
-                  <div className="flex">
-                    <div className="flex-1 min-w-0 p-6 relative">
-                      {suggestions && suggestions.length > 0 ? (
-                        suggestions.slice(0, 3).map((product, index) => (
-                          <div key={index} className="flex p-1 m-1 flex-grow">
-                            {/* Product Image */}
-                            <div className="w-1/3">
-                              <img
-                                src={product.featured_image.url}
-                                alt={product.featured_image.alt}
-                                className="w-full h-full object-contain"
-                              />
-                            </div>
-
-                            {/* Product Details */}
-                            <div className="w-2/3 flex flex-col p-2 space-y-1">
-                              {/* Product Name */}
-                              <div className="h-10 overflow-hidden line-clamp-2">
-                                {product.title}
-                              </div>
-
-                              {/* Product Price */}
-                              <div>{product.price}</div>
-
-                              {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
-
-                              <button
-                                className="w-1/3 mt-2 px-2 py-1 text-md font-medium text-white bg-blue-600 border border-black rounded cursor-pointer"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  addToCart(product.variants[0].id, 1).then(
-                                    (response) =>
-                                      alert(
-                                        product.title +
-                                          " has been added to cart"
-                                      )
-                                  );
-                                }}>
-                                Add to Cart
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center italic">
-                          Type in the search box to see suggestions
+                  {suggestions && suggestions.length > 0 ? (
+                    suggestions.slice(0, 3).map((product, index) => (
+                      <div key={index} className="flex p-1 m-1 flex-grow">
+                        {/* Product Image */}
+                        <div className="w-1/3">
+                          <img
+                            src={product.featured_image.url}
+                            alt={product.featured_image.alt}
+                            className="w-full h-full object-contain"
+                          />
                         </div>
-                      )}
 
-                      <div className="h-[3rem] flex justify-center mt-4">
-                        {suggestions.length > 0 && (
+                        {/* Product Details */}
+                        <div className="w-2/3 flex flex-col p-2 space-y-1">
+                          {/* Product Name */}
+                          <div className="h-10 overflow-hidden line-clamp-2">
+                            {product.title}
+                          </div>
+
+                          {/* Product Price */}
+                          <div>{product.price}</div>
+
+                          {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
+
                           <button
-                            className="px-2 py-1 text-md text-white bg-blue-600 border-none rounded cursor-pointer font-medium"
-                            onClick={() =>
-                              (window.location.href = `/search?q=${userInput}`)
-                            }>
-                            View All Items
+                            className="w-1/3 mt-2 px-2 py-1 text-md font-medium text-white bg-blue-600 border border-black rounded cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              addToCart(product.variants[0].id, 1).then(
+                                (response) =>
+                                  alert(
+                                    product.title + " has been added to cart"
+                                  )
+                              );
+                            }}>
+                            Add to Cart
                           </button>
-                        )}
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center italic">
+                      Type in the search box to see suggestions
                     </div>
+                  )}
+
+                  <div className="h-[3rem] flex justify-center mt-4">
+                    {suggestions.length > 0 && (
+                      <button
+                        className="px-2 py-1 text-md text-white bg-blue-600 border-none rounded cursor-pointer font-medium"
+                        onClick={() =>
+                          (window.location.href = `/search?q=${userInput}`)
+                        }>
+                        View All Items
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="flex-1 min-w-0 p-6 h-[60rem] overflow-y-auto border-2 p-4"
-                  style={{ maxHeight: "calc(70vh - 50px)" }}>
+                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
                   <div className="font-bold mb-2 mt-2 text-center">
                     Conversation
                   </div>
