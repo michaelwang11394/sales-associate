@@ -6,7 +6,7 @@ const shopifyRestQuery = async (endpoint) => {
       .then((json) => {
         return json;
       });
-  } catch (error) {
+  } catch (error: any) {
     console.error(
       `Error fetching endpoint ${endpoint}: with message %s`,
       error.message
@@ -62,7 +62,7 @@ export const addToCart = async (id, quantity) => {
       .then((json) => {
         return json;
       });
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error adding to cart`, error.message);
     return null;
   }
@@ -112,7 +112,7 @@ export const getProducts = async () => {
 
 export const getGreetingMessage = async (event) => {
   return (
-    getEventSpecificMessage(event.name) +
+    (await getEventSpecificMessage(event.name)) +
     "The entire response should fit in 150 characters, nothing in products field."
   );
 };

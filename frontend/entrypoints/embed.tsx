@@ -2,4 +2,4 @@ import "vite/modulepreload-polyfill";
 import "./section.css";
 import { createOverlayDiv, createIcon } from "./createElements";
 
-createIcon(home, "embed", createOverlayDiv(), 4);
+createIcon(embed_home, "embed", createOverlayDiv(), 100);

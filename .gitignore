@@ -11,7 +11,13 @@ node_modules
 /extensions/web-pixel/dist/
 database.sqlite
 
+/extensions/chat-interface/snippets
+/extensions/chat-interface/assets/
+/extensions/chat-interface/assets
+
 .env
 package-lock.json
 yarn.lock
 shopify.app.toml
+.vercel/output
+.vercel/.env*

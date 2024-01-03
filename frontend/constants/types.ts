@@ -4,6 +4,11 @@ export enum SenderType {
   SYSTEM = "system", // Generated greetings, noninteractive
 }
 
+export enum MessageSource {
+  EMBED = "embed", // Pop up greeting in app embed
+  CHAT = "chat", // Conversation/thread with customer
+}
+
 // Hallucination severity in decreasing order
 export enum HalluctinationCheckSeverity {
   FAIL = 4, // If any detected fail and do not retry
@@ -13,7 +18,6 @@ export enum HalluctinationCheckSeverity {
 }
 
 export interface Product {
-  url: string;
   featured_image: {
     url: string;
     alt: string;
@@ -23,6 +27,7 @@ export interface Product {
   variants: {
     id: string;
   }[];
+  url?: string;
 }
 
 // Props related to chat
@@ -70,9 +75,9 @@ export interface LinkMessageProps {
   image: string;
 }
 
-export class HallucinationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "HallucinationError";
-  }
+// Keep this synced with api/pages/api/v*/supabase/_helpers where response expected
+export interface ApiResponse {
+  body: any;
+  query: any;
+  message: string;
 }

@@ -11,6 +11,7 @@ register(async ({ analytics, browser, settings }) => {
     const detail = (event as any).data;
 
     const pathname = context.document.location.pathname;
+    const host = context.document.location.host;
     // Only log the home page for now
     if (name == "page_viewed" && pathname !== "/") {
       return;
@@ -18,12 +19,13 @@ register(async ({ analytics, browser, settings }) => {
       try {
         const { error } = await supabase.from("events").insert([
           {
-            id,
-            timestamp,
+            id: id,
+            timestamp: timestamp,
             detail: detail, // convert data object to JSON string
-            clientId,
-            context, // convert context object to JSON string
-            name,
+            clientId: clientId,
+            context: context, // convert context object to JSON string
+            name: name,
+            store: host,
           },
         ]);
 

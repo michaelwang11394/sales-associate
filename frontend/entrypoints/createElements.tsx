@@ -5,7 +5,7 @@ import CommandPalette from "@/components/command";
 import "./section.css";
 import "@/styles/chat.css";
 
-export function createIcon(home, mountDiv, overlayDiv, iconSize = 2) {
+export function createIcon(home, mountDiv, overlayDiv, iconSize) {
   const element = document.getElementById(mountDiv);
   if (!element) {
     throw new Error(`Element with id "${mountDiv}" not found`);
@@ -33,8 +33,8 @@ export function createOverlayDiv() {
     overlayDiv.style.top = "0";
     overlayDiv.style.left = "0";
     overlayDiv.style.backgroundColor = "rgba(0, 0, 0, 0.3)";
-    overlayDiv.style.width = "100%";
-    overlayDiv.style.height = "100%";
+    overlayDiv.style.width = "100vw";
+    overlayDiv.style.height = "100vh";
     overlayDiv.style.zIndex = "1000";
     overlayDiv.style.display = "block";
     overlayDiv.className = "overlay";
