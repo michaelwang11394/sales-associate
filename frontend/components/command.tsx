@@ -231,12 +231,12 @@ export default function CommandPalette({ props }) {
   };
 
   return (
-    <div id="overlay" className="h-[70%]">
+    <div id="overlay" className="h-[70vh] flex flex-col">
       <section
         id={PALETTE_DIV_ID}
-        className="relative overflow-hidden bg-cover">
-        <div className="relative flex items-center justify-center">
-          <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg ">
+        className="relative overflow-hidden bg-cover flex-grow">
+        <div className="relative flex items-center justify-center flex-grow flex-shrink h-full">
+          <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg flex-grow">
             <div className="flex justify-center">
               <form
                 onSubmit={handleSubmit}
@@ -272,7 +272,7 @@ export default function CommandPalette({ props }) {
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-t border-gray-300 max-h-[60rem]">
+            <div className="flex flex-col h-full border-t border-gray-300 max-h-[calc(70vh-50px)]">
               <div className="flex">
                 <div className="flex-1 min-w-0 p-6 relative h-[55rem]">
                   <div className="font-bold mb-2 text-center">
@@ -282,7 +282,7 @@ export default function CommandPalette({ props }) {
                     <div className="flex-1 min-w-0 p-6 relative">
                       {suggestions && suggestions.length > 0 ? (
                         suggestions.slice(0, 3).map((product, index) => (
-                          <div key={index} className="flex p-1 m-1 h-[15rem]">
+                          <div key={index} className="flex p-1 m-1 flex-grow">
                             {/* Product Image */}
                             <div className="w-1/3">
                               <img
@@ -345,7 +345,8 @@ export default function CommandPalette({ props }) {
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="flex-1 min-w-0 p-6 h-[60rem] overflow-y-auto border-2 p-4">
+                  className="flex-1 min-w-0 p-6 h-[60rem] overflow-y-auto border-2 p-4"
+                  style={{ maxHeight: "calc(70vh - 50px)" }}>
                   <div className="font-bold mb-2 mt-2 text-center">
                     Conversation
                   </div>
