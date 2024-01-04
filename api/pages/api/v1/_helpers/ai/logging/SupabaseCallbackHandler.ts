@@ -37,6 +37,7 @@ export class SupabaseCallbackHandler extends BaseCallbackHandler {
     this.store = metadata?.store as string;
     this.clientId = metadata?.clientId as string;
     this.startTimestamp = Date.now();
+    console.log("input", this.input);
   }
 
   async handleLLMEnd(

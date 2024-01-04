@@ -111,10 +111,7 @@ export const getProducts = async () => {
 };
 
 export const getGreetingMessage = async (event) => {
-  return (
-    (await getEventSpecificMessage(event.name)) +
-    "The entire response should fit in 150 characters, nothing in products field."
-  );
+  return await getEventSpecificMessage(event);
 };
 
 export const getEventSpecificMessage = async (event) => {
@@ -126,27 +123,27 @@ export const getEventSpecificMessage = async (event) => {
     // Welcome Intent
     case "page_viewed":
       if (newCustomer.isNew) {
-        return "Hi, this is my first time visiting this store. Greet me";
+        return "This is the user's first time visiting this store. Welcome them and ask them if they have any questions";
       } else {
-        return "Hi, welcome me back to the store and ask if I need any help.";
+        return "Welcome user back to the store and ask if user needs any help.";
       }
     // Cart Intent
     case "cart_viewed":
       if (isOfferCoupon.offerCoupon === true) {
-        return "I am back at my cart again. Encourage me to checkout by offering a coupon.";
+        return "User is looking through cart page. Encourage them to checkout by offering a coupon.";
       } else {
-        return "I am on the cart page. Encourage me to checkout.";
+        return "User is on the cart page. Encourage user to checkout.";
       }
     // Product Intent
     case "product_viewed":
       const product = event.detail.productVariant.product.title;
-      return `I am looking at ${product}. Tell me why this product is great for me. If highly relevant, suggest another product in your catalog for me to look at.`;
+      return `User is considering purchasing the product ${product}. Explain why this product is great for me and offer to answer any more questions`;
     // Search Intent
     case "search_submitted":
       const searchQuery = event.detail.query;
-      return `I am searching your store for ${searchQuery}. Ask me if I need any assistance.`;
+      return `The user is searching your store for ${searchQuery}. Offer to assist.`;
     default:
-      return "Hello.";
+      return "Greet the user.";
   }
 };
 // Example usage

@@ -70,7 +70,7 @@ export default function CommandPalette({ props }) {
             greetingPrompt,
             clientId!,
             uuid,
-            MessageSource.CHAT,
+            MessageSource.CHAT_GREETING,
             messages
               .slice(-1 * MESSAGES_HISTORY_LIMIT)
               .map((m) => String(m.id!))
@@ -82,7 +82,7 @@ export default function CommandPalette({ props }) {
               const newResponseMessage: FormattedMessage = {
                 type: "text",
                 sender: SenderType.SYSTEM,
-                content: response.openai.plainText,
+                content: response.openai.kwargs?.content,
               };
               await handleNewMessage(clientId, newResponseMessage, uuid);
             })
@@ -290,7 +290,7 @@ export default function CommandPalette({ props }) {
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-t border-gray-300 max-h-[calc(70vh-50px)]">
+            <div className="flex flex-col h-full border-t scrollable-bottom border-gray-300 max-h-[calc(70vh-50px)]">
               <div className="flex h-full">
                 <div
                   id="product-column"

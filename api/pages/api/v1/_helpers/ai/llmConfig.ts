@@ -18,6 +18,11 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
+  [MessageSource.CHAT_GREETING]: {
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep all responses to less than 100 characters.`,
+    include_embeddings: true,
+    validate_hallucination: HalluctinationCheckSeverity.FILTER,
+  },
   [MessageSource.EMBED]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
     include_embeddings: true,
