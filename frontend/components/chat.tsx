@@ -34,6 +34,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   handle,
   price,
   image,
+  host,
 }): React.JSX.Element => {
   return (
     <div className="w-64">
@@ -42,7 +43,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
         <h3 className="text-xl font-semibold mb-2">{name}</h3>
         <p className="text-lg font-medium text-gray-500 mb-4">{price}</p>
         <a
-          href={handle}
+          href={`https://${host}/products/${handle}`}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center justify-center px-4 py-2 bg-white text-black font-semibold rounded-md shadow-md hover:bg-gray-600">
@@ -57,6 +58,7 @@ export const ChatBubble = ({
   type,
   isAISender,
   content,
+  host,
 }: ChatBubbleProps): React.JSX.Element => {
   const renderMessage = () => {
     switch (type) {
@@ -79,6 +81,7 @@ export const ChatBubble = ({
             handle={handle}
             price={price}
             image={image}
+            host={host}
           />
         );
       default:

@@ -46,6 +46,7 @@ export default function CommandPalette({ props }) {
   const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
+  const host = window.location.host;
 
   useEffect(() => {
     if (clientId) {
@@ -102,18 +103,18 @@ export default function CommandPalette({ props }) {
             const products = data.data!;
             const productList = products.map((product) => {
               const productJson = JSON.parse(product);
-              console.log(productJson);
               return {
                 featured_image: {
                   url: productJson.image,
                   alt: "",
                 },
                 title: productJson.name,
+                handle: productJson.product_handle,
                 price: productJson.variants[0].price,
                 variants: {
-                  id: "", // Doesn't exist in current DB
+                  id: productJson.variants[0].id,
                 },
-                url: "", // Doesn't exist in current DB
+                url: "", // TODO: Add to DB
               };
             });
             setMentionedProducts(productList);
@@ -297,45 +298,60 @@ export default function CommandPalette({ props }) {
                   <div className="font-bold mb-2 mt-2 text-center">
                     Product Suggestions
                   </div>
+
                   {suggestions && suggestions.length > 0 ? (
                     suggestions.slice(0, 3).map((product, index) => (
-                      <div key={index} className="flex p-1 m-1 flex-grow">
-                        {/* Product Image */}
-                        <div className="w-1/3">
-                          <img
-                            src={product.featured_image.url}
-                            alt={product.featured_image.alt}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-
-                        {/* Product Details */}
-                        <div className="w-2/3 flex flex-col p-2 space-y-1">
-                          {/* Product Name */}
-                          <div className="h-10 overflow-hidden line-clamp-2">
-                            {product.title}
+                      <a
+                        key={index}
+                        href={`https://${host}/products/${product.handle}`}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        <div className="flex p-1 m-1 flex-grow">
+                          {/* Product Image */}
+                          <div className="w-1/3">
+                            <img
+                              src={product.featured_image.url}
+                              alt={product.featured_image.alt}
+                              className="w-full h-full object-contain"
+                            />
                           </div>
 
-                          {/* Product Price */}
-                          <div>{product.price}</div>
+                          {/* Product Details */}
+                          <div className="w-2/3 flex flex-col p-2 space-y-1">
+                            {/* Product Name */}
+                            <div className="h-10 overflow-hidden line-clamp-2">
+                              {product.title}
+                            </div>
 
-                          {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
+                            {/* Product Price */}
+                            <div>{product.price}</div>
 
-                          <button
-                            className="w-1/3 mt-2 px-2 py-1 text-md font-medium text-white bg-blue-600 border border-black rounded cursor-pointer"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              addToCart(product.variants[0].id, 1).then(
-                                (response) =>
-                                  alert(
-                                    product.title + " has been added to cart"
-                                  )
-                              );
-                            }}>
-                            Add to Cart
-                          </button>
+                            {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
+                            {product.variants &&
+                              product.variants[0] &&
+                              product.variants[0].id && (
+                                <button
+                                  className="w-1/3 mt-2 px-2 py-1 text-md font-medium text-white bg-blue-600 border rounded cursor-pointer"
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    const response = await addToCart(
+                                      product.variants[0].id,
+                                      1
+                                    );
+                                    if (response) {
+                                      window.location.href = `https://${host}/cart`;
+                                    } else {
+                                      // If product variant is not available to add, redirect to product page
+
+                                      window.location.href = `https://${host}/products/${product.handle}`;
+                                    }
+                                  }}>
+                                  Add to Cart
+                                </button>
+                              )}
+                          </div>
                         </div>
-                      </div>
+                      </a>
                     ))
                   ) : (
                     <div className="text-center italic">
@@ -348,7 +364,8 @@ export default function CommandPalette({ props }) {
                       <button
                         className="px-2 py-1 text-md text-white bg-blue-600 border-none rounded cursor-pointer font-medium"
                         onClick={() =>
-                          (window.location.href = `/search?q=${userInput}`)
+                          // TODO: Different themes will have different URLS for search result pages
+                          (window.location.href = `https://${host}/pages/search-results-page?/search?q=${userInput}`)
                         }>
                         View All Items
                       </button>
@@ -377,6 +394,7 @@ export default function CommandPalette({ props }) {
                         type={message.type}
                         isAISender={message.sender !== SenderType.USER}
                         content={message.content}
+                        host={host}
                       />
                     ))}
                 </div>
