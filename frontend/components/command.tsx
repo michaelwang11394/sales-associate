@@ -101,22 +101,27 @@ export default function CommandPalette({ props }) {
             console.error("Product mentions could not be fetched");
           } else {
             const products = data.data!;
-            const productList = products.map((product) => {
-              const productJson = JSON.parse(product);
-              return {
-                featured_image: {
-                  url: productJson.image,
-                  alt: "",
-                },
-                title: productJson.name,
-                handle: productJson.product_handle,
-                price:
-                  productJson.variants?.length > 0
-                    ? productJson.variants[0]?.price
-                    : "",
-                url: "", // TODO: Add to DB
-              };
-            });
+            const productList = products
+              .map((product) => {
+                const productJson = JSON.parse(product);
+                return {
+                  featured_image: {
+                    url: productJson.image,
+                    alt: "",
+                  },
+                  title: productJson.name,
+                  handle: productJson.product_handle,
+                  price:
+                    productJson.variants?.length > 0
+                      ? productJson.variants[0]?.price
+                      : "",
+                  url: "", // TODO: Add to DB
+                };
+              })
+              .filter(
+                (product, index, self) =>
+                  index === self.findIndex((p) => p.handle === product.handle)
+              );
             setMentionedProducts(productList);
             setSuggestions(productList);
           }
