@@ -318,6 +318,8 @@ export const createEmbeddings = async (store: string) => {
 
 export type ModelLoggingFields = {
   success: boolean;
+  store: string;
+  client_id: string;
   input: string;
   platform: string;
   model: string;
@@ -327,6 +329,7 @@ export type ModelLoggingFields = {
   output_cost?: number;
   rate_type?: string;
   duration?: number;
+  request_uuid: string;
   output?: string;
 };
 

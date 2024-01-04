@@ -10,7 +10,7 @@ import {
   RunnableSequence,
 } from "langchain/schema/runnable";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { chat_35_16k_Model, zodSchema } from "../llmConfig";
+import { salesModel, zodSchema } from "../llmConfig";
 import type { LLMConfigType } from "../types";
 
 export const createFinalRunnable = async (
@@ -37,7 +37,7 @@ export const createFinalRunnable = async (
   // Binding "function_call" below makes the model always call the specified function.
   // If you want to allow the model to call functions selectively, omit it.
   // If using replicate, bind will NOT work. So find alternate way for structured output
-  const functionCallingModel = chat_35_16k_Model.bind({
+  const functionCallingModel = salesModel.bind({
     functions: [
       {
         name: "output_formatter",

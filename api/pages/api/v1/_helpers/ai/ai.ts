@@ -15,7 +15,7 @@ import {
   isNewCustomer,
 } from "../supabase_queries";
 import { MESSAGE_SUMMARY_FLUSH_THRESHOLD } from "./constants";
-import { LLMConfig, chat_35_Model } from "./llmConfig";
+import { LLMConfig, summarizeHistoryModel } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
@@ -25,6 +25,7 @@ const createOpenaiWithHistory = async (
   input: string,
   store: string,
   clientId: string,
+  requestUuid: string,
   messageSource: MessageSource,
   messages: FormattedMessage[] = []
 ) => {
@@ -67,6 +68,8 @@ const createOpenaiWithHistory = async (
     store,
     customerContext,
     messageSource,
+    clientId,
+    requestUuid,
     history
   );
 };
@@ -76,6 +79,8 @@ const createOpenai = async (
   store: string,
   context: string[],
   messageSource: MessageSource,
+  clientId: string,
+  requestUuid: string,
   history: (HumanMessage | AIMessage)[] = []
 ) => {
   const llmConfig = LLMConfig[messageSource];
@@ -84,7 +89,7 @@ const createOpenai = async (
   const memory = new ConversationSummaryBufferMemory({
     chatHistory: new ChatMessageHistory(history),
     maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
-    llm: chat_35_Model, // Use same model as sales model for now
+    llm: summarizeHistoryModel,
     returnMessages: true,
   });
 
@@ -105,7 +110,7 @@ const createOpenai = async (
     memory,
     llmConfig.validate_hallucination
   );
-  const response = await runnable.run(input, store);
+  const response = await runnable.run(input, store, clientId, requestUuid);
   return { show: true, openai: response };
 };
 
@@ -113,6 +118,7 @@ export const callOpenai = async (
   input: string,
   store: string,
   clientId: string,
+  requestUuid: string,
   source: MessageSource,
   messageIds: string[] | undefined
 ) => {
@@ -139,6 +145,7 @@ export const callOpenai = async (
     input,
     store,
     clientId,
+    requestUuid,
     source,
     data // Pass in all messages for summary
   );
