@@ -44,6 +44,7 @@ export const zodSchema = z.object({
           .array(
             z
               .object({
+                id: z.string().describe("The id of this variant"),
                 title: z.string().describe("The title of this variant"),
                 price: z.number().describe("The price of the product"),
                 featured_image: z

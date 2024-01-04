@@ -18,11 +18,13 @@ export enum HalluctinationCheckSeverity {
 }
 
 export interface Product {
+  id: number;
   featured_image: {
     url: string;
     alt: string;
   };
   title: string;
+  handle?: string;
   price: string;
   variants: {
     id: string;
@@ -59,6 +61,7 @@ export interface ChatBubbleProps {
   type: string;
   isAISender: boolean;
   content: string;
+  host: string;
 }
 
 export interface TextMessageProps {
@@ -73,6 +76,7 @@ export interface LinkMessageProps {
   handle: string;
   price: string;
   image: string;
+  host: string;
 }
 
 // Keep this synced with api/pages/api/v*/supabase/_helpers where response expected
