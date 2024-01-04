@@ -110,10 +110,10 @@ export default function CommandPalette({ props }) {
                 },
                 title: productJson.name,
                 handle: productJson.product_handle,
-                price: productJson.variants[0].price,
-                variants: {
-                  id: productJson.variants[0].id,
-                },
+                price:
+                  productJson.variants?.length > 0
+                    ? productJson.variants[0]?.price
+                    : "",
                 url: "", // TODO: Add to DB
               };
             });
