@@ -18,6 +18,9 @@ export default async function handler(
   const requestUuid = request.query.requestUuid as string;
   const source = request.query.source as MessageSource;
   const messageIds = request.query.ids as string[];
+  if (request.method === "OPTIONS") {
+    return response.status(200).send("ok");
+  }
 
   try {
     return httpResponse(
