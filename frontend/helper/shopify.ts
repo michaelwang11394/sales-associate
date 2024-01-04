@@ -125,7 +125,7 @@ export const getEventSpecificMessage = async (event) => {
   switch (event.name) {
     // Welcome Intent
     case "page_viewed":
-      if (newCustomer[0] === true) {
+      if (newCustomer.isNew) {
         return "Hi, this is my first time visiting this store. Greet me";
       } else {
         return "Hi, welcome me back to the store and ask if I need any help.";
