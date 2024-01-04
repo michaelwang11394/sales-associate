@@ -33,6 +33,9 @@ export default async function handler(
   if (request.query.slug?.length !== 2) {
     return httpResponse(request, response, 404, "Invalid path");
   }
+  if (request.method === "OPTIONS") {
+    return response.status(200).send("ok");
+  }
   const table = request.query.slug[0];
   const queryType = request.query.slug[1];
 
