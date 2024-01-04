@@ -324,7 +324,9 @@ export default function CommandPalette({ props }) {
                             </div>
 
                             {/* Product Price */}
-                            <div>${product.price}</div>
+                            <div>
+                              {product.price ? "$" + product.price : ""}
+                            </div>
 
                             {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
                             {product.variants &&
