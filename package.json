@@ -18,7 +18,6 @@
     "cleanup": "rimraf --glob extensions/*/assets/*.{json,geetkeep}",
     "remix-build": "NODE_ENV=production remix build",
     "deploy:admin": "vercel deploy",
-    "deploy:admin-prod": "vercel deploy --prod",
     "predev": "prisma generate && prisma migrate deploy",
     "start": "remix-serve build",
     "docker-start": "npm run setup && npm run start",
@@ -27,7 +26,6 @@
     "prisma": "prisma",
     "dev:vercel-api": "cd api && VERCEL_HOST=localhost:3000 vercel dev",
     "deploy:vercel-api": "cd api && vercel deploy",
-    "deploy:vercel-api-prod": "cd api && vercel deploy --prod",
     "dev:run-full-stack": "run-p -rs dev:vercel-api dev:vercel"
   },
   "dependencies": {
