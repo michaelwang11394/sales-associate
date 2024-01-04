@@ -290,7 +290,7 @@ export default function CommandPalette({ props }) {
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-t border-gray-300 max-h-[calc(70vh-50px)]">
+            <div className="flex flex-col h-full border-t scrollable-bottom border-gray-300 max-h-[calc(70vh-50px)]">
               <div className="flex h-full">
                 <div
                   id="product-column"
