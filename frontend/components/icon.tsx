@@ -71,7 +71,7 @@ export default function Icon({ props }) {
                     "text",
                     "system",
                     response.openai.plainText,
-                    response.openai.requestUuid
+                    uuid
                   );
                 })
                 .catch((err) => console.error(err));

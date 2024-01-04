@@ -89,7 +89,8 @@ export const insertMessage = async (
   clientId: string,
   type: string,
   sender: string,
-  content: string
+  content: string,
+  requestUuid: string
 ) => {
   const { data, error } = await supabase
     .from("messages")
@@ -100,6 +101,7 @@ export const insertMessage = async (
         sender,
         content,
         store,
+        request_uuid: requestUuid,
       },
     ])
     .select();
