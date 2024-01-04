@@ -41,7 +41,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       <img src={image} alt={name} className="w-full h-48 object-cover" />
       <div className="flex flex-col p-4">
         <h3 className="text-xl font-semibold mb-2">{name}</h3>
-        <p className="text-lg font-medium text-gray-500 mb-4">{price}</p>
+        <p className="text-lg font-medium text-gray-500 mb-4">${price}</p>
         <a
           href={`https://${host}/products/${handle}`}
           target="_blank"
