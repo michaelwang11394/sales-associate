@@ -100,6 +100,7 @@ const createOpenai = async (
     context,
     llmConfig,
     memory,
+    messageSource,
     llmConfig.include_embeddings
       ? await createEmbedRunnable(store)
       : await createSimpleSearchRunnable(store)

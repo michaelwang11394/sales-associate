@@ -70,7 +70,7 @@ export default function CommandPalette({ props }) {
             greetingPrompt,
             clientId!,
             uuid,
-            MessageSource.CHAT,
+            MessageSource.CHAT_GREETING,
             messages
               .slice(-1 * MESSAGES_HISTORY_LIMIT)
               .map((m) => String(m.id!))
@@ -82,7 +82,7 @@ export default function CommandPalette({ props }) {
               const newResponseMessage: FormattedMessage = {
                 type: "text",
                 sender: SenderType.SYSTEM,
-                content: response.openai.plainText,
+                content: response.openai.kwargs?.content,
               };
               await handleNewMessage(clientId, newResponseMessage, uuid);
             })
