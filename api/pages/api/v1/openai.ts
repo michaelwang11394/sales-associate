@@ -5,7 +5,7 @@ import type { MessageSource } from "./types";
 
 // This function can run for a maximum of 5 seconds
 export const config = {
-  maxDuration: 60,
+  maxDuration: 180,
 };
 
 export default async function handler(
