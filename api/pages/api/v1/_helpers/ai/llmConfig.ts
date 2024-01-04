@@ -62,7 +62,7 @@ export const zodSchema = z.object({
 
 export const summarizeHistoryModel = new ChatOpenAI({
   openAIApiKey: OPENAI_KEY,
-  temperature: 0.7,
+  temperature: 1.0,
   modelName: GPT_3_5_TURBO_MODEL,
 });
 
