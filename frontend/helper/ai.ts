@@ -1,10 +1,11 @@
 import { OPENAI_PATH, V1, VERCEL_URL } from "@/constants/constants";
-import { HTTPHelper } from "./http";
 import type { ApiResponse } from "@/constants/types";
+import { HTTPHelper } from "./http";
 
 export const callOpenai = async (
   input: string,
   clientId: string,
+  requestUuid: string,
   source: string,
   messageIds: string[]
 ) => {
@@ -12,6 +13,7 @@ export const callOpenai = async (
     input: input,
     store: location.host,
     clientId: clientId,
+    requestUuid: requestUuid,
     source: source,
     ids: messageIds,
   });

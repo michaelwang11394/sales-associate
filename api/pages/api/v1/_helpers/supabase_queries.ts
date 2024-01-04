@@ -89,7 +89,8 @@ export const insertMessage = async (
   clientId: string,
   type: string,
   sender: string,
-  content: string
+  content: string,
+  requestUuid: string
 ) => {
   const { data, error } = await supabase
     .from("messages")
@@ -100,6 +101,7 @@ export const insertMessage = async (
         sender,
         content,
         store,
+        request_uuid: requestUuid,
       },
     ])
     .select();
@@ -318,6 +320,8 @@ export const createEmbeddings = async (store: string) => {
 
 export type ModelLoggingFields = {
   success: boolean;
+  store: string;
+  client_id: string;
   input: string;
   platform: string;
   model: string;
@@ -327,6 +331,7 @@ export type ModelLoggingFields = {
   output_cost?: number;
   rate_type?: string;
   duration?: number;
+  request_uuid: string;
   output?: string;
 };
 

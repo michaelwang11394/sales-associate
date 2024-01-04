@@ -20,8 +20,8 @@ import {
   SUPABASE_EVENTS_TABLE,
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
-  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
+  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_TABLE,
 } from "../constants";
 import { httpResponse } from "../http";
@@ -73,7 +73,8 @@ export default async function handler(
             clientId,
             request.query.type as string,
             request.query.sender as string,
-            request.query.content as string
+            request.query.content as string,
+            request.query.requestUuid as string
           )
         );
       default:

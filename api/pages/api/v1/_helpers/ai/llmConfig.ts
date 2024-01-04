@@ -61,22 +61,25 @@ export const zodSchema = z.object({
     .describe("A list of products mentioned in the response, if any"),
 });
 
-export const chat_35_Model = new ChatOpenAI({
-  openAIApiKey: OPENAI_KEY,
-  temperature: 0.7,
-  modelName: GPT_3_5_TURBO_MODEL,
-  callbacks: [
-    new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_MODEL),
-  ],
-});
-
-export const chat_35_16k_Model = new ChatOpenAI({
+export const summarizeHistoryModel = new ChatOpenAI({
   openAIApiKey: OPENAI_KEY,
   temperature: 1.0,
+  modelName: GPT_3_5_TURBO_MODEL,
+});
+
+export const salesModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
+  temperature: 0.7,
   modelName: GPT_3_5_TURBO_16K_MODEL,
   callbacks: [
     new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_16K_MODEL),
   ],
+});
+
+export const simpleSearchModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
+  temperature: 1.0,
+  modelName: GPT_3_5_TURBO_16K_MODEL,
 });
 
 export const replicateMistralModel = new Replicate({

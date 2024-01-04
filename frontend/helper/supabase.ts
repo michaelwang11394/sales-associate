@@ -6,15 +6,15 @@ import {
   SUPABASE_EVENTS_TABLE,
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
-  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
+  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_TABLE,
   SUPABASE_PATH,
   V1,
   VERCEL_URL,
 } from "@/constants/constants";
-import { HTTPHelper } from "./http";
 import type { ApiResponse } from "@/constants/types";
+import { HTTPHelper } from "./http";
 const store = location.host;
 
 export const getMessages = async (clientId, limit) => {
@@ -55,7 +55,13 @@ export const getProductMentions = async (clientId) => {
   }
 };
 
-export const insertMessage = async (clientId, type, sender, content) => {
+export const insertMessage = async (
+  clientId,
+  type,
+  sender,
+  content,
+  requestUuid
+) => {
   const res = await HTTPHelper.get<ApiResponse>(
     VERCEL_URL,
     [
@@ -70,6 +76,7 @@ export const insertMessage = async (clientId, type, sender, content) => {
       type: type,
       sender: sender,
       content: content,
+      requestUuid: requestUuid,
     }
   );
   return res.body;

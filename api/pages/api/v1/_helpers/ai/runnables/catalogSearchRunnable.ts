@@ -1,7 +1,7 @@
 import { PromptTemplate } from "langchain/prompts";
 import { RunnableSequence } from "langchain/schema/runnable";
 import { getProducts } from "../../shopify";
-import { chat_35_16k_Model } from "../llmConfig";
+import { simpleSearchModel } from "../llmConfig";
 
 // Narrow down relevant products by asking LLM directly
 export const createSimpleSearchRunnable = async (store: string) => {
@@ -22,7 +22,7 @@ export const createSimpleSearchRunnable = async (store: string) => {
           .format(previousOutput)
           .then(
             async (formatted_prompt) =>
-              await chat_35_16k_Model.invoke(formatted_prompt)
+              await simpleSearchModel.invoke(formatted_prompt)
           ),
       input: (previousOutput) => previousOutput.input,
     },
