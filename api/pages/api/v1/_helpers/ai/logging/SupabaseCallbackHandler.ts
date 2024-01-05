@@ -66,6 +66,7 @@ export class SupabaseCallbackHandler extends BaseCallbackHandler {
       output: JSON.stringify(output.generations[0][0].message),
     });
     this.input = "";
+    this.requestUuid = "";
     this.startTimestamp = undefined;
   }
 
@@ -88,6 +89,7 @@ export class SupabaseCallbackHandler extends BaseCallbackHandler {
       output: err,
     });
     this.input = "";
+    this.requestUuid = "";
     this.startTimestamp = undefined;
   }
 }
