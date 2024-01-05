@@ -70,7 +70,7 @@ export default function Icon({ props }) {
                     clientId,
                     "text",
                     "system",
-                    response.openai.kwargs?.content,
+                    response.openai,
                     uuid
                   );
                 })

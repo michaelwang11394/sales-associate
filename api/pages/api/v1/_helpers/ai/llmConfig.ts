@@ -8,9 +8,11 @@ import {
   GPT_3_5_TURBO_16K_MODEL,
   GPT_3_5_TURBO_MODEL,
   GPT_4_TURBO_16K_MODEL,
+  MISTRAL_7B_V0_1_MODEL,
   Platforms,
 } from "./constants";
-import { SupabaseCallbackHandler } from "./logging/SupabaseCallbackHandler";
+import { OpenAiCallbackHandler } from "./logging/OpenaiCallbackHandler";
+import { ReplicateMistralCallbackHandler } from "./logging/ReplicateMistralCallbackHandler";
 import type { LLMConfigType } from "./types";
 
 export const LLMConfig: Record<MessageSource, LLMConfigType> = {
@@ -78,7 +80,7 @@ export const salesModel = new ChatOpenAI({
   temperature: 0.7,
   modelName: GPT_4_TURBO_16K_MODEL,
   callbacks: [
-    new SupabaseCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
+    new OpenAiCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
   ],
 });
 
@@ -92,4 +94,10 @@ export const replicateMistralModel = new Replicate({
   apiKey: REPLICATE_KEY,
   model:
     "mistralai/mixtral-8x7b-instruct-v0.1:7b3212fbaf88310cfef07a061ce94224e82efc8403c26fc67e8f6c065de51f21",
+  callbacks: [
+    new ReplicateMistralCallbackHandler(
+      Platforms.Replicate,
+      MISTRAL_7B_V0_1_MODEL
+    ),
+  ],
 });

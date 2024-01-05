@@ -5,8 +5,8 @@ import { logModelRun } from "../../supabase_queries";
 import type { Platforms } from "../constants";
 import { PLATFORM_UNIT_TYPES } from "../constants";
 
-export class SupabaseCallbackHandler extends BaseCallbackHandler {
-  name = "SupabaseCallbackHandler";
+export class OpenAiCallbackHandler extends BaseCallbackHandler {
+  name = "OpenAiCallbackHandler";
   input: string;
   startTimestamp?: number;
   requestUuid: string;
