@@ -63,7 +63,6 @@ export default function Icon({ props }) {
                   .map((m) => String(m.id!))
               )
                 .then(async (response) => {
-                  console.log(response);
                   if (response.show) {
                     setGreeting(response.openai);
                   }
