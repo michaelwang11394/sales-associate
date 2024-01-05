@@ -11,7 +11,7 @@ import {
 } from "langchain/schema/runnable";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { MessageSource } from "../../../types";
-import { salesModel, zodSchema } from "../llmConfig";
+import { replicateMistralModel, salesModel, zodSchema } from "../llmConfig";
 import type { LLMConfigType } from "../types";
 
 export const createFinalRunnable = async (
@@ -56,7 +56,7 @@ export const createFinalRunnable = async (
             })
           )
           .pipe(new JsonOutputFunctionsParser())
-      : chatPrompt.pipe(salesModel);
+      : chatPrompt.pipe(replicateMistralModel);
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
