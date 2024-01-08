@@ -7,7 +7,6 @@ import { HalluctinationCheckSeverity, MessageSource } from "../../types";
 import {
   GPT_3_5_TURBO_16K_MODEL,
   GPT_3_5_TURBO_MODEL,
-  GPT_4_TURBO_16K_MODEL,
   Platforms,
 } from "./constants";
 import { SupabaseCallbackHandler } from "./logging/SupabaseCallbackHandler";
@@ -76,9 +75,9 @@ export const summarizeHistoryModel = new ChatOpenAI({
 export const salesModel = new ChatOpenAI({
   openAIApiKey: OPENAI_KEY,
   temperature: 0.7,
-  modelName: GPT_4_TURBO_16K_MODEL,
+  modelName: GPT_3_5_TURBO_16K_MODEL,
   callbacks: [
-    new SupabaseCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
+    new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_16K_MODEL),
   ],
 });
 
