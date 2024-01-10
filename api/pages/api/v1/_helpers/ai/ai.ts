@@ -16,7 +16,7 @@ import {
   isNewCustomer,
 } from "../supabase_queries";
 import { MESSAGE_SUMMARY_FLUSH_THRESHOLD } from "./constants";
-import { LLMConfig, chatSalesModel } from "./llmConfig";
+import { LLMConfig, summarizeHistoryModel } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
@@ -26,8 +26,9 @@ const createOpenaiWithHistory = async (
   input: string,
   store: string,
   clientId: string,
+  requestUuid: string,
   messageSource: MessageSource,
-  messages: FormattedMessage[],
+  messages: FormattedMessage[] = [],
   streamWriter: EventEmitter
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
@@ -69,6 +70,8 @@ const createOpenaiWithHistory = async (
     store,
     customerContext,
     messageSource,
+    clientId,
+    requestUuid,
     history,
     streamWriter
   );
@@ -79,7 +82,9 @@ const createOpenai = async (
   store: string,
   context: string[],
   messageSource: MessageSource,
-  history: (HumanMessage | AIMessage)[],
+  clientId: string,
+  requestUuid: string,
+  history: (HumanMessage | AIMessage)[] = [],
   streamWriter: EventEmitter
 ) => {
   const llmConfig = LLMConfig[messageSource];
@@ -88,7 +93,7 @@ const createOpenai = async (
   const memory = new ConversationSummaryBufferMemory({
     chatHistory: new ChatMessageHistory(history),
     maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
-    llm: chatSalesModel, // Use same model as sales model for now
+    llm: summarizeHistoryModel,
     returnMessages: true,
   });
 
@@ -99,17 +104,14 @@ const createOpenai = async (
     context,
     llmConfig,
     memory,
+    messageSource,
     llmConfig.include_embeddings
       ? await createEmbedRunnable(store)
       : await createSimpleSearchRunnable(store)
   );
 
-  const runnable = new RunnableWithMemory(
-    finalChain,
-    llmConfig.validate_hallucination,
-    streamWriter
-  );
-  const response = await runnable.run(input, store);
+  const runnable = new RunnableWithMemory(finalChain, streamWriter);
+  const response = await runnable.run(input, store, clientId, requestUuid);
   return { show: true, openai: response };
 };
 
@@ -117,6 +119,7 @@ export const callOpenai = async (
   input: string,
   store: string,
   clientId: string,
+  requestUuid: string,
   source: MessageSource,
   messageIds: string[] | undefined,
   streamWriter: EventEmitter
@@ -144,6 +147,7 @@ export const callOpenai = async (
     input,
     store,
     clientId,
+    requestUuid,
     source,
     data, // Pass in all messages for summary
     streamWriter

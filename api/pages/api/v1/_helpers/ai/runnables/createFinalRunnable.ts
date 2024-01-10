@@ -9,13 +9,15 @@ import {
   RunnableSequence,
 } from "langchain/schema/runnable";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { chatSalesModel, zodSchema } from "../llmConfig";
+import { MessageSource } from "../../../types";
+import { salesModel, zodSchema } from "../llmConfig";
 import type { LLMConfigType } from "../types";
 
 export const createFinalRunnable = async (
   context: string[],
   llmConfig: LLMConfigType,
   memory: BufferMemory,
+  messageSource: MessageSource,
   previous_chain?: RunnableSequence // If chaining, what is the previous chain
 ) => {
   const systemTemplate = llmConfig.prompt;
@@ -30,24 +32,27 @@ export const createFinalRunnable = async (
     formattedSystemMessagePrompt,
     new MessagesPlaceholder("history"),
     ["system", "{products}"],
-    ["user", "{input}"],
+    [messageSource === MessageSource.CHAT ? "user" : "system", "{input}"],
   ]);
 
-  // Binding "function_call" below makes the model always call the specified function.
-  // If you want to allow the model to call functions selectively, omit it.
-  // If using replicate, bind will NOT work. So find alternate way for structured output
-  const functionCallingModel = chatSalesModel.bind({
-    functions: [
-      {
-        name: "output_formatter",
-        description: "Should always be used to properly format output",
-        parameters: zodToJsonSchema(zodSchema),
-      },
-    ],
-    function_call: { name: "output_formatter" },
-  });
-
-  // const outputParser = new JsonOutputFunctionsParser();
+  /* If using replicate, bind will NOT work. So find alternate way for structured output
+    Do not create structured output with the embed greeting
+   */
+  const lastRunnable =
+    messageSource === MessageSource.CHAT
+      ? chatPrompt.pipe(
+          salesModel.bind({
+            functions: [
+              {
+                name: "output_formatter",
+                description: "Should always be used to properly format output",
+                parameters: zodToJsonSchema(zodSchema),
+              },
+            ],
+            function_call: { name: "output_formatter" },
+          })
+        )
+      : chatPrompt.pipe(salesModel);
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
@@ -61,7 +66,7 @@ export const createFinalRunnable = async (
         return mem;
       },
     }),
-    chatPrompt.pipe(functionCallingModel),
+    lastRunnable,
   ]);
 
   return previous_chain ? previous_chain.pipe(salesChain) : salesChain;

@@ -7,7 +7,13 @@ import { MessageSource, type DBMessage } from "@/constants/types";
 import { callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage } from "@/helper/shopify";
-import { getLastPixelEvent, getMessages } from "@/helper/supabase";
+import { v4 as uuidv4 } from "uuid";
+
+import {
+  getLastPixelEvent,
+  getMessages,
+  insertMessage,
+} from "@/helper/supabase";
 import "@/styles/chat.css";
 import { useEffect, useRef, useState } from "react";
 import { formatDBMessage } from "./command";
@@ -45,19 +51,28 @@ export default function Icon({ props }) {
             .reverse();
           getLastPixelEvent(clientId).then((d) => {
             d.data?.forEach(async (event) => {
+              const uuid = uuidv4();
               const greetingPrompt = await getGreetingMessage(event);
               callOpenai(
                 greetingPrompt,
                 clientId!,
+                uuid,
                 MessageSource.EMBED,
                 messages
                   .slice(-1 * MESSAGES_HISTORY_LIMIT)
                   .map((m) => String(m.id!))
               )
-                .then((response) => {
+                .then(async (response) => {
                   if (response.show) {
-                    setGreeting(response.openai.plainText);
+                    setGreeting(response.openai.kwargs?.content);
                   }
+                  await insertMessage(
+                    clientId,
+                    "text",
+                    "system",
+                    response.openai.kwargs?.content,
+                    uuid
+                  );
                 })
                 .catch((err) => console.error(err));
             });

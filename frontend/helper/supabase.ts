@@ -7,13 +7,14 @@ import {
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
+  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_TABLE,
   SUPABASE_PATH,
   V1,
   VERCEL_URL,
 } from "@/constants/constants";
-import { HTTPHelper } from "./http";
 import type { ApiResponse } from "@/constants/types";
+import { HTTPHelper } from "./http";
 const store = location.host;
 
 export const getMessages = async (clientId, limit) => {
@@ -35,7 +36,32 @@ export const getMessages = async (clientId, limit) => {
   }
 };
 
-export const insertMessage = async (clientId, type, sender, content) => {
+export const getProductMentions = async (clientId) => {
+  try {
+    const res = await HTTPHelper.get<ApiResponse>(
+      VERCEL_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SUPABASE_MESSAGES_TABLE,
+        SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
+      ],
+      { store: store, clientId: clientId }
+    );
+    return res.body;
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const insertMessage = async (
+  clientId,
+  type,
+  sender,
+  content,
+  requestUuid
+) => {
   const res = await HTTPHelper.get<ApiResponse>(
     VERCEL_URL,
     [
@@ -50,6 +76,7 @@ export const insertMessage = async (clientId, type, sender, content) => {
       type: type,
       sender: sender,
       content: content,
+      requestUuid: requestUuid,
     }
   );
   return res.body;

@@ -256,6 +256,10 @@ body {
   -webkit-margin-after: 0em;
 }
 
+.scrollable-bottom {
+  padding-bottom: 0.5em;
+}
+
 .overlay.visible {
   opacity: 1;
   color: black;

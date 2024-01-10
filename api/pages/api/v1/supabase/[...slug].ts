@@ -3,6 +3,7 @@ import {
   createEmbeddings,
   getLastPixelEvent,
   getMessages,
+  getProductsMentioned,
   hasItemsInCart,
   hasViewedProducts,
   insertMessage,
@@ -20,6 +21,7 @@ import {
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
+  SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_MESSAGES_TABLE,
 } from "../constants";
 import { httpResponse } from "../http";
@@ -30,6 +32,9 @@ export default async function handler(
 ) {
   if (request.query.slug?.length !== 2) {
     return httpResponse(request, response, 404, "Invalid path");
+  }
+  if (request.method === "OPTIONS") {
+    return response.status(200).send("ok");
   }
   const table = request.query.slug[0];
   const queryType = request.query.slug[1];
@@ -52,6 +57,14 @@ export default async function handler(
             Number(request.query.limit as string)
           )
         );
+      case SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT:
+        return httpResponse(
+          request,
+          response,
+          200,
+          "Messages products mentioned query completed",
+          await getProductsMentioned(store, clientId)
+        );
       case SUPABASE_MESSAGES_INSERT_ENDPOINT:
         return httpResponse(
           request,
@@ -63,7 +76,8 @@ export default async function handler(
             clientId,
             request.query.type as string,
             request.query.sender as string,
-            request.query.content as string
+            request.query.content as string,
+            request.query.requestUuid as string
           )
         );
       default:

@@ -36,6 +36,29 @@ export const getMessages = async (
   }
 };
 
+export const getProductsMentioned = async (store: string, clientId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("content")
+      .order("timestamp", { ascending: false })
+      .eq("clientId", clientId)
+      .eq("store", store)
+      .eq("type", "link")
+      .limit(3);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting messages." };
+    }
+
+    return { success: true, data: data.map((item) => item.content) };
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
 export const getMessagesFromIds = async (
   store: string,
   clientId: string,
@@ -66,7 +89,8 @@ export const insertMessage = async (
   clientId: string,
   type: string,
   sender: string,
-  content: string
+  content: string,
+  requestUuid: string
 ) => {
   const { data, error } = await supabase
     .from("messages")
@@ -77,6 +101,7 @@ export const insertMessage = async (
         sender,
         content,
         store,
+        request_uuid: requestUuid,
       },
     ])
     .select();
@@ -295,6 +320,8 @@ export const createEmbeddings = async (store: string) => {
 
 export type ModelLoggingFields = {
   success: boolean;
+  store: string;
+  client_id: string;
   input: string;
   platform: string;
   model: string;
@@ -304,6 +331,7 @@ export type ModelLoggingFields = {
   output_cost?: number;
   rate_type?: string;
   duration?: number;
+  request_uuid: string;
   output?: string;
 };
 

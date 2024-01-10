@@ -16,11 +16,15 @@ const LoadingMessage = () => {
     </svg>
   );
 };
-const TextMessage: React.FC<TextMessageProps> = ({ text }) => {
+const TextMessage: React.FC<TextMessageProps> = ({
+  text,
+}): React.JSX.Element => {
   return <p className="text-md">{text}</p>;
 };
 
-const ImageMessage: React.FC<ImageMessageProps> = ({ src }) => {
+const ImageMessage: React.FC<ImageMessageProps> = ({
+  src,
+}): React.JSX.Element => {
   // eslint-disable-next-line jsx-a11y/alt-text
   return <img src={src} className="w-40 h-40 rounded-lg object-cover" />;
 };
@@ -30,15 +34,18 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   handle,
   price,
   image,
-}) => {
+  host,
+}): React.JSX.Element => {
   return (
     <div className="w-64">
       <img src={image} alt={name} className="w-full h-48 object-cover" />
       <div className="flex flex-col p-4">
         <h3 className="text-xl font-semibold mb-2">{name}</h3>
-        <p className="text-lg font-medium text-gray-500 mb-4">{price}</p>
+        <p className="text-lg font-medium text-gray-500 mb-4">
+          {price ? "$" + price : ""}
+        </p>
         <a
-          href={handle}
+          href={`https://${host}/products/${handle}`}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center justify-center px-4 py-2 bg-white text-black font-semibold rounded-md shadow-md hover:bg-gray-600">
@@ -49,11 +56,12 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   );
 };
 
-export const ChatBubble: React.FC<ChatBubbleProps> = ({
+export const ChatBubble = ({
   type,
   isAISender,
   content,
-}) => {
+  host,
+}: ChatBubbleProps): React.JSX.Element => {
   const renderMessage = () => {
     switch (type) {
       case "loading":
@@ -67,7 +75,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         const linkObject = JSON.parse(content);
         const name = linkObject.name;
         const handle = linkObject.product_handle;
-        const price = linkObject.variants[0]?.price || "";
+        const price =
+          linkObject.variants?.length > 0 ? linkObject.variants[0]?.price : "";
         const image = linkObject.image;
         return (
           <LinkMessage
@@ -75,6 +84,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             handle={handle}
             price={price}
             image={image}
+            host={host}
           />
         );
       default:

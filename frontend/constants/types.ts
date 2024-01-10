@@ -7,6 +7,7 @@ export enum SenderType {
 export enum MessageSource {
   EMBED = "embed", // Pop up greeting in app embed
   CHAT = "chat", // Conversation/thread with customer
+  CHAT_GREETING = "chat_greeting", // Greeting message in palette
 }
 
 // Hallucination severity in decreasing order
@@ -18,16 +19,18 @@ export enum HalluctinationCheckSeverity {
 }
 
 export interface Product {
-  url: string;
+  id: number;
   featured_image: {
     url: string;
     alt: string;
   };
   title: string;
+  handle?: string;
   price: string;
   variants: {
     id: string;
   }[];
+  url?: string;
 }
 
 // Props related to chat
@@ -59,6 +62,7 @@ export interface ChatBubbleProps {
   type: string;
   isAISender: boolean;
   content: string;
+  host: string;
 }
 
 export interface TextMessageProps {
@@ -73,6 +77,7 @@ export interface LinkMessageProps {
   handle: string;
   price: string;
   image: string;
+  host: string;
 }
 
 // Keep this synced with api/pages/api/v*/supabase/_helpers where response expected

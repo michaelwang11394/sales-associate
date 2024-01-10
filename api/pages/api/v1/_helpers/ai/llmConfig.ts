@@ -18,6 +18,11 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
+  [MessageSource.CHAT_GREETING]: {
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep all responses to less than 100 characters.`,
+    include_embeddings: true,
+    validate_hallucination: HalluctinationCheckSeverity.FILTER,
+  },
   [MessageSource.EMBED]: {
     prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
     include_embeddings: true,
@@ -44,6 +49,7 @@ export const zodSchema = z.object({
           .array(
             z
               .object({
+                id: z.string().describe("The id of this variant"),
                 title: z.string().describe("The title of this variant"),
                 price: z.number().describe("The price of the product"),
                 featured_image: z
@@ -60,22 +66,25 @@ export const zodSchema = z.object({
     .describe("A list of products mentioned in the response, if any"),
 });
 
-export const chatSalesModel = new ChatOpenAI({
-  openAIApiKey: OPENAI_KEY,
-  temperature: 0.7,
-  modelName: GPT_3_5_TURBO_MODEL,
-  callbacks: [
-    new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_MODEL),
-  ],
-});
-
-export const chatProductModel = new ChatOpenAI({
+export const summarizeHistoryModel = new ChatOpenAI({
   openAIApiKey: OPENAI_KEY,
   temperature: 1.0,
+  modelName: GPT_3_5_TURBO_MODEL,
+});
+
+export const salesModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
+  temperature: 0.7,
   modelName: GPT_3_5_TURBO_16K_MODEL,
   callbacks: [
     new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_16K_MODEL),
   ],
+});
+
+export const simpleSearchModel = new ChatOpenAI({
+  openAIApiKey: OPENAI_KEY,
+  temperature: 1.0,
+  modelName: GPT_3_5_TURBO_16K_MODEL,
 });
 
 export const replicateMistralModel = new Replicate({

@@ -18,6 +18,8 @@ export const SUPABASE_EVENTS_TABLE = "events";
 export const SUPABASE_EMBEDDINGS_TABLE = "vector_catalog";
 
 export const SUPABASE_MESSAGES_HISTORY_ENDPOINT = "history";
+export const SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT =
+  "products-mentioned";
 export const SUPABASE_MESSAGES_INSERT_ENDPOINT = "insert";
 
 export const SUPABASE_EVENTS_LAST_EVENT_ENDPOINT = "last";

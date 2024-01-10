@@ -20,10 +20,12 @@ import {
 import {
   getLastPixelEvent,
   getMessages,
+  getProductMentions,
   insertMessage,
 } from "@/helper/supabase";
 import { debounce } from "lodash";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { ChatBubble } from "./chat";
 
 export const formatDBMessage = (messageRow: DBMessage) => {
@@ -40,9 +42,11 @@ export const formatDBMessage = (messageRow: DBMessage) => {
 export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [mentionedProducts, setMentionedProducts] = useState<Product[]>([]);
   const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
+  const host = window.location.host;
 
   useEffect(() => {
     if (clientId) {
@@ -61,33 +65,72 @@ export default function CommandPalette({ props }) {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
+          const uuid = uuidv4();
           callOpenai(
             greetingPrompt,
             clientId!,
-            MessageSource.CHAT,
+            uuid,
+            MessageSource.CHAT_GREETING,
             messages
               .slice(-1 * MESSAGES_HISTORY_LIMIT)
               .map((m) => String(m.id!))
           )
-            .then(async () => {
-              /*
+            .then(async (response) => {
               if (!response.show) {
                 return;
               }
-              console.log(response.openai.plainText);
               const newResponseMessage: FormattedMessage = {
                 type: "text",
                 sender: SenderType.SYSTEM,
-                content: response.openai.plainText,
+                content: response.openai.kwargs?.content,
               };
-              await handleNewMessage(clientId, newResponseMessage);
-              */
+              await handleNewMessage(clientId, newResponseMessage, uuid);
             })
             .catch((err) => console.error(err));
         });
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(
+    () => {
+      if (clientId) {
+        getProductMentions(clientId).then((data) => {
+          if (!data) {
+            console.error("Product mentions could not be fetched");
+          } else {
+            const products = data.data!;
+            const productList = products
+              .map((product) => {
+                const productJson = JSON.parse(product);
+                return {
+                  featured_image: {
+                    url: productJson.image,
+                    alt: "",
+                  },
+                  title: productJson.name,
+                  handle: productJson.product_handle,
+                  price:
+                    productJson.variants?.length > 0
+                      ? productJson.variants[0]?.price
+                      : "",
+                  url: "", // TODO: Add to DB
+                };
+              })
+              .filter(
+                (product, index, self) =>
+                  index === self.findIndex((p) => p.handle === product.handle)
+              );
+            setMentionedProducts(productList);
+            setSuggestions(productList);
+          }
+        });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [messages]
+  );
 
   useEffect(() => {
     scrollToBottom();
@@ -100,12 +143,13 @@ export default function CommandPalette({ props }) {
     }
   };
 
-  const handleNewMessage = async (clientId, newUserMessage) => {
+  const handleNewMessage = async (clientId, newUserMessage, requestUuid) => {
     const { success, data } = await insertMessage(
       clientId,
       newUserMessage.type,
       newUserMessage.sender,
-      newUserMessage.content
+      newUserMessage.content,
+      requestUuid
     );
     if (!success) {
       console.error("Messages update failed for supabase table messages");
@@ -120,10 +164,10 @@ export default function CommandPalette({ props }) {
     setUserInput(event.target.value);
     const debouncedGetSuggestions = debounce(async () => {
       if (event.target.value !== "") {
-        const suggestions = await getSuggestions(event.target.value);
-        setSuggestions(suggestions);
+        const newSuggestions = await getSuggestions(event.target.value);
+        setSuggestions(newSuggestions); // Only set the new suggestions, don't mix with mentioned products
       } else {
-        setSuggestions([]);
+        setSuggestions(mentionedProducts); // If search is empty, show the mentioned products
       }
     }, 300);
 
@@ -148,26 +192,31 @@ export default function CommandPalette({ props }) {
       sender: SenderType.SYSTEM,
       content: "Loading...",
     };
-    await handleNewMessage(clientId, newUserMessage);
+    const uuid = uuidv4();
+    await handleNewMessage(clientId, newUserMessage, uuid);
     setMessages((prevMessages) => [...prevMessages, loadingMessage]);
     callOpenai(
       input,
       clientId!,
+      uuid,
       MessageSource.CHAT,
       messages.slice(-1 - MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
     )
-      .then(async () => {
-        /*
+      .then(async (response) => {
         setIsLoading(false);
         setMessages((prevMessages) =>
           prevMessages.filter((message) => message.type !== "loading")
         );
         if (!response.show) {
-          await handleNewMessage(clientId, {
-            type: "text",
-            content: "AI has encountered an error. Please try agian.",
-            sender: SenderType.SYSTEM,
-          } as FormattedMessage);
+          await handleNewMessage(
+            clientId,
+            {
+              type: "text",
+              content: "AI has encountered an error. Please try agian.",
+              sender: SenderType.SYSTEM,
+            } as FormattedMessage,
+            uuid
+          );
           return;
         }
         const newResponseMessage: FormattedMessage = {
@@ -175,40 +224,42 @@ export default function CommandPalette({ props }) {
           sender: SenderType.AI,
           content: response.openai.plainText,
         };
-        await handleNewMessage(clientId, newResponseMessage);
+        await handleNewMessage(clientId, newResponseMessage, uuid);
         response.openai.products?.forEach(
           async (product) =>
-            await handleNewMessage(clientId, {
-              type: "link",
-              sender: SenderType.AI,
-              content: JSON.stringify(product),
-            } as FormattedMessage)
+            await handleNewMessage(
+              clientId,
+              {
+                type: "link",
+                sender: SenderType.AI,
+                content: JSON.stringify(product),
+              } as FormattedMessage,
+              uuid
+            )
         );
-        */
       })
       .catch(async (err) => {
         setIsLoading(false);
-        await handleNewMessage(clientId, {
-          type: "text",
-          content: "AI has encountered an error. Please try agian.",
-          sender: SenderType.SYSTEM,
-        } as FormattedMessage);
+        await handleNewMessage(
+          clientId,
+          {
+            type: "text",
+            content: "AI has encountered an error. Please try agian.",
+            sender: SenderType.SYSTEM,
+          } as FormattedMessage,
+          uuid
+        );
         console.error(err);
       });
   };
 
-  const handleDropdownItemClick = (item) => {
-    // Handle the selection of suggestions if needed
-    console.log("Selected suggestion:", item);
-  };
-
   return (
-    <div id="overlay" className="h-[70%]">
+    <div id="overlay" className="h-[70vh] flex flex-col">
       <section
         id={PALETTE_DIV_ID}
-        className="relative overflow-hidden bg-cover">
-        <div className="relative flex items-center justify-center">
-          <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg ">
+        className="relative overflow-hidden bg-cover flex-grow">
+        <div className="relative flex justify-center flex-grow flex-shrink h-full">
+          <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg flex-grow">
             <div className="flex justify-center">
               <form
                 onSubmit={handleSubmit}
@@ -242,93 +293,118 @@ export default function CommandPalette({ props }) {
                 </button>
               </form>
             </div>
-            {/* Dividing Line */}
-            {/* TODO: 1) Add add to cart button for each product. 2) Add button that will show rest of search results.*/}
-            <div className="flex border-t border-gray-300 flex-col overflow-y-auto max-h-[60rem]">
-              <div className="flex-1 min-w-0 p-6 relative">
-                <button
-                  className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
-                  onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
-                  &times;
-                </button>
-                <div className="font-bold mb-2 text-center">
-                  Product Suggestions
-                </div>
-                <div className="flex flex-wrap justify-around">
+            {/* Dividing Line. Beginning of product suggestions*/}
+
+            <div className="flex flex-col h-full border-t scrollable-bottom border-gray-300 max-h-[calc(70vh-50px)]">
+              <div className="flex h-full">
+                <div
+                  id="product-column"
+                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
+                  <div className="font-bold mb-2 mt-2 text-center">
+                    Product Suggestions
+                  </div>
+
                   {suggestions && suggestions.length > 0 ? (
-                    suggestions.slice(0, 4).map((product, index) => (
-                      <div key={index} className="flex-1 text-center p-1 m-1">
-                        <a
-                          href={product.url}
-                          onClick={() => handleDropdownItemClick(product)}
-                          className="text-decoration-none text-inherit flex flex-col items-center justify-between min-h-[150px]">
+                    suggestions.slice(0, 3).map((product, index) => (
+                      <a
+                        key={index}
+                        href={`https://${host}/products/${product.handle}`}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        <div className="flex p-1 m-1 flex-grow">
                           {/* Product Image */}
-                          <img
-                            src={product.featured_image.url}
-                            alt={product.featured_image.alt}
-                            className="w-4/5 h-1/2 max-h-[150px] object-contain mb-2"
-                          />
+                          <div className="w-1/3">
+                            <img
+                              src={product.featured_image.url}
+                              alt={product.featured_image.alt}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
 
-                          {/* Product Name */}
-                          <div className="mb-2 h-10">{product.title}</div>
+                          {/* Product Details */}
+                          <div className="w-2/3 flex flex-col p-2 space-y-1">
+                            {/* Product Name */}
+                            <div className="h-10 overflow-hidden line-clamp-2">
+                              {product.title}
+                            </div>
 
-                          {/* Product Price */}
-                          <div>{product.price}</div>
-                          {/* Add to Cart Button */}
-                          {product.variants.length > 0 && (
-                            <button
-                              className="mt-2 px-4 py-2 text-sm font-medium text-black bg-white border border-black rounded cursor-pointer"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                addToCart(product.variants[0].id, 1).then(
-                                  (response) =>
-                                    alert(
-                                      product.title + " has been added to cart"
-                                    )
-                                );
-                              }}>
-                              Add to Cart
-                            </button>
-                          )}
-                        </a>
-                      </div>
+                            {/* Product Price */}
+                            <div>
+                              {product.price ? "$" + product.price : ""}
+                            </div>
+
+                            {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
+                            {product.variants &&
+                              product.variants[0] &&
+                              product.variants[0].id && (
+                                <button
+                                  className="w-1/3 mt-2 px-2 py-1 text-md font-medium text-white bg-blue-600 border rounded cursor-pointer"
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    const response = await addToCart(
+                                      product.variants[0].id,
+                                      1
+                                    );
+                                    if (response) {
+                                      window.location.href = `https://${host}/cart`;
+                                    } else {
+                                      // If product variant is not available to add, redirect to product page
+
+                                      window.location.href = `https://${host}/products/${product.handle}`;
+                                    }
+                                  }}>
+                                  Add to Cart
+                                </button>
+                              )}
+                          </div>
+                        </div>
+                      </a>
                     ))
                   ) : (
                     <div className="text-center italic">
                       Type in the search box to see suggestions
                     </div>
                   )}
-                </div>
-                {userInput.length > 0 && (
-                  <div className="flex justify-center mt-4">
-                    <button
-                      className="px-4 py-2 text-lg text-white bg-black border-none rounded cursor-pointer font-medium"
-                      onClick={() =>
-                        (window.location.href = `/search?q=${userInput}`)
-                      }>
-                      View all Items
-                    </button>
-                  </div>
-                )}
-              </div>
 
-              {/* Chat Column*/}
-              <div className="font-bold mb-2 mt-2 text-center">
-                Conversation
-              </div>
-              <div
-                id="chat-column"
-                className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4">
-                {messages
-                  .filter((message) => message.content !== undefined)
-                  .map((message, index) => (
-                    <ChatBubble
-                      key={index}
-                      type={message.type}
-                      isAISender={message.sender !== SenderType.USER}
-                      content={message.content}
-                    />
-                  ))}
+                  <div className="h-[3rem] flex justify-center mt-4">
+                    {suggestions.length > 0 && (
+                      <button
+                        className="px-2 py-1 text-md text-white bg-blue-600 border-none rounded cursor-pointer font-medium"
+                        onClick={() =>
+                          // TODO: Different themes will have different URLS for search result pages
+                          (window.location.href = `https://${host}/pages/search-results-page?/search?q=${userInput}`)
+                        }>
+                        View All Items
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Chat Column*/}
+                <div
+                  id="chat-column"
+                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
+                  <div className="font-bold mb-2 mt-2 text-center">
+                    Conversation
+                  </div>
+                  <button
+                    className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
+                    onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
+                    &times;
+                  </button>
+
+                  {messages
+                    .filter((message) => message.content !== undefined)
+                    .map((message, index) => (
+                      <ChatBubble
+                        key={index}
+                        type={message.type}
+                        isAISender={message.sender !== SenderType.USER}
+                        content={message.content}
+                        host={host}
+                      />
+                    ))}
+                </div>
               </div>
             </div>
           </div>

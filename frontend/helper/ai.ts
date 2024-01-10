@@ -4,6 +4,7 @@ import { HTTPHelper } from "./http";
 export const callOpenai = async (
   input: string,
   clientId: string,
+  requestUuid: string,
   source: string,
   messageIds: string[]
 ): Promise<void> => {
@@ -11,6 +12,7 @@ export const callOpenai = async (
     input: input,
     store: location.host,
     clientId: clientId,
+    requestUuid: requestUuid,
     source: source,
     ids: messageIds,
   });
