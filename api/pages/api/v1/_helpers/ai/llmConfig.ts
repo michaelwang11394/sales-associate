@@ -35,32 +35,7 @@ export const zodSchema = z.object({
   products: z
     .array(
       z.object({
-        name: z.string().describe("The name of the product"),
-        product_handle: z.string().describe("The product handle"),
-        image: z
-          .string()
-          .includes("cdn.shopify.com", {
-            message: "Must include cdn.shopify.com",
-          })
-          .describe(
-            "The image url of the product. Must include cdn.shopify.com"
-          ),
-        variants: z
-          .array(
-            z
-              .object({
-                id: z.string().describe("The id of this variant"),
-                title: z.string().describe("The title of this variant"),
-                price: z.number().describe("The price of the product"),
-                featured_image: z
-                  .string()
-                  .url()
-                  .describe("The featured image of the product variant"),
-              })
-              .describe("A variant of product that has a specific price")
-          )
-          .describe("Array of variants of product if not empty")
-          .optional(),
+        product_handle: z.string().describe("The product handle of product"),
       })
     )
     .describe("A list of products mentioned in the response, if any"),

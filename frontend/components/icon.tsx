@@ -9,11 +9,7 @@ import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage } from "@/helper/shopify";
 import { v4 as uuidv4 } from "uuid";
 
-import {
-  getLastPixelEvent,
-  getMessages,
-  insertMessage,
-} from "@/helper/supabase";
+import { getLastPixelEvent, getMessages } from "@/helper/supabase";
 import "@/styles/chat.css";
 import { useEffect, useRef, useState } from "react";
 import { formatDBMessage } from "./command";
@@ -62,17 +58,22 @@ export default function Icon({ props }) {
                   .slice(-1 * MESSAGES_HISTORY_LIMIT)
                   .map((m) => String(m.id!))
               )
-                .then(async (response) => {
-                  if (response.show) {
-                    setGreeting(response.openai.kwargs?.content);
+                .then(async (reader) => {
+                  let full = "";
+                  while (true) {
+                    const { done, value } = await reader!.read();
+                    if (done) {
+                      // Do something with last chunk of data then exit reader
+                      reader?.cancel();
+                      console.log("ending reader)");
+                      break;
+                    }
+                    let chunk = new TextDecoder("utf-8").decode(value);
+                    full += chunk;
+                    console.log("BOI", chunk);
+                    console.log("BOI", full);
+                    setGreeting(full);
                   }
-                  await insertMessage(
-                    clientId,
-                    "text",
-                    "system",
-                    response.openai.kwargs?.content,
-                    uuid
-                  );
                 })
                 .catch((err) => console.error(err));
             });

@@ -1,14 +1,18 @@
-import type EventEmitter from "events";
 import type { RunnableSequence } from "langchain/schema/runnable";
 import { OPENAI_RETRIES } from "../../../constants";
+import {
+  HallucinationError,
+  HalluctinationCheckSeverity,
+} from "../../../types";
+import { isValidProduct } from "../../shopify";
 
-export class RunnableWithMemory {
+export class RunnableWithRetry {
   constructor(
     private runnable: RunnableSequence,
-    private stream: EventEmitter
+    private hallucinationSeverity: HalluctinationCheckSeverity
   ) {
     this.runnable = runnable;
-    this.stream = stream;
+    this.hallucinationSeverity = hallucinationSeverity;
   }
 
   private runPrivate = async (
@@ -17,44 +21,11 @@ export class RunnableWithMemory {
     clientId: string,
     requestUuid: string,
     retry_left: number
-  ): Promise<void> => {
+  ): Promise<{ valid: string; product: string }> => {
     if (retry_left === 0) {
       throw new Error("openai retries exceeded");
     }
     try {
-      const res = await this.runnable.stream({ input: input });
-
-      // Create an array to store chunks
-      const chunks: string[] = [];
-
-      let fullResponse = "";
-
-      for await (const chunk of res) {
-        // Collect each chunk
-        chunks.push(JSON.stringify(chunk));
-        fullResponse += chunk?.additional_kwargs?.function_call?.arguments;
-        this.stream.emit(
-          "channel",
-          "chunk",
-          chunk?.additional_kwargs?.function_call?.arguments
-        );
-      }
-
-      const concatenatedChunks = chunks.join("\n");
-
-      // Write the concatenated data to the file
-      /*
-      await fs.writeFile(
-        "/Users/oniken/output-" + Date.now(),
-        concatenatedChunks,
-        {
-          flag: "a",
-        }
-      );
-      */
-
-      this.stream.emit("channel", "end", "");
-      /*
       const res = await this.runnable.invoke(
         { input: input },
         {
@@ -115,9 +86,8 @@ export class RunnableWithMemory {
           .map((product) => product.product);
       }
 
-      */
+      return res;
     } catch (error: any) {
-      /* TODO: If we're streaming cannot check entire response before returning. So FAIL and RETRY are not feasible
       if (error instanceof HallucinationError) {
         switch (this.hallucinationSeverity) {
           case HalluctinationCheckSeverity.FAIL:
@@ -147,7 +117,6 @@ export class RunnableWithMemory {
       } else {
         throw error;
       }
-    */
     }
   };
 

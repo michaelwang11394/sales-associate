@@ -20,7 +20,7 @@ import { LLMConfig, summarizeHistoryModel } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
-import { RunnableWithMemory } from "./runnables/types";
+import { Streamable } from "./runnables/streamable";
 
 const createOpenaiWithHistory = async (
   input: string,
@@ -110,8 +110,14 @@ const createOpenai = async (
       : await createSimpleSearchRunnable(store)
   );
 
-  const runnable = new RunnableWithMemory(finalChain, streamWriter);
-  const response = await runnable.run(input, store, clientId, requestUuid);
+  const streamable = new Streamable(finalChain, streamWriter);
+  const response = await streamable.run(
+    input,
+    store,
+    messageSource,
+    clientId,
+    requestUuid
+  );
   return { show: true, openai: response };
 };
 

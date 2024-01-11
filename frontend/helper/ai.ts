@@ -7,7 +7,7 @@ export const callOpenai = async (
   requestUuid: string,
   source: string,
   messageIds: string[]
-): Promise<void> => {
+) => {
   const url = HTTPHelper.assembleUrl(VERCEL_URL, [V1, OPENAI_PATH], {
     input: input,
     store: location.host,
@@ -21,19 +21,5 @@ export const callOpenai = async (
   let res = await fetch(url, {
     method: "POST",
   });
-  let full = "";
-  const reader = res?.body?.getReader();
-  while (true) {
-    const { done, value } = await reader!.read();
-    if (done) {
-      // Do something with last chunk of data then exit reader
-      reader?.cancel();
-      console.log("ending reader)");
-      return;
-    }
-    let chunk = new TextDecoder("utf-8").decode(value);
-    full += chunk;
-    console.log("BOI", chunk);
-    console.log("BOI", full);
-  }
+  return res?.body?.getReader();
 };
