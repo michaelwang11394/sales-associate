@@ -6,7 +6,6 @@ import {
 } from "langchain/memory";
 import { AIMessage, HumanMessage } from "langchain/schema";
 
-import { ChatOpenAI } from "langchain/chat_models/openai";
 import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
 import type { FormattedMessage, MessageSource } from "../../types";
 import { SenderType } from "../../types";
