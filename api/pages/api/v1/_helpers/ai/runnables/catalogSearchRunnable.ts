@@ -1,7 +1,8 @@
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import { PromptTemplate } from "langchain/prompts";
 import { RunnableSequence } from "langchain/schema/runnable";
 import { getProducts } from "../../shopify";
-import { simpleSearchModel } from "../llmConfig";
+import { simpleSearchModelConfig } from "../llmConfig";
 
 // Narrow down relevant products by asking LLM directly
 export const createSimpleSearchRunnable = async (store: string) => {
@@ -22,7 +23,9 @@ export const createSimpleSearchRunnable = async (store: string) => {
           .format(previousOutput)
           .then(
             async (formatted_prompt) =>
-              await simpleSearchModel.invoke(formatted_prompt)
+              await new ChatOpenAI(simpleSearchModelConfig()).invoke(
+                formatted_prompt
+              )
           ),
       input: (previousOutput) => previousOutput.input,
     },

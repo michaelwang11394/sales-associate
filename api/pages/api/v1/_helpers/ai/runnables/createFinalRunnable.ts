@@ -1,3 +1,4 @@
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import type { BufferMemory } from "langchain/memory";
 import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import {
@@ -11,7 +12,7 @@ import {
 } from "langchain/schema/runnable";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { MessageSource } from "../../../types";
-import { salesModel, zodSchema } from "../llmConfig";
+import { salesModelConfig, zodSchema } from "../llmConfig";
 import type { LLMConfigType } from "../types";
 
 export const createFinalRunnable = async (
@@ -43,7 +44,7 @@ export const createFinalRunnable = async (
     messageSource === MessageSource.CHAT
       ? chatPrompt
           .pipe(
-            salesModel.bind({
+            new ChatOpenAI(salesModelConfig()).bind({
               functions: [
                 {
                   name: "output_formatter",
@@ -56,7 +57,7 @@ export const createFinalRunnable = async (
             })
           )
           .pipe(new JsonOutputFunctionsParser())
-      : chatPrompt.pipe(salesModel);
+      : chatPrompt.pipe(new ChatOpenAI(salesModelConfig()));
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
