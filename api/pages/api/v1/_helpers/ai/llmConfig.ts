@@ -68,11 +68,7 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
 };
 
 export const zodSchema = z.object({
-  plainText: z
-    .string()
-    .describe(
-      "The plain text response to the user that can refer to the products field for any images or richer content. This field will be presented as just text, so keep it very readable"
-    ),
+  plainText: z.string().describe("The response directly displayed to user"),
   products: z
     .array(
       z.object({
@@ -90,6 +86,7 @@ export const zodSchema = z.object({
           .array(
             z
               .object({
+                id: z.string().describe("The id of this variant"),
                 title: z.string().describe("The title of this variant"),
                 price: z.number().describe("The price of the product"),
                 featured_image: z
@@ -103,9 +100,7 @@ export const zodSchema = z.object({
           .optional(),
       })
     )
-    .describe(
-      "A list of products that exist in the catalog and are referenced in plainText field. All products must be unique and product_handle must be a real product_handle mentioned in the system prompt"
-    ),
+    .describe("A list of products mentioned in the response, if any"),
 });
 
 export const summarizeHistoryModelConfig = () => {
