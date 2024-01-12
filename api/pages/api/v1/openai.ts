@@ -52,7 +52,7 @@ export default async function handler(
   }
   */
 
-  stream.on("channel", function (event, data) {
+  stream.on("channel" + requestUuid, function (event, data) {
     if (event === "chunk") {
       response.write(data);
     } else if (event === "end") {

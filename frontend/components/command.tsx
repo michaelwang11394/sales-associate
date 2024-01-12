@@ -75,16 +75,29 @@ export default function CommandPalette({ props }) {
               .slice(-1 * MESSAGES_HISTORY_LIMIT)
               .map((m) => String(m.id!))
           )
-            .then(async (response) => {
-              if (!response.show) {
-                return;
+            .then(async (reader) => {
+              let full = "";
+              while (true) {
+                const { done, value } = await reader!.read();
+                if (done) {
+                  // Do something with last chunk of data then exit reader
+                  reader?.cancel();
+                  console.log("ending reader)");
+                  break;
+                }
+                let chunk = new TextDecoder("utf-8").decode(value);
+                full += chunk;
+                console.log("BOI", chunk);
+                console.log("BOI", full);
               }
+              /*
               const newResponseMessage: FormattedMessage = {
                 type: "text",
                 sender: SenderType.SYSTEM,
                 content: response.openai.kwargs?.content,
               };
               await handleNewMessage(clientId, newResponseMessage, uuid);
+              */
             })
             .catch((err) => console.error(err));
         });

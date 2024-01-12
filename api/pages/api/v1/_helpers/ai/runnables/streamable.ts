@@ -19,7 +19,16 @@ export class Streamable {
     requestUuid: string
   ) => {
     try {
-      const res = await this.runnable.stream({ input: input });
+      const res = await this.runnable.stream(
+        { input: input },
+        {
+          metadata: {
+            requestUuid: requestUuid,
+            store: store,
+            clientId: clientId,
+          },
+        }
+      );
 
       // Create an array to store chunks
       const chunks: string[] = [];
@@ -29,15 +38,15 @@ export class Streamable {
         chunks.push(JSON.stringify(chunk));
         console.log(chunk?.content);
         this.stream.emit(
-          "channel",
+          "channel" + requestUuid,
           "chunk",
           messageSource === MessageSource.CHAT
             ? chunk?.additional_kwargs?.function_call?.arguments
-            : chunk?.additional_kwargs?.content
+            : chunk?.content
         );
       }
 
-      this.stream.emit("channel", "end", "");
+      this.stream.emit("channel" + requestUuid, "end", "");
     } catch (error: any) {
       // TODO: close stream
     }
