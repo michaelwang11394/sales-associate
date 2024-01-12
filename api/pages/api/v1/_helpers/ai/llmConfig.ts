@@ -68,16 +68,44 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
 };
 
 export const zodSchema = z.object({
-  plainText: z.string().describe("The response directly displayed to the user"),
+  plainText: z
+    .string()
+    .describe(
+      "The plain text response to the user that can refer to the products field for any images or richer content. This field will be presented as just text, so keep it very readable"
+    ),
   products: z
     .array(
       z.object({
-        product_handle: z
+        name: z.string().describe("The name of the product"),
+        product_handle: z.string().describe("The product handle"),
+        image: z
           .string()
-          .describe("The product handle of the product"),
+          .includes("cdn.shopify.com", {
+            message: "Must include cdn.shopify.com",
+          })
+          .describe(
+            "The image url of the product. Must include cdn.shopify.com"
+          ),
+        variants: z
+          .array(
+            z
+              .object({
+                title: z.string().describe("The title of this variant"),
+                price: z.number().describe("The price of the product"),
+                featured_image: z
+                  .string()
+                  .url()
+                  .describe("The featured image of the product variant"),
+              })
+              .describe("A variant of product that has a specific price")
+          )
+          .describe("Array of variants of product if not empty")
+          .optional(),
       })
     )
-    .describe("A list of products mentioned in the response, if any"),
+    .describe(
+      "A list of products that exist in the catalog and are referenced in plainText field. All products must be unique and product_handle must be a real product_handle mentioned in the system prompt"
+    ),
 });
 
 export const summarizeHistoryModelConfig = () => {

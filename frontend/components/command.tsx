@@ -43,7 +43,6 @@ export default function CommandPalette({ props }) {
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [mentionedProducts, setMentionedProducts] = useState<Product[]>([]);
-  const [, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
   const host = window.location.host;
@@ -66,6 +65,11 @@ export default function CommandPalette({ props }) {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
           const uuid = uuidv4();
+          const newResponseMessage: FormattedMessage = {
+            type: "text",
+            sender: SenderType.SYSTEM,
+            content: "",
+          };
           callOpenai(
             greetingPrompt,
             clientId!,
@@ -76,10 +80,16 @@ export default function CommandPalette({ props }) {
               .map((m) => String(m.id!))
           )
             .then(async (reader) => {
+              setMessages((prevMessages) => [
+                ...prevMessages,
+                newResponseMessage,
+              ]);
               let full = "";
-              while (true) {
+              let streamDone = false;
+              while (true && !streamDone) {
                 const { done, value } = await reader!.read();
-                if (done) {
+                streamDone = done;
+                if (streamDone) {
                   // Do something with last chunk of data then exit reader
                   reader?.cancel();
                   console.log("ending reader)");
@@ -89,17 +99,23 @@ export default function CommandPalette({ props }) {
                 full += chunk;
                 console.log("BOI", chunk);
                 console.log("BOI", full);
+                setMessages((prevMessages) =>
+                  prevMessages.map((msg) => {
+                    if (msg === newResponseMessage) {
+                      msg.content = full;
+                    }
+                    return msg;
+                  })
+                );
               }
-              /*
-              const newResponseMessage: FormattedMessage = {
-                type: "text",
-                sender: SenderType.SYSTEM,
-                content: response.openai.kwargs?.content,
-              };
               await handleNewMessage(clientId, newResponseMessage, uuid);
-              */
             })
-            .catch((err) => console.error(err));
+            .catch((err) => {
+              setMessages((prevMessages) =>
+                prevMessages.filter((message) => message !== newResponseMessage)
+              );
+              console.error(err);
+            });
         });
       });
     }
@@ -167,10 +183,7 @@ export default function CommandPalette({ props }) {
     if (!success) {
       console.error("Messages update failed for supabase table messages");
     }
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { ...newUserMessage, id: data[0].id },
-    ]);
+    newUserMessage.id = data[0].id;
   };
 
   const handleInputChange = (event) => {
@@ -192,7 +205,6 @@ export default function CommandPalette({ props }) {
     if (userInput === "") {
       return;
     }
-    setIsLoading(true);
     const input = userInput;
     setUserInput("");
     const newUserMessage: FormattedMessage = {
@@ -200,14 +212,15 @@ export default function CommandPalette({ props }) {
       sender: SenderType.USER,
       content: input,
     };
-    const loadingMessage: FormattedMessage = {
-      type: "loading",
-      sender: SenderType.SYSTEM,
-      content: "Loading...",
-    };
     const uuid = uuidv4();
+    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
     await handleNewMessage(clientId, newUserMessage, uuid);
-    setMessages((prevMessages) => [...prevMessages, loadingMessage]);
+    const newResponseMessage: FormattedMessage = {
+      type: "text",
+      sender: SenderType.AI,
+      content: "",
+    };
+    console.log(JSON.stringify(messages));
     callOpenai(
       input,
       clientId!,
@@ -215,44 +228,35 @@ export default function CommandPalette({ props }) {
       MessageSource.CHAT,
       messages.slice(-1 - MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
     )
-      .then(async (response) => {
-        setIsLoading(false);
-        setMessages((prevMessages) =>
-          prevMessages.filter((message) => message.type !== "loading")
-        );
-        if (!response.show) {
-          await handleNewMessage(
-            clientId,
-            {
-              type: "text",
-              content: "AI has encountered an error. Please try agian.",
-              sender: SenderType.SYSTEM,
-            } as FormattedMessage,
-            uuid
+      .then(async (reader) => {
+        setMessages((prevMessages) => [...prevMessages, newResponseMessage]);
+        let response = "";
+        while (true) {
+          const { done, value } = await reader!.read();
+          if (done) {
+            // Do something with last chunk of data then exit reader
+            reader?.cancel();
+            console.log("ending reader)");
+            break;
+          }
+          let chunk = new TextDecoder("utf-8").decode(value);
+          response += chunk;
+          console.log("BOI", response);
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) => {
+              if (msg === newResponseMessage) {
+                msg.content = response;
+              }
+              return msg;
+            })
           );
-          return;
         }
-        const newResponseMessage: FormattedMessage = {
-          type: "text",
-          sender: SenderType.AI,
-          content: response.openai.plainText,
-        };
         await handleNewMessage(clientId, newResponseMessage, uuid);
-        response.openai.products?.forEach(
-          async (product) =>
-            await handleNewMessage(
-              clientId,
-              {
-                type: "link",
-                sender: SenderType.AI,
-                content: JSON.stringify(product),
-              } as FormattedMessage,
-              uuid
-            )
-        );
       })
       .catch(async (err) => {
-        setIsLoading(false);
+        setMessages((prevMessages) =>
+          prevMessages.filter((message) => message !== newResponseMessage)
+        );
         await handleNewMessage(
           clientId,
           {

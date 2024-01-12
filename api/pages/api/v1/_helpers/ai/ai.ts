@@ -145,6 +145,7 @@ export const callOpenai = async (
     numberArray
   );
   if (!success || !data) {
+    console.error(numberArray);
     throw new Error(
       "message history could not be retrieved or not all ids could be matched"
     );

@@ -65,7 +65,6 @@ export const ChatBubble = ({
   const renderMessage = () => {
     switch (type) {
       case "loading":
-        return <LoadingMessage />;
       case "text":
         return <TextMessage text={content || ""} />;
       case "img":
