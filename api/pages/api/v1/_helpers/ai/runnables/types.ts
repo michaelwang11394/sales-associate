@@ -65,7 +65,7 @@ export class RunnableWithMemory {
         }
         res = JSON.parse(rawResponse);
       } else {
-        res = await this.runnable.invoke(
+        const invokeResponse = await this.runnable.invoke(
           { input: input },
           {
             metadata: {
@@ -77,8 +77,11 @@ export class RunnableWithMemory {
         );
         console.log(res);
         if (messageSource !== MessageSource.CHAT) {
-          return { valid: "valid", product: res?.content };
+          return { valid: "valid", product: invokeResponse?.content };
         }
+        res = JSON.parse(
+          invokeResponse?.additional_kwargs?.function_call?.arguments
+        );
       }
       // Check with the zod schema if products returned
       if (
