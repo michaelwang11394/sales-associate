@@ -38,6 +38,7 @@ export class SupabaseCallbackHandler extends BaseCallbackHandler {
     this.clientId = metadata?.clientId as string;
     this.startTimestamp = Date.now();
     console.log("input", this.input);
+    console.log("requestUuid start", this.requestUuid);
   }
 
   async handleLLMEnd(
@@ -48,6 +49,7 @@ export class SupabaseCallbackHandler extends BaseCallbackHandler {
   ) {
     console.log("output", JSON.stringify(output.generations[0][0]));
     console.log("runId", runId);
+    console.log("requestUuid end", this.requestUuid);
     await logModelRun({
       success: true,
       input: this.input,

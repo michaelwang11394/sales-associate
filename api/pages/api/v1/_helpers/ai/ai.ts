@@ -1,4 +1,5 @@
 import "@shopify/shopify-api/adapters/node";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   ChatMessageHistory,
   ConversationSummaryBufferMemory,
@@ -16,7 +17,7 @@ import {
   isNewCustomer,
 } from "../supabase_queries";
 import { MESSAGE_SUMMARY_FLUSH_THRESHOLD } from "./constants";
-import { LLMConfig, summarizeHistoryModel } from "./llmConfig";
+import { LLMConfig, summarizeHistoryModelConfig } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
@@ -93,7 +94,7 @@ const createOpenai = async (
   const memory = new ConversationSummaryBufferMemory({
     chatHistory: new ChatMessageHistory(history),
     maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
-    llm: summarizeHistoryModel,
+    llm: new ChatOpenAI(summarizeHistoryModelConfig()),
     returnMessages: true,
   });
 

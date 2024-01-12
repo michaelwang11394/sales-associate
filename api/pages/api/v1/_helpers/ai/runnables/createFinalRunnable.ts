@@ -1,3 +1,4 @@
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import type { BufferMemory } from "langchain/memory";
 import {
   ChatPromptTemplate,
@@ -10,7 +11,7 @@ import {
 } from "langchain/schema/runnable";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { MessageSource } from "../../../types";
-import { salesModel, zodSchema } from "../llmConfig";
+import { salesModelConfig, zodSchema } from "../llmConfig";
 import type { LLMConfigType } from "../types";
 
 export const createFinalRunnable = async (
@@ -38,6 +39,7 @@ export const createFinalRunnable = async (
   /* If using replicate, bind will NOT work. So find alternate way for structured output
     Do not create structured output with the embed greeting
    */
+  const salesModel = new ChatOpenAI(salesModelConfig());
   const lastRunnable =
     messageSource === MessageSource.CHAT
       ? chatPrompt.pipe(
