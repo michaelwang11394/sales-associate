@@ -12,7 +12,6 @@ import {
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { MessageSource } from "../../../types";
 import { salesModelConfig, zodSchema } from "../llmConfig";
-
 import type { LLMConfigType } from "../types";
 
 export const createFinalRunnable = async (
