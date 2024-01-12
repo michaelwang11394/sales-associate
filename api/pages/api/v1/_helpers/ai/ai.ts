@@ -111,7 +111,13 @@ const createOpenai = async (
     memory,
     llmConfig.validate_hallucination
   );
-  const response = await runnable.run(input, store, clientId, requestUuid);
+  const response = await runnable.run(
+    input,
+    store,
+    messageSource,
+    clientId,
+    requestUuid
+  );
   return { show: true, openai: response };
 };
 

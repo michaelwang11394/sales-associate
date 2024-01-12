@@ -1,5 +1,4 @@
 import type { BufferMemory } from "langchain/memory";
-import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
@@ -41,21 +40,18 @@ export const createFinalRunnable = async (
    */
   const lastRunnable =
     messageSource === MessageSource.CHAT
-      ? chatPrompt
-          .pipe(
-            salesModel.bind({
-              functions: [
-                {
-                  name: "output_formatter",
-                  description:
-                    "Should always be used to properly format output",
-                  parameters: zodToJsonSchema(zodSchema),
-                },
-              ],
-              function_call: { name: "output_formatter" },
-            })
-          )
-          .pipe(new JsonOutputFunctionsParser())
+      ? chatPrompt.pipe(
+          salesModel.bind({
+            functions: [
+              {
+                name: "output_formatter",
+                description: "Should always be used to properly format output",
+                parameters: zodToJsonSchema(zodSchema),
+              },
+            ],
+            function_call: { name: "output_formatter" },
+          })
+        )
       : chatPrompt.pipe(salesModel);
 
   const salesChain = RunnableSequence.from([

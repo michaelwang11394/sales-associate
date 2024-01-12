@@ -64,13 +64,13 @@ export default function Icon({ props }) {
               )
                 .then(async (response) => {
                   if (response.show) {
-                    setGreeting(response.openai.kwargs?.content);
+                    setGreeting(response.openai.product);
                   }
                   await insertMessage(
                     clientId,
                     "text",
                     "system",
-                    response.openai.kwargs?.content,
+                    response.openai.product,
                     uuid
                   );
                 })

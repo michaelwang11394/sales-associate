@@ -82,7 +82,7 @@ export default function CommandPalette({ props }) {
               const newResponseMessage: FormattedMessage = {
                 type: "text",
                 sender: SenderType.SYSTEM,
-                content: response.openai.kwargs?.content,
+                content: response.openai.product,
               };
               await handleNewMessage(clientId, newResponseMessage, uuid);
             })

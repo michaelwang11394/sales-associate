@@ -4,8 +4,12 @@ import { OPENAI_RETRIES } from "../../../constants";
 import {
   HallucinationError,
   HalluctinationCheckSeverity,
+  MessageSource,
 } from "../../../types";
 import { isValidProduct } from "../../shopify";
+
+// TODO donotcommit, only for DEV
+const STREAM_DEV_FLAG = false;
 
 export class RunnableWithMemory {
   constructor(
@@ -21,24 +25,61 @@ export class RunnableWithMemory {
   private runPrivate = async (
     input: string,
     store: string,
+    messageSource: MessageSource,
     clientId: string,
     requestUuid: string,
     retry_left: number
-  ): Promise<{ valid: string; product: string }> => {
+  ): Promise<any> => {
     if (retry_left === 0) {
       throw new Error("openai retries exceeded");
     }
+    let res = undefined;
     try {
-      const res = await this.runnable.invoke(
-        { input: input },
-        {
-          metadata: {
-            requestUuid: requestUuid,
-            store: store,
-            clientId: clientId,
-          },
+      if (STREAM_DEV_FLAG) {
+        const streamResponse = await this.runnable.stream(
+          { input: input },
+          {
+            metadata: {
+              requestUuid: requestUuid,
+              store: store,
+              clientId: clientId,
+            },
+          }
+        );
+        let rawResponse = "";
+        const chunks: string[] = [];
+
+        for await (const chunk of streamResponse) {
+          // Collect each chunk
+          chunks.push(JSON.stringify(chunk));
+          console.log(JSON.stringify(chunk));
+          const rawChunk =
+            messageSource === MessageSource.CHAT
+              ? chunk?.additional_kwargs?.function_call?.arguments
+              : chunk?.content;
+          if (!rawChunk) continue;
+          rawResponse += rawChunk;
         }
-      );
+        if (messageSource !== MessageSource.CHAT) {
+          return { valid: "valid", product: rawResponse };
+        }
+        res = JSON.parse(rawResponse);
+      } else {
+        res = await this.runnable.invoke(
+          { input: input },
+          {
+            metadata: {
+              requestUuid: requestUuid,
+              store: store,
+              clientId: clientId,
+            },
+          }
+        );
+        console.log(res);
+        if (messageSource !== MessageSource.CHAT) {
+          return { valid: "valid", product: res?.content };
+        }
+      }
       // Check with the zod schema if products returned
       if (
         this.hallucinationSeverity > HalluctinationCheckSeverity.NONE &&
@@ -51,7 +92,6 @@ export class RunnableWithMemory {
             const fileExtension = (
               imageUrl?.split(".").pop()?.split("?")[0] || ""
             ).toLowerCase();
-
             // Check if image file extension and handle is real product
             const valid =
               (imageUrl?.startsWith("cdn.shopify.com") ||
@@ -64,7 +104,6 @@ export class RunnableWithMemory {
             return { valid: valid, product: product };
           })
         );
-
         if (filtered.some((product) => !product.valid)) {
           const hallucinated = filtered
             .filter((product) => !product.valid)
@@ -88,7 +127,6 @@ export class RunnableWithMemory {
           .filter((product) => product.valid)
           .map((product) => product.product);
       }
-
       return res;
     } catch (error: any) {
       if (error instanceof HallucinationError) {
@@ -100,6 +138,7 @@ export class RunnableWithMemory {
             return this.runPrivate(
               input,
               store,
+              messageSource,
               clientId,
               requestUuid,
               retry_left - 1
@@ -113,6 +152,7 @@ export class RunnableWithMemory {
         return this.runPrivate(
           input,
           store,
+          messageSource,
           clientId,
           requestUuid,
           retry_left - 1
@@ -126,12 +166,14 @@ export class RunnableWithMemory {
   public run = async (
     input: string,
     store: string,
+    messageSource: MessageSource,
     clientId: string,
     requestUuid: string
   ) => {
     return await this.runPrivate(
       input,
       store,
+      messageSource,
       clientId,
       requestUuid,
       OPENAI_RETRIES
