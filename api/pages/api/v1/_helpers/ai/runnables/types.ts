@@ -75,7 +75,7 @@ export class RunnableWithMemory {
             },
           }
         );
-        console.log(res);
+        console.log(invokeResponse);
         if (messageSource !== MessageSource.CHAT) {
           return { valid: "valid", product: invokeResponse?.content };
         }
