@@ -28,6 +28,12 @@ import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ChatBubble } from "./chat";
 
+export const productDelimiter = "====PRODUCT====";
+export enum StructuredOutputStreamState {
+  TEXT = 1,
+  PRODUCT = 2,
+}
+
 export const formatDBMessage = (messageRow: DBMessage) => {
   const { id, type, content, sender } = messageRow;
 
@@ -44,6 +50,7 @@ export default function CommandPalette({ props }) {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [mentionedProducts, setMentionedProducts] = useState<Product[]>([]);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
   const host = window.location.host;
 
@@ -92,13 +99,10 @@ export default function CommandPalette({ props }) {
                 if (streamDone) {
                   // Do something with last chunk of data then exit reader
                   reader?.cancel();
-                  console.log("ending reader)");
                   break;
                 }
                 let chunk = new TextDecoder("utf-8").decode(value);
                 full += chunk;
-                console.log("BOI", chunk);
-                console.log("BOI", full);
                 setMessages((prevMessages) =>
                   prevMessages.map((msg) => {
                     if (msg === newResponseMessage) {
@@ -202,9 +206,10 @@ export default function CommandPalette({ props }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (userInput === "") {
+    if (loading || userInput === "") {
       return;
     }
+    setLoading(true);
     const input = userInput;
     setUserInput("");
     const newUserMessage: FormattedMessage = {
@@ -220,7 +225,6 @@ export default function CommandPalette({ props }) {
       sender: SenderType.AI,
       content: "",
     };
-    console.log(JSON.stringify(messages));
     callOpenai(
       input,
       clientId!,
@@ -231,17 +235,60 @@ export default function CommandPalette({ props }) {
       .then(async (reader) => {
         setMessages((prevMessages) => [...prevMessages, newResponseMessage]);
         let response = "";
+        let state = StructuredOutputStreamState.TEXT;
+        let plainTextInserted = false;
+        let productInserted = 0;
         while (true) {
           const { done, value } = await reader!.read();
           if (done) {
             // Do something with last chunk of data then exit reader
             reader?.cancel();
-            console.log("ending reader)");
             break;
           }
           let chunk = new TextDecoder("utf-8").decode(value);
           response += chunk;
-          console.log("BOI", response);
+          if (response.includes(productDelimiter)) {
+            // plainText is completed
+            const splitChunks: string[] = response
+              .split(productDelimiter)
+              .filter((chunk) => chunk.trim() !== "");
+            if (state === StructuredOutputStreamState.TEXT) {
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) => {
+                  if (msg === newResponseMessage) {
+                    msg.content = splitChunks[0];
+                  }
+                  return msg;
+                })
+              );
+              state = StructuredOutputStreamState.PRODUCT;
+              await handleNewMessage(clientId, newResponseMessage, uuid);
+              plainTextInserted = true;
+            }
+            for (let i = productInserted + 1; i < splitChunks.length; i++) {
+              const linkMessage = {
+                type: "link",
+                sender: SenderType.AI,
+                content: splitChunks[i],
+              } as FormattedMessage;
+              setMessages((prevMessages) => [...prevMessages, linkMessage]);
+              await handleNewMessage(clientId, linkMessage, uuid);
+              productInserted++;
+            }
+          } else {
+            // Still in plainText field
+            setMessages((prevMessages) =>
+              prevMessages.map((msg) => {
+                if (msg === newResponseMessage) {
+                  msg.content = response;
+                }
+                return msg;
+              })
+            );
+          }
+        }
+        // Occurs if there are no elements in product field
+        if (!plainTextInserted) {
           setMessages((prevMessages) =>
             prevMessages.map((msg) => {
               if (msg === newResponseMessage) {
@@ -250,8 +297,9 @@ export default function CommandPalette({ props }) {
               return msg;
             })
           );
+          await handleNewMessage(clientId, newResponseMessage, uuid);
         }
-        await handleNewMessage(clientId, newResponseMessage, uuid);
+        setLoading(false);
       })
       .catch(async (err) => {
         setMessages((prevMessages) =>
@@ -267,6 +315,7 @@ export default function CommandPalette({ props }) {
           uuid
         );
         console.error(err);
+        setLoading(false);
       });
   };
 
@@ -293,6 +342,7 @@ export default function CommandPalette({ props }) {
                 />
                 <button
                   type="submit"
+                  disabled={loading}
                   className="rounded-full bg-blue-600 text-white w-16 h-16 flex items-center m-1 justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

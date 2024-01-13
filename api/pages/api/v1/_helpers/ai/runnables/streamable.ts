@@ -63,44 +63,33 @@ export class Streamable {
       for await (const chunk of res) {
         // Collect each chunk
         chunks.push(JSON.stringify(chunk));
-        console.log(JSON.stringify(chunk));
         if (messageSource === MessageSource.CHAT) {
           const rawChunk = chunk?.additional_kwargs?.function_call?.arguments;
           if (!rawChunk) continue;
 
           response += rawChunk;
-          console.log("raw response", response);
           if (
             response.trim().length === 0 ||
             response.trim().slice(-1) === `\\`
           )
             continue;
           const data = parse(response);
-          console.log("best effort parsed", JSON.stringify(data));
           if (state === StructuredOutputStreamState.TEXT) {
-            console.log("in state text");
             const parsedText = data?.plainText;
-            console.log("before emit", parsedText);
             if (!parsedText) {
               continue;
             } else if (sentParsedText === parsedText) {
               state = StructuredOutputStreamState.PRODUCT;
-              console.log("Moved to product");
             } else {
               this.stream.emit(
                 "channel" + requestUuid,
                 "chunk",
                 Streamable.getDiff(sentParsedText, parsedText)
               );
-              console.log(
-                "emitted",
-                Streamable.getDiff(sentParsedText, parsedText)
-              );
               sentParsedText = parsedText;
             }
           }
           if (state === StructuredOutputStreamState.PRODUCT) {
-            console.log("in state product");
             while (data?.products?.length > productSent + 1) {
               // This state means that there is at least one product that is fully parsed
               this.stream.emit(
@@ -108,10 +97,16 @@ export class Streamable {
                 "chunk",
                 productDelimiter
               );
+              const product = data?.products[productSent];
               this.stream.emit(
                 "channel" + requestUuid,
                 "chunk",
-                data?.products[productSent].product_handle
+                JSON.stringify({
+                  name: product.name,
+                  handle: product.product_handle,
+                  image: product.image,
+                  variants: product.variants,
+                })
               );
               productSent++;
             }
@@ -126,10 +121,16 @@ export class Streamable {
       ) {
         // This state means that there is at least one product that is fully parsed
         this.stream.emit("channel" + requestUuid, "chunk", productDelimiter);
+        const product = parse(response)?.products[productSent];
         this.stream.emit(
           "channel" + requestUuid,
           "chunk",
-          parse(response)?.products[productSent].product_handle
+          JSON.stringify({
+            name: product.name,
+            handle: product.product_handle,
+            image: product.image,
+            variants: product.variants,
+          })
         );
         productSent++;
       }

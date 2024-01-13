@@ -65,13 +65,10 @@ export default function Icon({ props }) {
                     if (done) {
                       // Do something with last chunk of data then exit reader
                       reader?.cancel();
-                      console.log("ending reader)");
                       break;
                     }
                     let chunk = new TextDecoder("utf-8").decode(value);
                     full += chunk;
-                    console.log("BOI", chunk);
-                    console.log("BOI", full);
                     setGreeting(full);
                   }
                 })

@@ -16,7 +16,6 @@ export const callOpenai = async (
     source: source,
     ids: messageIds,
   });
-  console.log("hitting " + url);
   // make a POST call to our api route
   let res = await fetch(url, {
     method: "POST",

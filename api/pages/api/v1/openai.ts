@@ -54,11 +54,9 @@ export default async function handler(
 
   stream.on("channel" + requestUuid, function (event, data) {
     if (event === "chunk") {
-      console.log("writing to response", data);
       response.write(data);
     } else if (event === "end") {
       // Signal the end of the stream
-      console.log("openai response done");
       response.end();
       response.destroy();
       stream.removeAllListeners("channel" + requestUuid);
