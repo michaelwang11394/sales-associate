@@ -47,7 +47,7 @@ export const createFinalRunnable = async (
             functions: [
               {
                 name: "output_formatter",
-                description: "Should always be used to properly format output",
+                description: "Always use to properly format output",
                 parameters: zodToJsonSchema(zodSchema),
               },
             ],

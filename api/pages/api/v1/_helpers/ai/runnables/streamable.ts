@@ -137,7 +137,7 @@ export class Streamable {
 
       this.stream.emit("channel" + requestUuid, "end", "");
     } catch (error: any) {
-      // TODO: close stream
+      this.stream.emit("channel" + requestUuid, "end", "");
     }
   };
 }
