@@ -1,4 +1,3 @@
-import type { BufferMemory } from "langchain/memory";
 import type { RunnableSequence } from "langchain/schema/runnable";
 import { OPENAI_RETRIES } from "../../../constants";
 import {
@@ -7,14 +6,12 @@ import {
 } from "../../../types";
 import { isValidProduct } from "../../shopify";
 
-export class RunnableWithMemory {
+export class RunnableWithRetry {
   constructor(
     private runnable: RunnableSequence,
-    private memory: BufferMemory,
     private hallucinationSeverity: HalluctinationCheckSeverity
   ) {
     this.runnable = runnable;
-    this.memory = memory;
     this.hallucinationSeverity = hallucinationSeverity;
   }
 

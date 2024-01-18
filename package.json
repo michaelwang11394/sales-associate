@@ -42,6 +42,7 @@
     "@supabase/supabase-js": "^2.37.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
+    "best-effort-json-parser": "^1.0.1",
     "bundler": "^0.8.0",
     "clsx": "^2.0.0",
     "cross-env": "^7.0.3",

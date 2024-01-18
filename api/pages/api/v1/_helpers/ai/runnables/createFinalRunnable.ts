@@ -1,6 +1,5 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import type { BufferMemory } from "langchain/memory";
-import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
@@ -40,24 +39,22 @@ export const createFinalRunnable = async (
   /* If using replicate, bind will NOT work. So find alternate way for structured output
     Do not create structured output with the embed greeting
    */
+  const salesModel = new ChatOpenAI(salesModelConfig());
   const lastRunnable =
     messageSource === MessageSource.CHAT
-      ? chatPrompt
-          .pipe(
-            new ChatOpenAI(salesModelConfig()).bind({
-              functions: [
-                {
-                  name: "output_formatter",
-                  description:
-                    "Should always be used to properly format output",
-                  parameters: zodToJsonSchema(zodSchema),
-                },
-              ],
-              function_call: { name: "output_formatter" },
-            })
-          )
-          .pipe(new JsonOutputFunctionsParser())
-      : chatPrompt.pipe(new ChatOpenAI(salesModelConfig()));
+      ? chatPrompt.pipe(
+          salesModel.bind({
+            functions: [
+              {
+                name: "output_formatter",
+                description: "Always use to properly format output",
+                parameters: zodToJsonSchema(zodSchema),
+              },
+            ],
+            function_call: { name: "output_formatter" },
+          })
+        )
+      : chatPrompt.pipe(salesModel);
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({

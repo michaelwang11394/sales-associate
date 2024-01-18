@@ -1,11 +1,12 @@
 import "@shopify/shopify-api/adapters/node";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   ChatMessageHistory,
   ConversationSummaryBufferMemory,
 } from "langchain/memory";
 import { AIMessage, HumanMessage } from "langchain/schema";
 
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import type { EventEmitter } from "events";
 import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
 import type { FormattedMessage, MessageSource } from "../../types";
 import { SenderType } from "../../types";
@@ -20,7 +21,7 @@ import { LLMConfig, summarizeHistoryModelConfig } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
-import { RunnableWithMemory } from "./runnables/types";
+import { Streamable } from "./runnables/streamable";
 
 const createOpenaiWithHistory = async (
   input: string,
@@ -28,7 +29,8 @@ const createOpenaiWithHistory = async (
   clientId: string,
   requestUuid: string,
   messageSource: MessageSource,
-  messages: FormattedMessage[] = []
+  messages: FormattedMessage[] = [],
+  streamWriter: EventEmitter
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext: string[] = [];
@@ -71,7 +73,8 @@ const createOpenaiWithHistory = async (
     messageSource,
     clientId,
     requestUuid,
-    history
+    history,
+    streamWriter
   );
 };
 
@@ -82,7 +85,8 @@ const createOpenai = async (
   messageSource: MessageSource,
   clientId: string,
   requestUuid: string,
-  history: (HumanMessage | AIMessage)[] = []
+  history: (HumanMessage | AIMessage)[] = [],
+  streamWriter: EventEmitter
 ) => {
   const llmConfig = LLMConfig[messageSource];
 
@@ -107,12 +111,14 @@ const createOpenai = async (
       : await createSimpleSearchRunnable(store)
   );
 
-  const runnable = new RunnableWithMemory(
-    finalChain,
-    memory,
-    llmConfig.validate_hallucination
+  const streamable = new Streamable(finalChain, streamWriter);
+  const response = await streamable.run(
+    input,
+    store,
+    messageSource,
+    clientId,
+    requestUuid
   );
-  const response = await runnable.run(input, store, clientId, requestUuid);
   return { show: true, openai: response };
 };
 
@@ -122,7 +128,8 @@ export const callOpenai = async (
   clientId: string,
   requestUuid: string,
   source: MessageSource,
-  messageIds: string[] | undefined
+  messageIds: string[] | undefined,
+  streamWriter: EventEmitter
 ) => {
   // Some weird Typescript issue where I can't use lambda, convert with for loop
   const numberArray: number[] = [];
@@ -138,6 +145,7 @@ export const callOpenai = async (
     numberArray
   );
   if (!success || !data) {
+    console.error(numberArray);
     throw new Error(
       "message history could not be retrieved or not all ids could be matched"
     );
@@ -149,6 +157,7 @@ export const callOpenai = async (
     clientId,
     requestUuid,
     source,
-    data // Pass in all messages for summary
+    data, // Pass in all messages for summary
+    streamWriter
   );
 };
