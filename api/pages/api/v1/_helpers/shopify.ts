@@ -6,7 +6,7 @@ const shopify_client = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY!,
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: LATEST_API_VERSION,
-  scopes: ["read_products"],
+  scopes: ["read_products", "read_orders"],
   hostName: process.env.VERCEL_HOST ?? "sales-associate-backend.vercel.app",
   hostScheme: process.env.VERCEL_HOST === undefined ? "https" : "http",
   isEmbeddedApp: false,
