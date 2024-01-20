@@ -35,8 +35,28 @@ export default async function handler(
   const requestUuid = request.query.requestUuid as string;
   const source = request.query.source as MessageSource;
   const messageIds = request.query.ids as string[];
+  stream.on("channel" + requestUuid, async function (event, data) {
+    if (event === "chunk") {
+      await new Promise<void>((resolve) => {
+        response.write(data, "utf-8", () => resolve());
+      });
+    } else if (event === "end") {
+      // Signal the end of the stream
+      response.end();
+      response.destroy();
+      stream.removeAllListeners("channel" + requestUuid);
+    }
+  });
 
-  callOpenai(input, store, clientId, requestUuid, source, messageIds, stream);
+  await callOpenai(
+    input,
+    store,
+    clientId,
+    requestUuid,
+    source,
+    messageIds,
+    stream
+  );
 
   /*
   try {
@@ -51,15 +71,4 @@ export default async function handler(
     return httpResponse(request, response, 404, error.message);
   }
   */
-
-  stream.on("channel" + requestUuid, function (event, data) {
-    if (event === "chunk") {
-      response.write(data);
-    } else if (event === "end") {
-      // Signal the end of the stream
-      response.end();
-      response.destroy();
-      stream.removeAllListeners("channel" + requestUuid);
-    }
-  });
 }
