@@ -70,6 +70,9 @@ body {
   font-weight: 800;
   line-height: normal;
 }
+.product-card {
+  box-shadow: 1px 1px 8px 5px rgba(0, 0, 0, 0.15);
+}
 
 /* Right triangle placed top left flush. */
 .tri-right.border.left-top:before {

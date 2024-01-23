@@ -107,8 +107,8 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       const fill = active === index ? "#474B58" : "#CBD2DD";
       return (
         <svg
-          width="6"
-          height="6"
+          width="9"
+          height="9"
           viewBox="0 0 6 6"
           fill="none"
           xmlns="http://www.w3.org/2000/svg">
@@ -124,22 +124,26 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
     <div className="w-full grid grid-cols-2 gap-4">
       {/* Existing Element */}
       <div>
-        <a
-          href={`https://${content[active].host}/products/${content[active].handle}`}
-          target="_blank"
-          rel="noopener noreferrer">
-          <img
-            src={content[active].image}
-            alt={content[active].name}
-            className="w-full h-120 object-cover"
-          />
-          <div className="flex flex-col p-3">
-            <h2 className="text-xxl font-semibold">{content[active].name}</h2>
-            <p className="text-lg font-medium text-gray-500 mb-4">
-              {content[active].price ? "$" + content[active].price : ""}
-            </p>
-          </div>
-        </a>
+        {/* Card */}
+        <div className="product-card">
+          <a
+            href={`https://${content[active].host}/products/${content[active].handle}`}
+            target="_blank"
+            rel="noopener noreferrer">
+            <img
+              src={content[active].image}
+              alt={content[active].name}
+              className="w-full h-120 object-cover"
+            />
+            <div className="flex flex-col p-3">
+              <h2 className="text-xxl font-semibold">{content[active].name}</h2>
+              <p className="text-lg font-medium text-gray-500 mb-4">
+                {content[active].price ? "$" + content[active].price : ""}
+              </p>
+            </div>
+          </a>
+        </div>
+
         {content.length > 1 && (
           <div className="w-full grid grid-cols-3 items-center">
             <div className="flex justify-start">
