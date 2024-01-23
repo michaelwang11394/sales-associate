@@ -62,7 +62,7 @@ body {
 }
 .user-input-text {
   border-radius: 0px 25px 25px 25px;
-  background: var(--Background-grey, #f0f3f8);
+  background: var(--Background-grey, #d9dce2);
   color: var(--Primary-accent, #2a33ff);
   font-family: Avenir;
   font-size: 16px;

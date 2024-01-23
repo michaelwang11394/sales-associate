@@ -1,5 +1,4 @@
 import type {
-  ChatBubbleProps,
   ImageMessageProps,
   LinkMessageProps,
   TextMessageProps,
@@ -23,9 +22,7 @@ const TextMessage: React.FC<TextMessageProps> = ({
 }): React.JSX.Element => {
   return (
     <div className="flex items-start">
-      {!isAISender ? (
-        ""
-      ) : (
+      {isAISender && (
         <div className="pr-4">
           <svg
             width="30"
@@ -144,46 +141,52 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
           </div>
         </a>
         {content.length > 1 && (
-          <div className="flex items-center space-x-2">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              onClick={handleLeftClick}
-              className="text-gray-400 mr-auto link-card-arrow">
-              <g id="Arrows">
-                <path
-                  id="Icon"
-                  d="M19 12H5M5 12L12 19M5 12L12 5"
-                  stroke={active === 0 ? "#CBD2DD" : "#474B58"}
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </g>
-            </svg>
-            <div>{renderDots()}</div>
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              onClick={handleRightClick}
-              className="text-gray-400 ml-auto link-card-arrow">
-              <g id="Arrows">
-                <path
-                  id="Icon"
-                  d="M5 12H19M19 12L12 5M19 12L12 19"
-                  stroke={content.length - 1 === active ? "#CBD2DD" : "#474B58"}
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </g>
-            </svg>
+          <div className="w-full grid grid-cols-3 items-center">
+            <div className="flex justify-start">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                onClick={handleLeftClick}
+                className="text-gray-400 link-card-arrow">
+                <g id="Arrows">
+                  <path
+                    id="Icon"
+                    d="M19 12H5M5 12L12 19M5 12L12 5"
+                    stroke={active === 0 ? "#CBD2DD" : "#474B58"}
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </g>
+              </svg>
+            </div>
+            <div className="flex justify-center">{renderDots()}</div>
+            <div className="flex justify-end">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                onClick={handleRightClick}
+                className="text-gray-400 link-card-arrow">
+                <g id="Arrows">
+                  <path
+                    id="Icon"
+                    d="M5 12H19M19 12L12 5M19 12L12 19"
+                    stroke={
+                      content.length - 1 === active ? "#CBD2DD" : "#474B58"
+                    }
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </g>
+              </svg>
+            </div>
           </div>
         )}
       </div>
@@ -221,13 +224,13 @@ export const ChatBubble = ({
   // TODO: Figure out better way to use flex. We want to make AI response full width but flex for user input
   return isAISender ? (
     <div className={`items-end justify-start py-1 mb-2`}>
-      <div className={`px-4 py-2 min-h-[25px] bg-gray-200 ai-grey-text mr-2`}>
+      <div className={`px-4 py-3 min-h-[25px] ai-grey-text mr-2`}>
         <div className="message">{renderMessage()}</div>
       </div>
     </div>
   ) : (
     <div className={`flex items-end justify-start py-1 mb-2`}>
-      <div className={`px-4 py-2 min-h-[25px] user-input-text`}>
+      <div className={`px-4 py-3 min-h-[25px] user-input-text`}>
         <div className="message">{renderMessage()}</div>
       </div>
     </div>
