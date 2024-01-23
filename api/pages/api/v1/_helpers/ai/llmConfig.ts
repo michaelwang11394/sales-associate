@@ -73,6 +73,11 @@ export const zodSchema = z.object({
   products: z
     .array(
       z.object({
+        recommendation: z
+          .string()
+          .describe(
+            "Should be around 300 characters. Detailed breakdown why this product is relevant and a great fit for user. Format is one line summary, followed by a paragraph for reasons why this is relevant."
+          ),
         name: z.string().describe("The name of the product"),
         product_handle: z.string().describe("The product handle"),
         image: z

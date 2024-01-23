@@ -41,7 +41,7 @@ export const formatDBMessage = (messageRow: DBMessage) => {
     id,
     type,
     sender,
-    content,
+    content: JSON.parse(content),
   };
   return message;
 };
@@ -75,7 +75,7 @@ export default function CommandPalette({ props }) {
           const newResponseMessage: FormattedMessage = {
             type: "text",
             sender: SenderType.SYSTEM,
-            content: "",
+            content: JSON.stringify([""]),
           };
           callOpenai(
             greetingPrompt,
@@ -106,7 +106,7 @@ export default function CommandPalette({ props }) {
                 setMessages((prevMessages) =>
                   prevMessages.map((msg) => {
                     if (msg === newResponseMessage) {
-                      msg.content = full;
+                      msg.content = JSON.stringify([full]);
                     }
                     return msg;
                   })
@@ -181,7 +181,7 @@ export default function CommandPalette({ props }) {
       clientId,
       newUserMessage.type,
       newUserMessage.sender,
-      newUserMessage.content,
+      JSON.stringify(newUserMessage.content),
       requestUuid
     );
     if (!success) {
@@ -215,7 +215,7 @@ export default function CommandPalette({ props }) {
     const newUserMessage: FormattedMessage = {
       type: "text",
       sender: SenderType.USER,
-      content: input,
+      content: JSON.stringify([input]),
     };
     const uuid = uuidv4();
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
@@ -223,7 +223,7 @@ export default function CommandPalette({ props }) {
     const newResponseMessage: FormattedMessage = {
       type: "text",
       sender: SenderType.AI,
-      content: "",
+      content: JSON.stringify([""]),
     };
     callOpenai(
       input,
@@ -233,6 +233,11 @@ export default function CommandPalette({ props }) {
       messages.slice(-1 - MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
     )
       .then(async (reader) => {
+        const linkMessage = {
+          type: "link",
+          sender: SenderType.AI,
+          content: JSON.stringify([]),
+        } as FormattedMessage;
         setMessages((prevMessages) => [...prevMessages, newResponseMessage]);
         let response = "";
         let state = StructuredOutputStreamState.TEXT;
@@ -256,7 +261,7 @@ export default function CommandPalette({ props }) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === newResponseMessage) {
-                    msg.content = splitChunks[0];
+                    msg.content = JSON.stringify(splitChunks[0]);
                   }
                   return msg;
                 })
@@ -266,13 +271,23 @@ export default function CommandPalette({ props }) {
               plainTextInserted = true;
             }
             for (let i = productInserted + 1; i < splitChunks.length; i++) {
-              const linkMessage = {
-                type: "link",
-                sender: SenderType.AI,
-                content: splitChunks[i],
-              } as FormattedMessage;
-              setMessages((prevMessages) => [...prevMessages, linkMessage]);
-              await handleNewMessage(clientId, linkMessage, uuid);
+              if (productInserted === 0) {
+                setMessages((prevMessages) => [...prevMessages, linkMessage]);
+              }
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) => {
+                  if (msg === linkMessage) {
+                    console.log("BOI msg.content", msg.content);
+                    console.log("BOI msg.content", splitChunks[i]);
+                    msg.content = JSON.stringify([
+                      ...JSON.parse(msg.content),
+                      JSON.parse(splitChunks[i]),
+                    ]);
+                    console.log("BOI msg.content", msg.content);
+                  }
+                  return msg;
+                })
+              );
               productInserted++;
             }
           } else {
@@ -280,7 +295,7 @@ export default function CommandPalette({ props }) {
             setMessages((prevMessages) =>
               prevMessages.map((msg) => {
                 if (msg === newResponseMessage) {
-                  msg.content = response;
+                  msg.content = JSON.stringify(response);
                 }
                 return msg;
               })
@@ -292,13 +307,18 @@ export default function CommandPalette({ props }) {
           setMessages((prevMessages) =>
             prevMessages.map((msg) => {
               if (msg === newResponseMessage) {
-                msg.content = response;
+                msg.content = JSON.stringify(response);
               }
               return msg;
             })
           );
           await handleNewMessage(clientId, newResponseMessage, uuid);
         }
+
+        if (productInserted > 0) {
+          await handleNewMessage(clientId, linkMessage, uuid);
+        }
+
         setLoading(false);
       })
       .catch(async (err) => {
@@ -309,7 +329,9 @@ export default function CommandPalette({ props }) {
           clientId,
           {
             type: "text",
-            content: "AI has encountered an error. Please try agian.",
+            content: JSON.stringify([
+              "AI has encountered an error. Please try agian.",
+            ]),
             sender: SenderType.SYSTEM,
           } as FormattedMessage,
           uuid
@@ -366,7 +388,7 @@ export default function CommandPalette({ props }) {
               <div className="flex h-full">
                 <div
                   id="product-column"
-                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
+                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)]">
                   <div className="font-bold mb-2 mt-2 text-center">
                     Product Suggestions
                   </div>
@@ -450,10 +472,7 @@ export default function CommandPalette({ props }) {
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="flex-1 min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
-                  <div className="font-bold mb-2 mt-2 text-center">
-                    Conversation
-                  </div>
+                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
                   <button
                     className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
                     onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
@@ -467,7 +486,7 @@ export default function CommandPalette({ props }) {
                         key={index}
                         type={message.type}
                         isAISender={message.sender !== SenderType.USER}
-                        content={message.content}
+                        content={JSON.parse(message.content)}
                         host={host}
                       />
                     ))}

@@ -37,7 +37,7 @@ export interface Product {
 export interface DBMessage {
   id: number;
   type: string;
-  content: string;
+  content: any;
   sender: SenderType;
   clientId: string;
   timestamp: Date;
@@ -47,7 +47,7 @@ export interface FormattedMessage {
   id?: number;
   type: string;
   sender: SenderType;
-  content: string;
+  content: any;
 }
 export interface ChatMessage {
   type: "text" | "img" | "url";
@@ -61,12 +61,13 @@ export interface ChatBubbleProps {
   key?: number;
   type: string;
   isAISender: boolean;
-  content: string;
+  content: any;
   host: string;
 }
 
 export interface TextMessageProps {
   text: string;
+  isAISender: boolean;
 }
 export interface ImageMessageProps {
   src: string;
@@ -78,6 +79,7 @@ export interface LinkMessageProps {
   price: string;
   image: string;
   host: string;
+  recommendation: string;
 }
 
 // Keep this synced with api/pages/api/v*/supabase/_helpers where response expected

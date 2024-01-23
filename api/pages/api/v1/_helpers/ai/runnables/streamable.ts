@@ -104,6 +104,7 @@ export class Streamable {
                 JSON.stringify({
                   name: product.name,
                   handle: product.product_handle,
+                  recommendation: product.recommendation,
                   image: product.image,
                   variants: product.variants,
                 })
