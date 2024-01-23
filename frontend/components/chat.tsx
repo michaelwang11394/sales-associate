@@ -5,7 +5,7 @@ import type {
   TextMessageProps,
 } from "@/constants/types";
 
-import React from "react";
+import React, { useState } from "react";
 
 const LoadingMessage = () => {
   return (
@@ -86,33 +86,112 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   );
 };
 */
+
 const LinkMessage: React.FC<LinkMessageProps> = ({
-  name,
-  handle,
-  price,
-  image,
-  host,
-  recommendation,
+  content,
 }): React.JSX.Element => {
-  const productLink = `https://${host}/products/${handle}`;
+  const [active, setActive] = useState(0);
+
+  const handleRightClick = () => {
+    // Add your click handler logic here
+    setActive(Math.min(active + 1, content.length - 1));
+    console.log("Right clicked", active);
+    console.log(content);
+  };
+
+  const handleLeftClick = () => {
+    // Add your click handler logic here
+    setActive(Math.max(active - 1, 0));
+    console.log("Left clicked", active);
+  };
+
+  const renderDots = () => {
+    return content.map((_, index) => {
+      const fill = active === index ? "#474B58" : "#CBD2DD";
+      return (
+        <svg
+          width="6"
+          height="6"
+          viewBox="0 0 6 6"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <g id="Icons">
+            <circle id="Ellipse 4" cx="3" cy="3" r="2.5" fill={fill} />
+          </g>
+        </svg>
+      );
+    });
+  };
 
   return (
     <div className="w-full grid grid-cols-2 gap-4">
       {/* Existing Element */}
       <div>
-        <a href={productLink} target="_blank" rel="noopener noreferrer">
-          <img src={image} alt={name} className="w-full h-120 object-cover" />
-          <div className="flex flex-col p-4">
-            <h3 className="text-xl font-semibold mb-2">{name}</h3>
+        <a
+          href={`https://${content[active].host}/products/${content[active].handle}`}
+          target="_blank"
+          rel="noopener noreferrer">
+          <img
+            src={content[active].image}
+            alt={content[active].name}
+            className="w-full h-120 object-cover"
+          />
+          <div className="flex flex-col p-3">
+            <h2 className="text-xxl font-semibold">{content[active].name}</h2>
             <p className="text-lg font-medium text-gray-500 mb-4">
-              {price ? "$" + price : ""}
+              {content[active].price ? "$" + content[active].price : ""}
             </p>
           </div>
         </a>
+        {content.length > 1 && (
+          <div className="flex items-center space-x-2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              onClick={handleLeftClick}
+              className="text-gray-400 mr-auto link-card-arrow">
+              <g id="Arrows">
+                <path
+                  id="Icon"
+                  d="M19 12H5M5 12L12 19M5 12L12 5"
+                  stroke={active === 0 ? "#CBD2DD" : "#474B58"}
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+            </svg>
+            <div>{renderDots()}</div>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              onClick={handleRightClick}
+              className="text-gray-400 ml-auto link-card-arrow">
+              <g id="Arrows">
+                <path
+                  id="Icon"
+                  d="M5 12H19M19 12L12 5M19 12L12 19"
+                  stroke={content.length - 1 === active ? "#CBD2DD" : "#474B58"}
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+            </svg>
+          </div>
+        )}
       </div>
 
       <div>
-        <p className="text-lg ai-grey-text mb-4">{recommendation}</p>
+        <p className="text-xxl ai-grey-text mb-4">
+          {content[active].recommendation}
+        </p>
         {/* Add any additional styling or elements for the recommendation input */}
       </div>
     </div>
@@ -134,22 +213,7 @@ export const ChatBubble = ({
         // TODO Add IMG
         return <ImageMessage src={content || ""} />;
       case "link":
-        const linkObject = content[0]; // TODO make this carousel
-        const name = linkObject.name;
-        const handle = linkObject.handle;
-        const price =
-          linkObject.variants?.length > 0 ? linkObject.variants[0]?.price : "";
-        const image = linkObject.image;
-        return (
-          <LinkMessage
-            name={name}
-            handle={handle}
-            price={price}
-            image={image}
-            host={host}
-            recommendation={linkObject.recommendation}
-          />
-        );
+        return <LinkMessage content={content} />;
       default:
         return <TextMessage text={content[0] || ""} isAISender={isAISender} />;
     }

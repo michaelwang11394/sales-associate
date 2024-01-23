@@ -74,12 +74,7 @@ export interface ImageMessageProps {
 }
 
 export interface LinkMessageProps {
-  name: string;
-  handle: string;
-  price: string;
-  image: string;
-  host: string;
-  recommendation: string;
+  content: any[];
 }
 
 // Keep this synced with api/pages/api/v*/supabase/_helpers where response expected

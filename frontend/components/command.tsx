@@ -277,13 +277,10 @@ export default function CommandPalette({ props }) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === linkMessage) {
-                    console.log("BOI msg.content", msg.content);
-                    console.log("BOI msg.content", splitChunks[i]);
                     msg.content = JSON.stringify([
                       ...JSON.parse(msg.content),
                       JSON.parse(splitChunks[i]),
                     ]);
-                    console.log("BOI msg.content", msg.content);
                   }
                   return msg;
                 })

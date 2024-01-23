@@ -3,13 +3,17 @@ import {
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
-import { MessageSource, type DBMessage } from "@/constants/types";
+import { MessageSource, SenderType, type DBMessage } from "@/constants/types";
 import { callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage } from "@/helper/shopify";
 import { v4 as uuidv4 } from "uuid";
 
-import { getLastPixelEvent, getMessages } from "@/helper/supabase";
+import {
+  getLastPixelEvent,
+  getMessages,
+  insertMessage,
+} from "@/helper/supabase";
 import "@/styles/chat.css";
 import { useEffect, useRef, useState } from "react";
 import { formatDBMessage } from "./command";
@@ -71,6 +75,13 @@ export default function Icon({ props }) {
                     full += chunk;
                     setGreeting(full);
                   }
+                  await insertMessage(
+                    clientId,
+                    "text",
+                    SenderType.SYSTEM,
+                    JSON.stringify([full]),
+                    uuid
+                  );
                 })
                 .catch((err) => console.error(err));
             });

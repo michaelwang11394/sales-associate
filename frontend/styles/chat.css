@@ -40,6 +40,9 @@ body {
   height: auto;
   background-color: white;
 }
+.link-card-arrow {
+  cursor: pointer;
+}
 .border {
   border: 8px solid #666;
 }
