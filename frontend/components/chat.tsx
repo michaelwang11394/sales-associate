@@ -134,7 +134,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
             <img
               src={content[active].image}
               alt={content[active].name}
-              className="w-full h-120 object-cover"
+              className="w-full object-cover"
             />
             <div className="flex flex-col p-3">
               <h2 className="text-xxl font-semibold">{content[active].name}</h2>
@@ -197,7 +197,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       </div>
 
       <div>
-        <p className="text-xxl ai-grey-text mb-4">
+        <p className="text-xxl ai-grey-text mb-4 p-8">
           {content[active].recommendation}
         </p>
         {/* Add any additional styling or elements for the recommendation input */}

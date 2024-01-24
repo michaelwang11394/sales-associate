@@ -365,7 +365,7 @@ export default function CommandPalette({ props }) {
   };
 
   return (
-    <div id="overlay" className="h-[70vh] flex flex-col">
+    <div id="overlay" className="h-[80vh] flex flex-col">
       <section
         id={PALETTE_DIV_ID}
         className="relative overflow-hidden bg-cover flex-grow">
@@ -405,11 +405,11 @@ export default function CommandPalette({ props }) {
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-t scrollable-bottom border-gray-300 max-h-[calc(70vh-50px)]">
+            <div className="flex flex-col h-full border-t scrollable-bottom border-gray-300 max-h-[calc(80vh-50px)]">
               <div className="flex h-full">
                 <div
                   id="product-column"
-                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)]">
+                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)]">
                   <div className="font-bold mb-2 mt-2 text-center">
                     You might like:
                   </div>
@@ -470,7 +470,7 @@ export default function CommandPalette({ props }) {
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)">
+                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)">
                   <button
                     className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
                     onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
