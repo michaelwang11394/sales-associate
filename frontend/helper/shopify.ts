@@ -71,7 +71,7 @@ export const addToCart = async (id, quantity) => {
 // Function to retrieve suggestions based on a search query. Run for each word
 export const getSuggestions = async (query) => {
   // Don't bother with keywords of length 1
-  const keywords = query.split(" ").filter((p) => p.length > 1);
+  const keywords = query.split(" ");
 
   // Function to perform a Shopify REST query for a keyword
   const fetchSuggestionsForKeyword = async (keyword) => {
