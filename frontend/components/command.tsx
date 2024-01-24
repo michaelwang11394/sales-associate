@@ -12,11 +12,7 @@ import {
 } from "@/constants/types";
 import { callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
-import {
-  addToCart,
-  getGreetingMessage,
-  getSuggestions,
-} from "@/helper/shopify";
+import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
   getLastPixelEvent,
   getMessages,
@@ -75,7 +71,7 @@ export default function CommandPalette({ props }) {
           const newResponseMessage: FormattedMessage = {
             type: "text",
             sender: SenderType.SYSTEM,
-            content: JSON.stringify([""]),
+            content: [""],
           };
           callOpenai(
             greetingPrompt,
@@ -106,7 +102,7 @@ export default function CommandPalette({ props }) {
                 setMessages((prevMessages) =>
                   prevMessages.map((msg) => {
                     if (msg === newResponseMessage) {
-                      msg.content = JSON.stringify([full]);
+                      msg.content = [full];
                     }
                     return msg;
                   })
@@ -136,25 +132,26 @@ export default function CommandPalette({ props }) {
             const products = data.data!;
             const productList = products
               .map((product) => {
-                const productJson = JSON.parse(product);
-                return {
+                const productJsons = JSON.parse(product);
+                return productJsons.map((productJson) => ({
                   featured_image: {
                     url: productJson.image,
-                    alt: "",
                   },
                   title: productJson.name,
-                  handle: productJson.product_handle,
+                  handle: productJson.handle,
                   price:
                     productJson.variants?.length > 0
                       ? productJson.variants[0]?.price
                       : "",
                   url: "", // TODO: Add to DB
-                };
+                }));
               })
+              .flat()
               .filter(
                 (product, index, self) =>
                   index === self.findIndex((p) => p.handle === product.handle)
               );
+
             setMentionedProducts(productList);
             setSuggestions(productList);
           }
@@ -215,7 +212,7 @@ export default function CommandPalette({ props }) {
     const newUserMessage: FormattedMessage = {
       type: "text",
       sender: SenderType.USER,
-      content: JSON.stringify([input]),
+      content: [input],
     };
     const uuid = uuidv4();
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
@@ -223,7 +220,7 @@ export default function CommandPalette({ props }) {
     const newResponseMessage: FormattedMessage = {
       type: "text",
       sender: SenderType.AI,
-      content: JSON.stringify([""]),
+      content: [""],
     };
     callOpenai(
       input,
@@ -236,7 +233,7 @@ export default function CommandPalette({ props }) {
         const linkMessage = {
           type: "link",
           sender: SenderType.AI,
-          content: JSON.stringify([]),
+          content: [],
         } as FormattedMessage;
         setMessages((prevMessages) => [...prevMessages, newResponseMessage]);
         let response = "";
@@ -261,13 +258,21 @@ export default function CommandPalette({ props }) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === newResponseMessage) {
-                    msg.content = JSON.stringify(splitChunks[0]);
+                    msg.content = [splitChunks[0]];
                   }
                   return msg;
                 })
               );
               state = StructuredOutputStreamState.PRODUCT;
-              await handleNewMessage(clientId, newResponseMessage, uuid);
+              await handleNewMessage(
+                clientId,
+                {
+                  type: "text",
+                  sender: SenderType.AI,
+                  content: [splitChunks[0]],
+                },
+                uuid
+              );
               plainTextInserted = true;
             }
             for (let i = productInserted + 1; i < splitChunks.length; i++) {
@@ -277,10 +282,7 @@ export default function CommandPalette({ props }) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === linkMessage) {
-                    msg.content = JSON.stringify([
-                      ...JSON.parse(msg.content),
-                      JSON.parse(splitChunks[i]),
-                    ]);
+                    msg.content = [...msg.content, JSON.parse(splitChunks[i])];
                   }
                   return msg;
                 })
@@ -292,28 +294,53 @@ export default function CommandPalette({ props }) {
             setMessages((prevMessages) =>
               prevMessages.map((msg) => {
                 if (msg === newResponseMessage) {
-                  msg.content = JSON.stringify(response);
+                  msg.content = [response];
                 }
                 return msg;
               })
             );
           }
         }
+
+        const finalSplit: string[] = response
+          .split(productDelimiter)
+          .filter((chunk) => chunk.trim() !== "")
+          .splice(1)
+          .map((p) => {
+            return JSON.parse(p);
+          });
         // Occurs if there are no elements in product field
         if (!plainTextInserted) {
           setMessages((prevMessages) =>
             prevMessages.map((msg) => {
               if (msg === newResponseMessage) {
-                msg.content = JSON.stringify(response);
+                msg.content = [response];
               }
               return msg;
             })
           );
-          await handleNewMessage(clientId, newResponseMessage, uuid);
+          await handleNewMessage(
+            clientId,
+            {
+              type: "text",
+              sender: SenderType.AI,
+              content: [response],
+            },
+            uuid
+          );
         }
 
         if (productInserted > 0) {
-          await handleNewMessage(clientId, linkMessage, uuid);
+          console.log(linkMessage);
+          await handleNewMessage(
+            clientId,
+            {
+              type: "link",
+              sender: SenderType.AI,
+              content: finalSplit,
+            },
+            uuid
+          );
         }
 
         setLoading(false);
@@ -326,9 +353,7 @@ export default function CommandPalette({ props }) {
           clientId,
           {
             type: "text",
-            content: JSON.stringify([
-              "AI has encountered an error. Please try agian.",
-            ]),
+            content: ["AI has encountered an error. Please try agian."],
             sender: SenderType.SYSTEM,
           } as FormattedMessage,
           uuid
@@ -344,11 +369,9 @@ export default function CommandPalette({ props }) {
         id={PALETTE_DIV_ID}
         className="relative overflow-hidden bg-cover flex-grow">
         <div className="relative flex justify-center flex-grow flex-shrink h-full">
-          <div className="w-full mx-auto overflow-hidden transition-all shadow-lg bg-white backdrop-blur-[10px] rounded-lg flex-grow">
+          <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
             <div className="flex justify-center">
-              <form
-                onSubmit={handleSubmit}
-                className="w-1/2 border-4 border-black m-2 flex">
+              <form onSubmit={handleSubmit} className="w-1/2 m-2 flex">
                 <input
                   type="text"
                   value={userInput}
@@ -359,22 +382,22 @@ export default function CommandPalette({ props }) {
                   aria-expanded="false"
                   aria-controls="options"
                 />
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="rounded-full bg-blue-600 text-white w-16 h-16 flex items-center m-1 justify-center">
+                <button type="submit" disabled={loading}>
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    className="h-6 w-6 transform rotate-90">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <g id="vuesax/bold/send">
+                      <g id="send">
+                        <path
+                          id="Vector"
+                          d="M18.07 8.50965L9.51002 4.22965C3.76002 1.34965 1.40002 3.70965 4.28002 9.45965L5.15002 11.1996C5.40002 11.7096 5.40002 12.2996 5.15002 12.8096L4.28002 14.5396C1.40002 20.2896 3.75002 22.6496 9.51002 19.7696L18.07 15.4896C21.91 13.5696 21.91 10.4296 18.07 8.50965ZM14.84 12.7496H9.44002C9.03002 12.7496 8.69002 12.4096 8.69002 11.9996C8.69002 11.5896 9.03002 11.2496 9.44002 11.2496H14.84C15.25 11.2496 15.59 11.5896 15.59 11.9996C15.59 12.4096 15.25 12.7496 14.84 12.7496Z"
+                          fill="#2A33FF"
+                        />
+                      </g>
+                    </g>
                   </svg>
                 </button>
               </form>
@@ -387,7 +410,7 @@ export default function CommandPalette({ props }) {
                   id="product-column"
                   className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(70vh-50px)]">
                   <div className="font-bold mb-2 mt-2 text-center">
-                    Product Suggestions
+                    You might like:
                   </div>
 
                   {suggestions && suggestions.length > 0 ? (
@@ -395,11 +418,12 @@ export default function CommandPalette({ props }) {
                       <a
                         key={index}
                         href={`https://${host}/products/${product.handle}`}
+                        className="p-2"
                         target="_blank"
                         rel="noopener noreferrer">
-                        <div className="flex p-1 m-1 flex-grow">
+                        <div className="flex flex-grow product-card-shadow p-2 m-1">
                           {/* Product Image */}
-                          <div className="w-1/3">
+                          <div className="w-1/3 h-40">
                             <img
                               src={product.featured_image.url}
                               alt={product.featured_image.alt}
@@ -408,9 +432,9 @@ export default function CommandPalette({ props }) {
                           </div>
 
                           {/* Product Details */}
-                          <div className="w-2/3 flex flex-col p-2 space-y-1">
+                          <div className="w-2/3 flex flex-grow flex-col space-y-1">
                             {/* Product Name */}
-                            <div className="h-10 overflow-hidden line-clamp-2">
+                            <div className="h-8 search-card-header flex-grow">
                               {product.title}
                             </div>
 
@@ -418,30 +442,6 @@ export default function CommandPalette({ props }) {
                             <div>
                               {product.price ? "$" + product.price : ""}
                             </div>
-
-                            {/* Add to Cart Button. Note: We may run into an issue where suggested product is not available. In which case, we need to check the variant length */}
-                            {product.variants &&
-                              product.variants[0] &&
-                              product.variants[0].id && (
-                                <button
-                                  className="w-1/3 mt-2 px-2 py-1 text-md font-medium text-white bg-blue-600 border rounded cursor-pointer"
-                                  onClick={async (e) => {
-                                    e.preventDefault();
-                                    const response = await addToCart(
-                                      product.variants[0].id,
-                                      1
-                                    );
-                                    if (response) {
-                                      window.location.href = `https://${host}/cart`;
-                                    } else {
-                                      // If product variant is not available to add, redirect to product page
-
-                                      window.location.href = `https://${host}/products/${product.handle}`;
-                                    }
-                                  }}>
-                                  Add to Cart
-                                </button>
-                              )}
                           </div>
                         </div>
                       </a>
@@ -455,7 +455,7 @@ export default function CommandPalette({ props }) {
                   <div className="h-[3rem] flex justify-center mt-4">
                     {suggestions.length > 0 && (
                       <button
-                        className="px-2 py-1 text-md text-white bg-blue-600 border-none rounded cursor-pointer font-medium"
+                        className="search-button px-2 py-1 border-none"
                         onClick={() =>
                           // TODO: Different themes will have different URLS for search result pages
                           (window.location.href = `https://${host}/pages/search-results-page?/search?q=${userInput}`)
@@ -483,7 +483,7 @@ export default function CommandPalette({ props }) {
                         key={index}
                         type={message.type}
                         isAISender={message.sender !== SenderType.USER}
-                        content={JSON.parse(message.content)}
+                        content={message.content}
                         host={host}
                       />
                     ))}

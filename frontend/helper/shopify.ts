@@ -68,17 +68,36 @@ export const addToCart = async (id, quantity) => {
   }
 };
 
-// Function to retrieve suggestions based on a search query
+// Function to retrieve suggestions based on a search query. Run for each word
 export const getSuggestions = async (query) => {
-  const json = await shopifyRestQuery(
-    `search/suggest.json?q=${query}&resources[type]=product&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`
+  // Don't bother with keywords of length 1
+  const keywords = query.split(" ").filter((p) => p.length > 1);
+
+  // Function to perform a Shopify REST query for a keyword
+  const fetchSuggestionsForKeyword = async (keyword) => {
+    const json = await shopifyRestQuery(
+      `search/suggest.json?q=${keyword}&resources[type]=product&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`
+    );
+    return json?.resources?.results?.products || [];
+  };
+
+  // Use Promise.all to run requests in parallel for each keyword
+  const suggestionsPromises = keywords.map((keyword) =>
+    fetchSuggestionsForKeyword(keyword)
   );
-  // TODO: Get Search link page
-  // const fullTest = await shopifyRestQuery(
-  //   `search/suggest.json?q=${query}&resources[page]`
-  // );
-  // console.log("seearch json", test);
-  return json?.resources?.results?.products;
+
+  // Wait for all promises to resolve
+  const suggestionsArray = await Promise.all(suggestionsPromises);
+
+  // Flatten the array of arrays into a single array of suggestions
+  const allSuggestions = suggestionsArray.flat();
+
+  // Deduplicate the suggestions based on the product handle
+  const uniqueSuggestions = Array.from(
+    new Set(allSuggestions.map((p) => p.handle))
+  ).map((handle) => allSuggestions.find((p) => p.handle === handle));
+
+  return uniqueSuggestions;
 };
 
 export const isValidProduct = async (handle) => {

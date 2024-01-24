@@ -33,10 +33,11 @@ body {
 
 /* CSS talk bubble */
 .talk-bubble {
+  border-radius: 25px 25px 0px 25px;
+  border: 1px solid var(--Primary-accent, #2a33ff);
+  background: var(--White, #fff);
   margin: 40px;
-  display: inline-block;
   position: relative;
-  width: 200px;
   height: auto;
   background-color: white;
 }
@@ -70,8 +71,32 @@ body {
   font-weight: 800;
   line-height: normal;
 }
-.product-card {
+.search-card-header {
+  color: #000;
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+}
+.product-card-shadow {
+  border-radius: 10px;
   box-shadow: 1px 1px 8px 5px rgba(0, 0, 0, 0.15);
+}
+.search-card-border {
+  border: 1px solid var(--Border-darker, #cbd2dd);
+}
+.search-button {
+  border-radius: 10px;
+  background: var(--Background-grey, #2a33ff);
+  color: var(--Primary-accent, #ffffff);
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 /* Right triangle placed top left flush. */
@@ -298,6 +323,15 @@ body {
   line-height: 1.5em;
 }
 .talktext p {
+  color: var(--Primary-accent, #2a33ff);
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+
   /* remove webkit p margins */
   -webkit-margin-before: 0em;
   -webkit-margin-after: 0em;

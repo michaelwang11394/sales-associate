@@ -1,4 +1,5 @@
 import type {
+  ChatBubbleProps,
   ImageMessageProps,
   LinkMessageProps,
   TextMessageProps,
@@ -125,7 +126,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       {/* Existing Element */}
       <div>
         {/* Card */}
-        <div className="product-card">
+        <div className="product-card-shadow">
           <a
             href={`https://${content[active].host}/products/${content[active].handle}`}
             target="_blank"

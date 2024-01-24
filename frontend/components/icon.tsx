@@ -120,18 +120,15 @@ export default function Icon({ props }) {
       {/* Overlay Bubble */}
       {props.mountDiv === "embed" && iconRef.current && (
         <div
-          className="talk-bubble tri-right round border btm-right-in"
+          className="talk-bubble"
           style={{
             position: "absolute",
+            width: "400px",
             bottom: iconRef.current.offsetTop + iconSize / 2 + "px",
-            right: iconRef.current.offsetLeft + "px",
-            height: "auto",
-            width: "500px",
-            background: "white",
-            color: "black",
+            right: iconRef.current.offsetLeft + iconSize / 3 + "px",
           }}>
-          <div className="talktext">
-            <p style={{ overflow: "hidden", margin: 0 }}>{greeting}</p>
+          <div className="talktext flex-1" style={{ whiteSpace: "normal" }}>
+            <p>{greeting}</p>
           </div>
         </div>
       )}
