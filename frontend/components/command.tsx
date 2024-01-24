@@ -371,7 +371,26 @@ export default function CommandPalette({ props }) {
         className="relative overflow-hidden bg-cover flex-grow">
         <div className="relative flex justify-center flex-grow flex-shrink h-full">
           <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
-            <div className="flex justify-center">
+            <div className="flex justify-between align-center">
+              <div className="flex items-center pr-7">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <g id="Cancel">
+                    <path
+                      id="Vector"
+                      d="M5 5L12 12L5 19M19.5 19L12.5 12L19.5 5"
+                      stroke="white"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </g>
+                </svg>
+              </div>
               <form onSubmit={handleSubmit} className="w-1/2 m-2 flex">
                 <input
                   type="text"
@@ -402,6 +421,27 @@ export default function CommandPalette({ props }) {
                   </svg>
                 </button>
               </form>
+              <div
+                className="flex items-center pr-7 overlay-exit-button"
+                onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <g id="Cancel">
+                    <path
+                      id="Vector"
+                      d="M5 5L12 12L5 19M19.5 19L12.5 12L19.5 5"
+                      stroke="#474B58"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </g>
+                </svg>
+              </div>
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
