@@ -185,6 +185,7 @@ export default function CommandPalette({ props }) {
       console.error("Messages update failed for supabase table messages");
     }
     newUserMessage.id = data[0].id;
+    return data[0].id;
   };
 
   const handleInputChange = (event) => {
@@ -264,7 +265,7 @@ export default function CommandPalette({ props }) {
                 })
               );
               state = StructuredOutputStreamState.PRODUCT;
-              await handleNewMessage(
+              newResponseMessage.id = await handleNewMessage(
                 clientId,
                 {
                   type: "text",
@@ -319,7 +320,7 @@ export default function CommandPalette({ props }) {
               return msg;
             })
           );
-          await handleNewMessage(
+          newResponseMessage.id = await handleNewMessage(
             clientId,
             {
               type: "text",
@@ -332,7 +333,7 @@ export default function CommandPalette({ props }) {
 
         if (productInserted > 0) {
           console.log(linkMessage);
-          await handleNewMessage(
+          linkMessage.id = await handleNewMessage(
             clientId,
             {
               type: "link",
