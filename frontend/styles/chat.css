@@ -11,13 +11,13 @@ body {
 
 .product-column {
   flex: 0 0 auto;
-  width: 40%;
+  width: 33%;
 }
 .chat-column {
   flex: 0 0 auto;
   border-radius: 10px;
   background: var(--White, #fff);
-  width: 60%;
+  width: 67%;
 }
 .link-card {
   flex: 0 0 auto;

@@ -15,8 +15,8 @@ import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
   getLastPixelEvent,
+  getMentionedProducts,
   getMessages,
-  getProductMentions,
   insertMessage,
 } from "@/helper/supabase";
 import { debounce } from "lodash";
@@ -125,7 +125,7 @@ export default function CommandPalette({ props }) {
   useEffect(
     () => {
       if (clientId) {
-        getProductMentions(clientId).then((data) => {
+        getMentionedProducts(clientId).then((data) => {
           if (!data) {
             console.error("Product mentions could not be fetched");
           } else {

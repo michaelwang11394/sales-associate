@@ -79,7 +79,7 @@ export default function Icon({ props }) {
                     clientId,
                     "text",
                     SenderType.SYSTEM,
-                    JSON.stringify([full]),
+                    [full],
                     uuid
                   );
                 })
