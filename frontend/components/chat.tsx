@@ -146,7 +146,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
         </div>
 
         {content.length > 1 && (
-          <div className="w-full grid grid-cols-3 items-center">
+          <div className="w-full pt-8 grid grid-cols-3 items-center">
             <div className="flex justify-start">
               <svg
                 width="24"
