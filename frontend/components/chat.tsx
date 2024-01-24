@@ -86,6 +86,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
 */
 
 const LinkMessage: React.FC<LinkMessageProps> = ({
+  host,
   content,
 }): React.JSX.Element => {
   const [active, setActive] = useState(0);
@@ -128,7 +129,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
         {/* Card */}
         <div className="product-card-shadow">
           <a
-            href={`https://${content[active].host}/products/${content[active].handle}`}
+            href={`https://${host}/products/${content[active].handle}`}
             target="_blank"
             rel="noopener noreferrer">
             <img
@@ -221,7 +222,7 @@ export const ChatBubble = ({
         // TODO Add IMG
         return <ImageMessage src={content || ""} />;
       case "link":
-        return <LinkMessage content={content} />;
+        return <LinkMessage content={content} host={host} />;
       default:
         return <TextMessage text={content[0] || ""} isAISender={isAISender} />;
     }

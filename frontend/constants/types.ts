@@ -74,6 +74,7 @@ export interface ImageMessageProps {
 }
 
 export interface LinkMessageProps {
+  host: string;
   content: any[];
 }
 

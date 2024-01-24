@@ -52,7 +52,7 @@ export const createModelConfig = (modelType: string, config: any) => {
 
 export const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep responses to less than 150 characters for the plainText field and readable`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
@@ -69,14 +69,18 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
 };
 
 export const zodSchema = z.object({
-  plainText: z.string().describe("The response directly displayed to user"),
+  plainText: z
+    .string()
+    .describe(
+      "The response directly displayed to user. Keep to less than 200 characters"
+    ),
   products: z
     .array(
       z.object({
         recommendation: z
           .string()
           .describe(
-            "Should be around 300 characters. Detailed breakdown why this product is relevant and a great fit for user. Format is one line summary, followed by a paragraph for reasons why this is relevant."
+            "Should be around 500 characters, use bullet points and paragraphs for readability. Detailed breakdown why this product is relevant and a great fit for user. Format is one line summary, followed by a paragraph for reasons why this is relevant."
           ),
         name: z.string().describe("The name of the product"),
         product_handle: z.string().describe("The product handle"),
@@ -106,7 +110,7 @@ export const zodSchema = z.object({
           .optional(),
       })
     )
-    .describe("A list of products mentioned in the response, if any"),
+    .describe("A list of products referred to in the response"),
 });
 
 export const summarizeHistoryModelConfig = () => {
