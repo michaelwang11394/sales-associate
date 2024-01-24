@@ -454,7 +454,7 @@ export default function CommandPalette({ props }) {
                   )}
 
                   <div className="h-[3rem] flex justify-center mt-4">
-                    {suggestions.length > 0 && (
+                    {userInput.length > 0 && (
                       <button
                         className="search-button px-2 py-1 border-none"
                         onClick={() =>
