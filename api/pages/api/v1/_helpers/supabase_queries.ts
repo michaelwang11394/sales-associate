@@ -45,7 +45,7 @@ export const getProductsMentioned = async (store: string, clientId: string) => {
       .eq("clientId", clientId)
       .eq("store", store)
       .eq("type", "link")
-      .limit(3);
+      .limit(10);
 
     if (error) {
       console.error("Error", error);
