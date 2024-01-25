@@ -36,7 +36,7 @@ export const getMessages = async (clientId, limit) => {
   }
 };
 
-export const getProductMentions = async (clientId) => {
+export const getMentionedProducts = async (clientId) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
       VERCEL_URL,

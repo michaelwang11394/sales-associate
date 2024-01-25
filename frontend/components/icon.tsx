@@ -3,13 +3,17 @@ import {
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
-import { MessageSource, type DBMessage } from "@/constants/types";
+import { MessageSource, SenderType, type DBMessage } from "@/constants/types";
 import { callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage } from "@/helper/shopify";
 import { v4 as uuidv4 } from "uuid";
 
-import { getLastPixelEvent, getMessages } from "@/helper/supabase";
+import {
+  getLastPixelEvent,
+  getMessages,
+  insertMessage,
+} from "@/helper/supabase";
 import "@/styles/chat.css";
 import { useEffect, useRef, useState } from "react";
 import { formatDBMessage } from "./command";
@@ -71,6 +75,13 @@ export default function Icon({ props }) {
                     full += chunk;
                     setGreeting(full);
                   }
+                  await insertMessage(
+                    clientId,
+                    "text",
+                    SenderType.SYSTEM,
+                    [full],
+                    uuid
+                  );
                 })
                 .catch((err) => console.error(err));
             });
@@ -109,18 +120,15 @@ export default function Icon({ props }) {
       {/* Overlay Bubble */}
       {props.mountDiv === "embed" && iconRef.current && (
         <div
-          className="talk-bubble tri-right round border btm-right-in"
+          className="talk-bubble"
           style={{
             position: "absolute",
+            width: "400px",
             bottom: iconRef.current.offsetTop + iconSize / 2 + "px",
-            right: iconRef.current.offsetLeft + "px",
-            height: "auto",
-            width: "500px",
-            background: "white",
-            color: "black",
+            right: iconRef.current.offsetLeft + iconSize / 3 + "px",
           }}>
-          <div className="talktext">
-            <p style={{ overflow: "hidden", margin: 0 }}>{greeting}</p>
+          <div className="talktext flex-1" style={{ whiteSpace: "normal" }}>
+            <p>{greeting}</p>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 /* General CSS Setup */
 body {
   background-color: lightblue;
-  font-family: "Ubuntu-Italic", "Lucida Sans", helvetica, sans;
+  font-family: "Avenir", "Lucida Sans", helvetica, sans;
 }
 
 /* container */
@@ -9,14 +9,43 @@ body {
   padding: 5% 5%;
 }
 
+.product-column {
+  flex: 0 0 auto;
+  width: 33%;
+}
+.chat-column {
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: var(--White, #fff);
+  width: 67%;
+}
+.link-card {
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: var(--White, #fff);
+  width: 50%;
+}
+.rec-text {
+  flex: 0 0 auto;
+  border-radius: 10px;
+  width: 50%;
+}
+
 /* CSS talk bubble */
 .talk-bubble {
+  border-radius: 25px 25px 0px 25px;
+  border: 1px solid var(--Primary-accent, #2a33ff);
+  background: var(--White, #fff);
   margin: 40px;
-  display: inline-block;
   position: relative;
-  width: 200px;
   height: auto;
   background-color: white;
+}
+.link-card-arrow {
+  cursor: pointer;
+}
+.overlay-exit-button {
+  cursor: pointer;
 }
 .border {
   border: 8px solid #666;
@@ -25,6 +54,52 @@ body {
   border-radius: 30px;
   -webkit-border-radius: 30px;
   -moz-border-radius: 30px;
+}
+.ai-grey-text {
+  color: var(--Secondary-grey, #474b58);
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+}
+.user-input-text {
+  border-radius: 0px 25px 25px 25px;
+  background: var(--Background-grey, #d9dce2);
+  color: var(--Primary-accent, #2a33ff);
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: normal;
+}
+.search-card-header {
+  color: #000;
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+}
+.product-card-shadow {
+  border-radius: 10px;
+  box-shadow: 1px 1px 8px 5px rgba(0, 0, 0, 0.15);
+}
+.search-card-border {
+  border: 1px solid var(--Border-darker, #cbd2dd);
+}
+.search-button {
+  border-radius: 10px;
+  background: var(--Background-grey, #2a33ff);
+  color: var(--Primary-accent, #ffffff);
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 /* Right triangle placed top left flush. */
@@ -251,6 +326,15 @@ body {
   line-height: 1.5em;
 }
 .talktext p {
+  color: var(--Primary-accent, #2a33ff);
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+
   /* remove webkit p margins */
   -webkit-margin-before: 0em;
   -webkit-margin-after: 0em;
