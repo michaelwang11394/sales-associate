@@ -366,10 +366,12 @@ export default function CommandPalette({ props }) {
   };
 
   return (
-    <div id="overlay" className="h-[80vh] flex flex-col bg-gray-200">
+    <div
+      id="overlay"
+      className="fixed top-0 left-0 right-0 bottom-0 flex flex-col items-center justify-center h-[60rem] w-[70rem] m-auto bg-gray-200 rounded-lg shadow-lg overflow-auto">
       <section
         id={PALETTE_DIV_ID}
-        className="relative overflow-hidden bg-cover flex-grow">
+        className="flex flex-grow overflow-hidden bg-cover w-full">
         <div className="relative flex justify-center flex-grow flex-shrink h-full">
           <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
             <div className="flex justify-between align-center">
