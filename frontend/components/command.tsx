@@ -189,10 +189,11 @@ export default function CommandPalette({ props }) {
   };
 
   const handleInputChange = (event) => {
-    setUserInput(event.target.value);
+    const input = event.target.value;
+    setUserInput(input);
     const debouncedGetSuggestions = debounce(async () => {
-      if (event.target.value !== "") {
-        const newSuggestions = await getSuggestions(event.target.value);
+      if (input !== "") {
+        const newSuggestions = await getSuggestions(input);
         setSuggestions(newSuggestions); // Only set the new suggestions, don't mix with mentioned products
       } else {
         setSuggestions(mentionedProducts); // If search is empty, show the mentioned products
@@ -451,11 +452,13 @@ export default function CommandPalette({ props }) {
                   id="product-column"
                   className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)]">
                   <div className="font-bold mb-2 mt-2 text-center">
-                    You might like:
+                    {suggestions && suggestions.length > 0
+                      ? "You might like:"
+                      : "We're sorry, no results matches this search"}
                   </div>
 
-                  {suggestions && suggestions.length > 0 ? (
-                    suggestions.slice(0, 3).map((product, index) => (
+                  {suggestions.length > 0 &&
+                    suggestions.slice(0, 10).map((product, index) => (
                       <a
                         key={index}
                         href={`https://${host}/products/${product.handle}`}
@@ -486,25 +489,7 @@ export default function CommandPalette({ props }) {
                           </div>
                         </div>
                       </a>
-                    ))
-                  ) : (
-                    <div className="text-center italic">
-                      Type in the search box to see suggestions
-                    </div>
-                  )}
-
-                  <div className="h-[3rem] flex justify-center mt-4">
-                    {userInput.length > 0 && (
-                      <button
-                        className="search-button px-2 py-1 border-none"
-                        onClick={() =>
-                          // TODO: Different themes will have different URLS for search result pages
-                          (window.location.href = `https://${host}/pages/search-results-page?/search?q=${userInput}`)
-                        }>
-                        View All Items
-                      </button>
-                    )}
-                  </div>
+                    ))}
                 </div>
 
                 {/* Chat Column*/}

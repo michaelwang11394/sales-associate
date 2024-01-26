@@ -82,9 +82,9 @@ export const getSuggestions = async (query) => {
   };
 
   // Use Promise.all to run requests in parallel for each keyword
-  const suggestionsPromises = keywords.map((keyword) =>
-    fetchSuggestionsForKeyword(keyword)
-  );
+  const suggestionsPromises = keywords
+    .filter((w) => w.length > 0)
+    .map((keyword) => fetchSuggestionsForKeyword(keyword));
 
   // Wait for all promises to resolve
   const suggestionsArray = await Promise.all(suggestionsPromises);
