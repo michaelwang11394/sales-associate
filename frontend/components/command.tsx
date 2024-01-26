@@ -366,7 +366,7 @@ export default function CommandPalette({ props }) {
   };
 
   return (
-    <div id="overlay" className="h-[80vh] flex flex-col">
+    <div id="overlay" className="h-[80vh] flex flex-col bg-gray-200">
       <section
         id={PALETTE_DIV_ID}
         className="relative overflow-hidden bg-cover flex-grow">
@@ -446,7 +446,7 @@ export default function CommandPalette({ props }) {
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-t scrollable-bottom border-gray-300 max-h-[calc(80vh-50px)]">
+            <div className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(80vh-50px)]">
               <div className="flex h-full">
                 <div
                   id="product-column"
