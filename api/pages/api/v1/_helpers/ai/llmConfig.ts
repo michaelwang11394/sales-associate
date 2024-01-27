@@ -122,17 +122,17 @@ export const hintsSchema = z.object({
   first_hint: z
     .string()
     .describe(
-      "The first and most relevant message user can input to continue message"
+      "The first and most relevant query user can input to continue message"
     ),
   second_hint: z
     .string()
     .describe(
-      "The second relevant message user can input to continue message. Ensure it is a different type of message from first_hint"
+      "The second relevant query user can input to continue message. Ensure it is a different type of message from first_hint"
     ),
   third_hint: z
     .string()
     .describe(
-      "The third relevant message user can input. Ensure different than first_hint or second_hint"
+      "The third relevant query user can input. Ensure different than first_hint or second_hint"
     ),
 });
 

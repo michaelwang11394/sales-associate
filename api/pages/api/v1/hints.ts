@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { callOpenai } from "./_helpers/ai/ai";
+import { httpResponse } from "./http";
 import type { MessageSource } from "./types";
 
 export default async function handler(
@@ -17,7 +18,13 @@ export default async function handler(
   const source = request.query.source as MessageSource;
   const messageIds = request.query.ids as string[];
 
-  await callOpenai(input, store, clientId, requestUuid, source, messageIds);
+  return httpResponse(
+    request,
+    response,
+    200,
+    "Hints returned successfully",
+    await callOpenai(input, store, clientId, requestUuid, source, messageIds)
+  );
 
   /*
   try {

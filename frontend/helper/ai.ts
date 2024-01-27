@@ -30,17 +30,13 @@ export const callHints = async (
   source: string,
   messageIds: string[]
 ) => {
-  const url = HTTPHelper.assembleUrl(VERCEL_URL, [V1, HINTS_PATH], {
+  const res: Response = await HTTPHelper.get(VERCEL_URL, [V1, HINTS_PATH], {
     input: input,
     store: location.host,
     clientId: clientId,
     requestUuid: requestUuid,
     source: source,
     ids: messageIds,
-  });
-  // make a POST call to our api route
-  let res = await fetch(url, {
-    method: "POST",
   });
   return res?.body;
 };

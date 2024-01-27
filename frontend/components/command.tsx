@@ -61,24 +61,7 @@ export default function CommandPalette({ props }) {
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
           setMessages((prevMessages) => messages.concat(prevMessages));
-
-          const uuid = uuidv4();
-          callHints(
-            "User has just opened a text box for a chat bot. Recommend three questions or requests they can ask to learn more about the store or continue the conversation",
-            clientId!,
-            uuid,
-            MessageSource.HINTS,
-            messages
-              .slice(-1 * MESSAGES_HISTORY_LIMIT)
-              .map((m) => String(m.id!))
-          )
-            .then(async (res) => {
-              console.log("BOI", res);
-            })
-            .catch((err) => {
-              setHints([]);
-              console.error(err);
-            });
+          refreshHints();
         }
       });
       getLastPixelEvent(clientId).then((data) => {
@@ -183,6 +166,32 @@ export default function CommandPalette({ props }) {
     scrollToBottom();
   }, [messages, suggestions]);
 
+  const refreshHints = () => {
+    const uuid = uuidv4();
+    callHints(
+      "User has just opened a text box for a chat bot. Recommend three questions or requests they can ask to learn more about the store or continue the conversation",
+      clientId!,
+      uuid,
+      MessageSource.HINTS,
+      messages
+        .slice(-1 * MESSAGES_HISTORY_LIMIT)
+        .filter((m) => !isNaN(m.id!))
+        .map((m) => String(m.id!))
+    )
+      .then((res) => {
+        // @ts-ignore
+        const hints = JSON.parse(
+          res?.openai?.kwargs?.additional_kwargs?.function_call?.arguments
+        );
+
+        setHints([hints.first_hint, hints.second_hint, hints.third_hint]);
+      })
+      .catch((err) => {
+        setHints([]);
+        console.error(err);
+      });
+  };
+
   const scrollToBottom = () => {
     const chatColumn = document.getElementById("chat-column");
     if (chatColumn) {
@@ -220,14 +229,8 @@ export default function CommandPalette({ props }) {
     debouncedGetSuggestions();
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (loading || userInput === "") {
-      return;
-    }
+  const callOpenaiWithInput = async (input) => {
     setLoading(true);
-    const input = userInput;
-    setUserInput("");
     const newUserMessage: FormattedMessage = {
       type: "text",
       sender: SenderType.USER,
@@ -361,6 +364,7 @@ export default function CommandPalette({ props }) {
             uuid
           );
         }
+        refreshHints();
 
         setLoading(false);
       })
@@ -380,6 +384,16 @@ export default function CommandPalette({ props }) {
         console.error(err);
         setLoading(false);
       });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (loading || userInput === "") {
+      return;
+    }
+    const input = userInput;
+    setUserInput("");
+    await callOpenaiWithInput(input);
   };
 
   return (
@@ -451,17 +465,18 @@ export default function CommandPalette({ props }) {
                 </svg>
               </div>
             </div>
-            <div className="flex justify-center items-center rounded">
-              <div className="hint-bubble border-2 justify-center items-center">
-                <p>Hint 1 that is a bit longer than the others</p>
+            {hints.length > 0 && (
+              <div className="flex justify-center items-center rounded">
+                {hints.map((hint, index) => (
+                  <div
+                    key={index}
+                    className="hint-bubble border-2 justify-center items-center"
+                    onClick={async () => await callOpenaiWithInput(hint)}>
+                    <p>{hint}</p>
+                  </div>
+                ))}
               </div>
-              <div className="hint-bubble border-2 justify-center items-center">
-                <p>Hint 1</p>
-              </div>
-              <div className="hint-bubble border-2 justify-center items-center">
-                <p>Hint 1</p>
-              </div>
-            </div>
+            )}
             {/* Dividing Line. Beginning of product suggestions*/}
 
             <div className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(80vh-80px)]">
@@ -514,12 +529,6 @@ export default function CommandPalette({ props }) {
                 <div
                   id="chat-column"
                   className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)">
-                  <button
-                    className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
-                    onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
-                    &times;
-                  </button>
-
                   {messages
                     .filter((message) => message.content !== undefined)
                     .map((message, index) => (
