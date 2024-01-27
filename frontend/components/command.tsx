@@ -10,7 +10,7 @@ import {
   type FormattedMessage,
   type Product,
 } from "@/constants/types";
-import { callOpenai } from "@/helper/ai";
+import { callHints, callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
@@ -47,6 +47,7 @@ export default function CommandPalette({ props }) {
   const [mentionedProducts, setMentionedProducts] = useState<Product[]>([]);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [hints, setHints] = useState<string[]>([]);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
   const host = window.location.host;
 
@@ -60,10 +61,26 @@ export default function CommandPalette({ props }) {
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
           setMessages((prevMessages) => messages.concat(prevMessages));
+
+          const uuid = uuidv4();
+          callHints(
+            "User has just opened a text box for a chat bot. Recommend three questions or requests they can ask to learn more about the store or continue the conversation",
+            clientId!,
+            uuid,
+            MessageSource.HINTS,
+            messages
+              .slice(-1 * MESSAGES_HISTORY_LIMIT)
+              .map((m) => String(m.id!))
+          )
+            .then(async (res) => {
+              console.log("BOI", res);
+            })
+            .catch((err) => {
+              setHints([]);
+              console.error(err);
+            });
         }
       });
-    }
-    if (clientId) {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
@@ -374,23 +391,13 @@ export default function CommandPalette({ props }) {
           <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
             <div className="flex justify-between align-center">
               <div className="flex items-center pr-7">
+                {/* This is just a placeholder element to make justify-between work smoothly since Kenta couldn't figure out CSS. This shouldn't be visible*/}
                 <svg
                   width="24"
                   height="24"
                   viewBox="0 0 24 24"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <g id="Cancel">
-                    <path
-                      id="Vector"
-                      d="M5 5L12 12L5 19M19.5 19L12.5 12L19.5 5"
-                      stroke="white"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </g>
-                </svg>
+                  xmlns="http://www.w3.org/2000/svg"></svg>
               </div>
               <form onSubmit={handleSubmit} className="w-1/2 m-2 flex">
                 <input
@@ -444,9 +451,20 @@ export default function CommandPalette({ props }) {
                 </svg>
               </div>
             </div>
+            <div className="flex justify-center items-center rounded">
+              <div className="hint-bubble border-2 justify-center items-center">
+                <p>Hint 1 that is a bit longer than the others</p>
+              </div>
+              <div className="hint-bubble border-2 justify-center items-center">
+                <p>Hint 1</p>
+              </div>
+              <div className="hint-bubble border-2 justify-center items-center">
+                <p>Hint 1</p>
+              </div>
+            </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(80vh-50px)]">
+            <div className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(80vh-80px)]">
               <div className="flex h-full">
                 <div
                   id="product-column"
