@@ -12,7 +12,7 @@
     "shopify:info": "shopify app info",
     "shopify:generate": "shopify app generate",
     "shopify:deploy": "shopify app deploy",
-    "vite:setup": "touch extensions/chat-interface/snippets/vite-generator.liquid",
+    "vite:setup": "mkdir -p extensions/chat-interface/snippets/ && touch extensions/chat-interface/snippets/vite-generator.liquid",
     "vite:dev": "run-s vite:setup && vite",
     "vite:build": "run-s vite:setup && vite build",
     "cleanup": "rimraf --glob extensions/*/assets/*.{json,geetkeep}",
