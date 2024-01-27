@@ -394,12 +394,12 @@ export default function CommandPalette({ props }) {
                   </g>
                 </svg>
               </div>
-              <form onSubmit={handleSubmit} className="w-1/2 m-2 flex">
+              <form onSubmit={handleSubmit} className="w-full m-2 flex">
                 <input
                   type="text"
                   value={userInput}
                   onChange={handleInputChange}
-                  className="w-full h-16 pr-4 text-black border-none rounded-t-lg pl-11 focus:outline-none focus:shadow-none focus:border-none "
+                  className="flex-grow h-16 pr-4 text-black border-none rounded-t-lg pl-14 text-center focus:outline-none focus:shadow-none focus:border-none "
                   placeholder="Ask me anything! I am not your typical search bar."
                   role="combobox"
                   aria-expanded="false"
@@ -498,12 +498,6 @@ export default function CommandPalette({ props }) {
                 <div
                   id="chat-column"
                   className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)">
-                  <button
-                    className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
-                    onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
-                    &times;
-                  </button>
-
                   {messages
                     .filter((message) => message.content !== undefined)
                     .map((message, index) => (
