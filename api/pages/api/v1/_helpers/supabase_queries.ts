@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import * as yaml from "js-yaml";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { SenderType } from "../types";
@@ -234,19 +235,11 @@ export const hasViewedProducts = async (
     }
 
     if (data.length > 0) {
-      const productTitles = data.map(
-        (item) => item.detail.productVariant.product.title
-      );
-      const productURLs = data.map(
-        (item) => item.context.document.location.href
-      );
+      const products = data.map((item) => yaml.dump(item.detail));
       return {
         hasViewed: true,
-        message: `This customer has viewed the following products: ${productTitles.join(
-          ", "
-        )}`,
-        productURLs: `The customer can revisit these products by clicking these links: ${productURLs.join(
-          ", "
+        message: `This customer has viewed the following products:\n${products.join(
+          "\r\n"
         )}`,
       };
     } else {
