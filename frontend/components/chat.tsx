@@ -198,7 +198,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       </div>
 
       <div>
-        <p className="text-base sm:text-sm md:text-sm lg:text-3xl ai-grey-text leading-relaxed mb-4 p-8">
+        <p className="text-base sm:text-xl md:text-xl lg:text-3xl ai-grey-text leading-relaxed mb-4 p-8">
           {content[active].recommendation}
         </p>
         {/* Add any additional styling or elements for the recommendation input */}

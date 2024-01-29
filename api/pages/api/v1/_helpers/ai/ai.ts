@@ -8,8 +8,8 @@ import { AIMessage, HumanMessage } from "langchain/schema";
 
 import type { EventEmitter } from "events";
 import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
-import type { FormattedMessage, MessageSource } from "../../types";
-import { SenderType } from "../../types";
+import type { FormattedMessage } from "../../types";
+import { MessageSource, SenderType } from "../../types";
 import {
   getMessagesFromIds,
   hasItemsInCart,
@@ -21,6 +21,7 @@ import { LLMConfig, summarizeHistoryModelConfig } from "./llmConfig";
 import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
+import { Runnable } from "./runnables/runnable";
 import { Streamable } from "./runnables/streamable";
 
 const createOpenaiWithHistory = async (
@@ -30,7 +31,7 @@ const createOpenaiWithHistory = async (
   requestUuid: string,
   messageSource: MessageSource,
   messages: FormattedMessage[] = [],
-  streamWriter: EventEmitter
+  streamWriter?: EventEmitter
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext: string[] = [];
@@ -86,7 +87,7 @@ const createOpenai = async (
   clientId: string,
   requestUuid: string,
   history: (HumanMessage | AIMessage)[] = [],
-  streamWriter: EventEmitter
+  streamWriter?: EventEmitter
 ) => {
   const llmConfig = LLMConfig[messageSource];
 
@@ -111,14 +112,16 @@ const createOpenai = async (
       : await createSimpleSearchRunnable(store)
   );
 
-  const streamable = new Streamable(finalChain, streamWriter);
-  const response = await streamable.run(
-    input,
-    store,
-    messageSource,
-    clientId,
-    requestUuid
-  );
+  const response =
+    messageSource === MessageSource.HINTS
+      ? await new Runnable(finalChain).run(input, store, clientId, requestUuid)
+      : await new Streamable(finalChain, streamWriter!).run(
+          input,
+          store,
+          messageSource,
+          clientId,
+          requestUuid
+        );
   return { show: true, openai: response };
 };
 
@@ -129,7 +132,7 @@ export const callOpenai = async (
   requestUuid: string,
   source: MessageSource,
   messageIds: string[] | undefined,
-  streamWriter: EventEmitter
+  streamWriter?: EventEmitter
 ) => {
   // Some weird Typescript issue where I can't use lambda, convert with for loop
   const numberArray: number[] = [];

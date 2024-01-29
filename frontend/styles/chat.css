@@ -24,11 +24,28 @@ body {
   border-radius: 10px;
   background: var(--White, #fff);
   width: 50%;
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
+}
+.link-card:hover {
+  background-color: #f0f3f8; /* Change to desired hover background color */
 }
 .rec-text {
   flex: 0 0 auto;
   border-radius: 10px;
   width: 50%;
+}
+.hint-bubble {
+  border-color: #2a33ff;
+  border-radius: 15px;
+  color: #2a33ff;
+  margin: 0px 3px 8px 3px;
+  padding: 5px 10px 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
+}
+
+.hint-bubble:hover {
+  background-color: #f0f3f8; /* Change to desired hover background color */
 }
 
 /* CSS talk bubble */
@@ -87,7 +104,13 @@ body {
 .product-card-shadow {
   border-radius: 10px;
   box-shadow: 1px 1px 8px 5px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
 }
+
+.product-card-shadow:hover {
+  background-color: #f0f3f8; /* Change to desired hover background color */
+}
+
 .search-card-border {
   border: 1px solid var(--Border-darker, #cbd2dd);
 }

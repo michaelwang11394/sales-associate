@@ -31,3 +31,4 @@ export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
 export const SUPABASE_EMBEDDINGS_CREATE_ENDPOINT = "create";
 
 export const OPENAI_PATH = "openai";
+export const HINTS_PATH = "hints";

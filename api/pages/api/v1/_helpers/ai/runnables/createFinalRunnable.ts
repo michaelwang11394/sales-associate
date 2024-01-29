@@ -11,7 +11,11 @@ import {
 } from "langchain/schema/runnable";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { MessageSource } from "../../../types";
-import { salesModelConfig, zodSchema } from "../llmConfig";
+import {
+  chatResponseSchema,
+  hintsSchema,
+  salesModelConfig,
+} from "../llmConfig";
 import type { LLMConfigType } from "../types";
 
 export const createFinalRunnable = async (
@@ -40,6 +44,7 @@ export const createFinalRunnable = async (
     Do not create structured output with the embed greeting
    */
   const salesModel = new ChatOpenAI(salesModelConfig());
+  /*
   const lastRunnable =
     messageSource === MessageSource.CHAT
       ? chatPrompt.pipe(
@@ -48,13 +53,19 @@ export const createFinalRunnable = async (
               {
                 name: "output_formatter",
                 description: "Always use to properly format output",
-                parameters: zodToJsonSchema(zodSchema),
+                parameters: zodToJsonSchema(chatResponseSchema),
               },
             ],
             function_call: { name: "output_formatter" },
           })
         )
       : chatPrompt.pipe(salesModel);
+      */
+  const lastRunnable = await getLastRunnable(
+    messageSource,
+    chatPrompt,
+    salesModel
+  );
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
@@ -72,4 +83,41 @@ export const createFinalRunnable = async (
   ]);
 
   return previous_chain ? previous_chain.pipe(salesChain) : salesChain;
+};
+
+const getLastRunnable = async (
+  messageSource: MessageSource,
+  chatPrompt: any,
+  salesModel: any
+) => {
+  switch (messageSource) {
+    case MessageSource.CHAT:
+      return chatPrompt.pipe(
+        salesModel.bind({
+          functions: [
+            {
+              name: "output_formatter",
+              description: "Always use to properly format output",
+              parameters: zodToJsonSchema(chatResponseSchema),
+            },
+          ],
+          function_call: { name: "output_formatter" },
+        })
+      );
+    case MessageSource.HINTS:
+      return chatPrompt.pipe(
+        salesModel.bind({
+          functions: [
+            {
+              name: "output_formatter",
+              description: "Always use to properly format output",
+              parameters: zodToJsonSchema(hintsSchema),
+            },
+          ],
+          function_call: { name: "output_formatter" },
+        })
+      );
+    default:
+      return chatPrompt.pipe(salesModel);
+  }
 };

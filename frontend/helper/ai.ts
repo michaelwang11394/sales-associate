@@ -1,4 +1,4 @@
-import { OPENAI_PATH, V1, VERCEL_URL } from "@/constants/constants";
+import { HINTS_PATH, OPENAI_PATH, V1, VERCEL_URL } from "@/constants/constants";
 import { HTTPHelper } from "./http";
 
 export const callOpenai = async (
@@ -21,4 +21,22 @@ export const callOpenai = async (
     method: "POST",
   });
   return res?.body?.getReader();
+};
+
+export const callHints = async (
+  input: string,
+  clientId: string,
+  requestUuid: string,
+  source: string,
+  messageIds: string[]
+) => {
+  const res: Response = await HTTPHelper.get(VERCEL_URL, [V1, HINTS_PATH], {
+    input: input,
+    store: location.host,
+    clientId: clientId,
+    requestUuid: requestUuid,
+    source: source,
+    ids: messageIds,
+  });
+  return res?.body;
 };
