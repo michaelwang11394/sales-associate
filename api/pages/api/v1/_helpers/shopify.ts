@@ -21,11 +21,22 @@ function stripHttps(url: string): string {
   return url;
 }
 
-const createClient = async (store: string) => {
+const createRestClient = async (store: string) => {
   const session = (
     await new SupabaseSessionStorage().findSessionsByShop(stripHttps(store))
   )[0];
   const client = new shopify_client.Rest({
+    session,
+    apiVersion: LATEST_API_VERSION,
+  });
+  return client;
+};
+
+const createGraphqlClient = async (store: string) => {
+  const session = (
+    await new SupabaseSessionStorage().findSessionsByShop(stripHttps(store))
+  )[0];
+  const client = new shopify_client.Graphql({
     session,
     apiVersion: LATEST_API_VERSION,
   });
@@ -68,7 +79,7 @@ export const isValidProduct = async (
 ): Promise<boolean> => {
   const data = (
     await (
-      await createClient(store)
+      await createRestClient(store)
     ).get<any>({
       path: "products",
       query: { store: store, handle: handle },
@@ -80,7 +91,7 @@ export const isValidProduct = async (
 export const getProducts = async (store: string, limit = 250) => {
   const data = (
     await (
-      await createClient(store)
+      await createRestClient(store)
     ).get<any>({
       path: "products",
     })
@@ -105,4 +116,59 @@ export const getProducts = async (store: string, limit = 250) => {
   });
 
   return { stringifiedProducts, metadataIds, strippedProducts };
+};
+
+const getTwoWeekAgo = () => {
+  // Get the current date
+  const currentDate = new Date();
+
+  // Calculate two weeks ago
+  const twoWeeksAgo = new Date(currentDate);
+  twoWeeksAgo.setDate(currentDate.getDate() - 14);
+  return twoWeeksAgo;
+};
+
+export const getBestSellers = async (store: string, limit = 10) => {
+  const data = await (
+    await createGraphqlClient(store)
+  ).query({
+    data: `query {
+    shopifyqlQuery(query: "FROM products
+VISUALIZE sum(net_sales) AS product_sales
+TYPE BAR
+GROUP BY product_title
+SINCE last_month UNTIL yesterday
+ORDER BY product_sales DESC
+LIMIT 5
+") {
+      __typename
+      ... on TableResponse {
+        tableData {
+          unformattedData
+          rowData
+          columns {
+            name
+            dataType
+            displayName
+          }
+        }
+      }
+      parseErrors {
+        code
+        message
+        range {
+          start {
+            line
+            character
+          }
+          end {
+            line
+            character
+          }
+        }
+      }
+    }
+  }`,
+  });
+  console.log(data);
 };

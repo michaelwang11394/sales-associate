@@ -8,8 +8,8 @@ import { AIMessage, HumanMessage } from "langchain/schema";
 
 import type { EventEmitter } from "events";
 import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
-import type { FormattedMessage } from "../../types";
 import { MessageSource, SenderType } from "../../types";
+import { getBestSellers } from "../shopify";
 import {
   getMessagesFromIds,
   hasItemsInCart,
@@ -23,106 +23,6 @@ import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { createEmbedRunnable } from "./runnables/embedRunnable";
 import { Runnable } from "./runnables/runnable";
 import { Streamable } from "./runnables/streamable";
-
-const createOpenaiWithHistory = async (
-  input: string,
-  store: string,
-  clientId: string,
-  requestUuid: string,
-  messageSource: MessageSource,
-  messages: FormattedMessage[] = [],
-  streamWriter?: EventEmitter
-) => {
-  /* CUSTOMER INFORMATION CONTEXT */
-  let customerContext: string[] = [];
-
-  // Check if the customer is new
-  const newCustomer = await isNewCustomer(store, clientId);
-  customerContext.push(newCustomer.message);
-
-  // If customer is not new, check their cart history and product_viewed history. Add relevant links
-  if (newCustomer.isNew === false) {
-    const itemsInCart = await hasItemsInCart(store, clientId);
-    const productsViewed = await hasViewedProducts(
-      store,
-      clientId,
-      RECENTLY_VIEWED_PRODUCTS_COUNT
-    );
-
-    // Check if the customer has items in their cart
-    if (itemsInCart.hasItems === true) {
-      customerContext.push(itemsInCart.message);
-      customerContext.push(itemsInCart.cartURL!);
-    }
-
-    // Check if the customer has viewed any products
-    if (productsViewed.hasViewed === true) {
-      customerContext.push(productsViewed.message);
-    }
-  }
-  const history = messages.map((m) =>
-    m.sender === SenderType.USER
-      ? new HumanMessage(m.content)
-      : new AIMessage(m.content)
-  );
-
-  return await createOpenai(
-    input,
-    store,
-    customerContext,
-    messageSource,
-    clientId,
-    requestUuid,
-    history,
-    streamWriter
-  );
-};
-
-const createOpenai = async (
-  input: string,
-  store: string,
-  context: string[],
-  messageSource: MessageSource,
-  clientId: string,
-  requestUuid: string,
-  history: (HumanMessage | AIMessage)[] = [],
-  streamWriter?: EventEmitter
-) => {
-  const llmConfig = LLMConfig[messageSource];
-
-  // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
-  const memory = new ConversationSummaryBufferMemory({
-    chatHistory: new ChatMessageHistory(history),
-    maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
-    llm: new ChatOpenAI(summarizeHistoryModelConfig()),
-    returnMessages: true,
-  });
-
-  // Langchain quirk, the summarization and threshold enforce only happens on saveContext. Since we instantiate memory on every request, we need to prune here
-  await memory.prune();
-
-  const finalChain = await createFinalRunnable(
-    context,
-    llmConfig,
-    memory,
-    messageSource,
-    llmConfig.include_embeddings
-      ? await createEmbedRunnable(store)
-      : await createSimpleSearchRunnable(store)
-  );
-
-  const response =
-    messageSource === MessageSource.HINTS
-      ? await new Runnable(finalChain).run(input, store, clientId, requestUuid)
-      : await new Streamable(finalChain, streamWriter!).run(
-          input,
-          store,
-          messageSource,
-          clientId,
-          requestUuid
-        );
-  return { show: true, openai: response };
-};
 
 export const callOpenai = async (
   input: string,
@@ -152,14 +52,74 @@ export const callOpenai = async (
       "message history could not be retrieved or not all ids could be matched"
     );
   }
+  /* CUSTOMER INFORMATION CONTEXT */
+  let customerContext: string[] = [];
 
-  return await createOpenaiWithHistory(
-    input,
-    store,
-    clientId,
-    requestUuid,
-    source,
-    data, // Pass in all messages for summary
-    streamWriter
+  // Check if the customer is new
+  const newCustomer = await isNewCustomer(store, clientId);
+  customerContext.push(newCustomer.message);
+
+  // If customer is not new, check their cart history and product_viewed history. Add relevant links
+  if (newCustomer.isNew === false) {
+    const itemsInCart = await hasItemsInCart(store, clientId);
+    const productsViewed = await hasViewedProducts(
+      store,
+      clientId,
+      RECENTLY_VIEWED_PRODUCTS_COUNT
+    );
+
+    // Check if the customer has items in their cart
+    if (itemsInCart.hasItems === true) {
+      customerContext.push(itemsInCart.message);
+      customerContext.push(itemsInCart.cartURL!);
+    }
+
+    // Check if the customer has viewed any products
+    if (productsViewed.hasViewed === true) {
+      customerContext.push(productsViewed.message);
+    }
+  }
+
+  // Add best sellers from past two weeks ago
+  await getBestSellers(store);
+
+  const history = data.map((m) =>
+    m.sender === SenderType.USER
+      ? new HumanMessage(m.content)
+      : new AIMessage(m.content)
   );
+  const llmConfig = LLMConfig[source];
+
+  // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
+  const memory = new ConversationSummaryBufferMemory({
+    chatHistory: new ChatMessageHistory(history),
+    maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
+    llm: new ChatOpenAI(summarizeHistoryModelConfig()),
+    returnMessages: true,
+  });
+
+  // Langchain quirk, the summarization and threshold enforce only happens on saveContext. Since we instantiate memory on every request, we need to prune here
+  await memory.prune();
+
+  const finalChain = await createFinalRunnable(
+    customerContext,
+    llmConfig,
+    memory,
+    source,
+    llmConfig.include_embeddings
+      ? await createEmbedRunnable(store)
+      : await createSimpleSearchRunnable(store)
+  );
+
+  const response =
+    source === MessageSource.HINTS
+      ? await new Runnable(finalChain).run(input, store, clientId, requestUuid)
+      : await new Streamable(finalChain, streamWriter!).run(
+          input,
+          store,
+          source,
+          clientId,
+          requestUuid
+        );
+  return { show: true, openai: response };
 };
