@@ -179,8 +179,8 @@ export default function CommandPalette({ props }) {
         .map((m) => String(m.id!))
     )
       .then((res) => {
-        // @ts-ignore
         const hints = JSON.parse(
+          // @ts-ignore
           res?.openai?.kwargs?.additional_kwargs?.function_call?.arguments
         );
 
