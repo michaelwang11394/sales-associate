@@ -7,16 +7,6 @@ import type {
 
 import React, { useState } from "react";
 
-const LoadingMessage = () => {
-  return (
-    <svg className="animate-bounce" width={40} height={8} viewBox="0 0 40 8">
-      <circle cx={4} cy={4} r={4} fill="#6b7280" />
-      <circle cx={20} cy={4} r={4} fill="#6b7280" />
-      <circle cx={36} cy={4} r={4} fill="#6b7280" />
-    </svg>
-  );
-};
-
 const TextMessage: React.FC<TextMessageProps> = ({
   text,
   isAISender,
@@ -110,6 +100,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       return (
         <svg
           width="9"
+          key={index}
           height="9"
           viewBox="0 0 6 6"
           fill="none"
@@ -198,7 +189,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       </div>
 
       <div>
-        <p className="text-base sm:text-sm md:text-sm lg:text-3xl ai-grey-text leading-relaxed mb-4 p-8">
+        <p className="text-base sm:text-xl md:text-xl lg:text-3xl ai-grey-text leading-relaxed mb-4 p-8">
           {content[active].recommendation}
         </p>
         {/* Add any additional styling or elements for the recommendation input */}

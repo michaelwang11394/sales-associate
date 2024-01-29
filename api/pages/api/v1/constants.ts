@@ -29,3 +29,4 @@ export const SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT = "viewed-products";
 export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
 
 export const OPENAI_PATH = "openai";
+export const HINTS_PATH = "hints";

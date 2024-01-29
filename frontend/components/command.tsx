@@ -10,7 +10,7 @@ import {
   type FormattedMessage,
   type Product,
 } from "@/constants/types";
-import { callOpenai } from "@/helper/ai";
+import { callHints, callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
@@ -47,6 +47,7 @@ export default function CommandPalette({ props }) {
   const [mentionedProducts, setMentionedProducts] = useState<Product[]>([]);
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [hints, setHints] = useState<string[]>([]);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
   const host = window.location.host;
 
@@ -60,10 +61,9 @@ export default function CommandPalette({ props }) {
             .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
             .reverse();
           setMessages((prevMessages) => messages.concat(prevMessages));
+          refreshHints();
         }
       });
-    }
-    if (clientId) {
       getLastPixelEvent(clientId).then((data) => {
         data.data?.forEach(async (event) => {
           const greetingPrompt = await getGreetingMessage(event);
@@ -166,6 +166,32 @@ export default function CommandPalette({ props }) {
     scrollToBottom();
   }, [messages, suggestions]);
 
+  const refreshHints = () => {
+    const uuid = uuidv4();
+    callHints(
+      "User has just opened a text box for a chat bot. Recommend three questions or requests they can ask to learn more about the store or continue the conversation",
+      clientId!,
+      uuid,
+      MessageSource.HINTS,
+      messages
+        .slice(-1 * MESSAGES_HISTORY_LIMIT)
+        .filter((m) => !isNaN(m.id!))
+        .map((m) => String(m.id!))
+    )
+      .then((res) => {
+        const hints = JSON.parse(
+          // @ts-ignore
+          res?.openai?.kwargs?.additional_kwargs?.function_call?.arguments
+        );
+
+        setHints([hints.first_hint, hints.second_hint, hints.third_hint]);
+      })
+      .catch((err) => {
+        setHints([]);
+        console.error(err);
+      });
+  };
+
   const scrollToBottom = () => {
     const chatColumn = document.getElementById("chat-column");
     if (chatColumn) {
@@ -203,14 +229,8 @@ export default function CommandPalette({ props }) {
     debouncedGetSuggestions();
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (loading || userInput === "") {
-      return;
-    }
+  const callOpenaiWithInput = async (input) => {
     setLoading(true);
-    const input = userInput;
-    setUserInput("");
     const newUserMessage: FormattedMessage = {
       type: "text",
       sender: SenderType.USER,
@@ -344,6 +364,7 @@ export default function CommandPalette({ props }) {
             uuid
           );
         }
+        refreshHints();
 
         setLoading(false);
       })
@@ -365,6 +386,16 @@ export default function CommandPalette({ props }) {
       });
   };
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (loading || userInput === "") {
+      return;
+    }
+    const input = userInput;
+    setUserInput("");
+    await callOpenaiWithInput(input);
+  };
+
   return (
     <div id="overlay" className="h-[80vh] flex flex-col bg-gray-200">
       <section
@@ -372,27 +403,8 @@ export default function CommandPalette({ props }) {
         className="relative overflow-hidden bg-cover flex-grow">
         <div className="relative flex justify-center flex-grow flex-shrink h-full">
           <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
-            <div className="flex justify-between align-center">
-              <div className="flex items-center pr-7">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <g id="Cancel">
-                    <path
-                      id="Vector"
-                      d="M5 5L12 12L5 19M19.5 19L12.5 12L19.5 5"
-                      stroke="white"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </g>
-                </svg>
-              </div>
-              <form onSubmit={handleSubmit} className="w-1/2 m-2 flex">
+            <div className="flex justify-between items-center">
+              <form onSubmit={handleSubmit} className="w-1/2 m-2 flex mx-auto">
                 <input
                   type="text"
                   value={userInput}
@@ -444,9 +456,21 @@ export default function CommandPalette({ props }) {
                 </svg>
               </div>
             </div>
+            {hints.length > 0 && (
+              <div className="flex justify-center items-center rounded">
+                {hints.map((hint, index) => (
+                  <div
+                    key={index}
+                    className="hint-bubble border-2 justify-center items-center"
+                    onClick={async () => await callOpenaiWithInput(hint)}>
+                    <p>{hint}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(80vh-50px)]">
+            <div className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(80vh-80px)]">
               <div className="flex h-full">
                 <div
                   id="product-column"
@@ -496,12 +520,6 @@ export default function CommandPalette({ props }) {
                 <div
                   id="chat-column"
                   className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)">
-                  <button
-                    className="absolute top-2 right-2 bg-transparent border-none text-2xl cursor-pointer"
-                    onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
-                    &times;
-                  </button>
-
                   {messages
                     .filter((message) => message.content !== undefined)
                     .map((message, index) => (

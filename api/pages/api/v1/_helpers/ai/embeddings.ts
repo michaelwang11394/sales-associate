@@ -74,5 +74,7 @@ export const runEmbeddingsAndSearch = async (
     );
   }
 
-  return relevantDocs.map((doc) => doc.pageContent);
+  return relevantDocs.map((doc) => {
+    return doc.pageContent;
+  });
 };

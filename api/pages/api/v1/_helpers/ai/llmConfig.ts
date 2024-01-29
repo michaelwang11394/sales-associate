@@ -66,9 +66,14 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
+  [MessageSource.HINTS]: {
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
+    include_embeddings: true,
+    validate_hallucination: HalluctinationCheckSeverity.FILTER,
+  },
 };
 
-export const zodSchema = z.object({
+export const chatResponseSchema = z.object({
   plainText: z
     .string()
     .describe(
@@ -111,6 +116,24 @@ export const zodSchema = z.object({
       })
     )
     .describe("A list of products referred to in the response"),
+});
+
+export const hintsSchema = z.object({
+  first_hint: z
+    .string()
+    .describe(
+      "The first and most relevant query user can input to continue conversation"
+    ),
+  second_hint: z
+    .string()
+    .describe(
+      "The second relevant query user can input to continue conversation. Ensure it is a different type of query from first_hint"
+    ),
+  third_hint: z
+    .string()
+    .describe(
+      "The third relevant query user can input to continue conversation. Ensure this query is different than first_hint or second_hint"
+    ),
 });
 
 export const summarizeHistoryModelConfig = () => {

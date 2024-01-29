@@ -1,5 +1,6 @@
 import { LATEST_API_VERSION, shopifyApi } from "@shopify/shopify-api";
 import "@shopify/shopify-api/adapters/node";
+import * as yaml from "js-yaml";
 import { SupabaseSessionStorage } from "./supabase.session";
 
 const shopify_client = shopifyApi({
@@ -99,8 +100,8 @@ export const getProducts = async (store: string, limit = 250) => {
   // RAG and embeddings pre-processing
   const metadataIds = formattedProducts.map((product: any) => product.id);
   const strippedProducts = formattedProducts.map((product: any) => {
-    // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
-    return JSON.stringify(product).replace(/"/g, "").replace(/\n/g, " ");
+    // Convert each product object to a YAML object. Possibly remove brackets in the future too
+    return yaml.dump(product);
   });
 
   return { stringifiedProducts, metadataIds, strippedProducts };
