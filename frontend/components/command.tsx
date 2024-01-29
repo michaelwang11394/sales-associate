@@ -403,17 +403,8 @@ export default function CommandPalette({ props }) {
         className="relative overflow-hidden bg-cover flex-grow">
         <div className="relative flex justify-center flex-grow flex-shrink h-full">
           <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
-            <div className="flex justify-between align-center">
-              <div className="flex items-center pr-7">
-                {/* This is just a placeholder element to make justify-between work smoothly since Kenta couldn't figure out CSS. This shouldn't be visible*/}
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"></svg>
-              </div>
-              <form onSubmit={handleSubmit} className="w-1/2 m-2 flex">
+            <div className="flex justify-between items-center">
+              <form onSubmit={handleSubmit} className="w-1/2 m-2 flex mx-auto">
                 <input
                   type="text"
                   value={userInput}
