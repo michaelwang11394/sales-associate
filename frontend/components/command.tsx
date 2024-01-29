@@ -368,13 +368,13 @@ export default function CommandPalette({ props }) {
   return (
     <div
       id="overlay"
-      className="fixed top-0 left-0 right-0 bottom-0 flex flex-col items-center justify-center h-[60rem] w-[70rem] m-auto bg-gray-200 rounded-lg shadow-lg overflow-auto">
+      className="fixed top-0 left-0 right-0 bottom-0 flex flex-col items-center justify-center h-[60rem] w-[80rem] m-auto bg-gray-200 rounded-lg shadow-lg overflow-auto">
       <section
         id={PALETTE_DIV_ID}
         className="flex flex-grow overflow-hidden bg-cover w-full">
         <div className="relative flex justify-center flex-grow flex-shrink h-full">
           <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
-            <div className="flex justify-between align-center">
+            <div id="search bar" className="flex justify-between align-center">
               <div className="flex items-center pr-7">
                 <svg
                   width="24"
@@ -448,11 +448,13 @@ export default function CommandPalette({ props }) {
             </div>
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-tborder-gray-300 ">
+            <div
+              id="results and convo"
+              className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(60rem-50px)]">
               <div className="flex h-full">
                 <div
                   id="product-column"
-                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)]">
+                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(60rem-50px)]">
                   <div className="font-bold mb-2 mt-2 text-center">
                     {suggestions && suggestions.length > 0
                       ? "You might like:"
@@ -497,7 +499,7 @@ export default function CommandPalette({ props }) {
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)">
+                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(60rem-50px)">
                   {messages
                     .filter((message) => message.content !== undefined)
                     .map((message, index) => (
