@@ -25,18 +25,4 @@ export default async function handler(
     "Hints returned successfully",
     await callOpenai(input, store, clientId, requestUuid, source, messageIds)
   );
-
-  /*
-  try {
-    return httpResponse(
-      request,
-      response,
-      200,
-      "Openai call finished with",
-      await callOpenai(input, store, clientId, requestUuid, source, messageIds)
-    );
-  } catch (error: any) {
-    return httpResponse(request, response, 404, error.message);
-  }
-  */
 }

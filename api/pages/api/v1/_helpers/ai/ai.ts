@@ -58,7 +58,6 @@ const createOpenaiWithHistory = async (
     // Check if the customer has viewed any products
     if (productsViewed.hasViewed === true) {
       customerContext.push(productsViewed.message);
-      customerContext.push(productsViewed.productURLs!);
     }
   }
   const history = messages.map((m) =>

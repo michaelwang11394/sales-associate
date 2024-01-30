@@ -4,6 +4,7 @@ import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { OPENAI_KEY, RETURN_TOP_N_SIMILARITY_DOCS } from "../../constants";
 import { getProducts } from "../shopify";
 import { supabase } from "../supabase_queries";
+import { EMBEDDING_SMALL_MODEL } from "./constants";
 
 // TODO: Move createCatalogEmbeddings to app home once we create that.
 export const runEmbeddingsAndSearch = async (
@@ -45,7 +46,10 @@ export const runEmbeddingsAndSearch = async (
       vectorStore = await SupabaseVectorStore.fromTexts(
         strippedProducts,
         Array(strippedProducts.length).fill(store),
-        new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_KEY }),
+        new OpenAIEmbeddings({
+          modelName: EMBEDDING_SMALL_MODEL,
+          openAIApiKey: process.env.OPENAI_KEY,
+        }),
         {
           client: supabase,
           tableName: "vector_catalog",
@@ -65,6 +69,7 @@ export const runEmbeddingsAndSearch = async (
       document,
       uids,
       new OpenAIEmbeddings({
+        modelName: EMBEDDING_SMALL_MODEL,
         openAIApiKey: OPENAI_KEY,
       })
     );
@@ -74,5 +79,7 @@ export const runEmbeddingsAndSearch = async (
     );
   }
 
-  return relevantDocs.map((doc) => doc.pageContent);
+  return relevantDocs.map((doc) => {
+    return doc.pageContent;
+  });
 };
