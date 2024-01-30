@@ -1,7 +1,9 @@
 import { LATEST_API_VERSION, shopifyApi } from "@shopify/shopify-api";
 import "@shopify/shopify-api/adapters/node";
 import * as yaml from "js-yaml";
+import { BEST_SELLER_SAMPLE_COUNT } from "../constants";
 import { SupabaseSessionStorage } from "./supabase.session";
+import { getBestSellers, setBestSellers } from "./supabase_queries";
 
 const shopify_client = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY!,
@@ -105,4 +107,82 @@ export const getProducts = async (store: string, limit = 250) => {
   });
 
   return { stringifiedProducts, metadataIds, strippedProducts };
+};
+
+const getProductById = async (store: string, product_id: string) => {
+  const data = (
+    await (
+      await createClient(store)
+    ).get<any>({
+      path: "products/" + product_id,
+    })
+  ).body;
+
+  return yaml.dump(formatCatalogEntry(data?.product));
+};
+
+const getTwoWeekAgo = () => {
+  // Get the current date
+  const currentDate = new Date();
+
+  // Calculate two weeks ago
+  const twoWeeksAgo = new Date(currentDate);
+  twoWeeksAgo.setDate(currentDate.getDate() - 14);
+  return twoWeeksAgo;
+};
+
+export const computeBestSellers = async (store: string, limit = 10) => {
+  const cachedBestSellers = await getBestSellers(store);
+  if (cachedBestSellers && cachedBestSellers?.length > 0) {
+    return cachedBestSellers;
+  }
+  let pageInfo;
+  let ordersProcessed = 0;
+  const orderCount: Record<string, { product_id: string; count: number }> = {};
+  do {
+    const data = await (
+      await createClient(store)
+    )
+      // @ts-ignore
+      .request<any>({
+        // @ts-ignore
+        method: "GET",
+        path: "orders",
+        query: {
+          created_at_max: new Date().toISOString(),
+          created_at_min: getTwoWeekAgo().toISOString(),
+          fields: "line_items",
+          limit: 250,
+        },
+      });
+
+    // Process each order
+    data.body.orders.forEach((order: any) => {
+      order.line_items.forEach((item: any) => {
+        const key = item.title;
+        if (!orderCount[key]) {
+          orderCount[key] = {
+            product_id: item.product_id,
+            count: 0,
+          };
+        }
+        orderCount[key].count += 1; // Increment count
+      });
+    });
+
+    pageInfo = data.pageInfo;
+    ordersProcessed += data.body.orders.length;
+  } while (pageInfo?.nextPage && ordersProcessed < BEST_SELLER_SAMPLE_COUNT);
+
+  // Convert orderCount object to an array of objects and sort by count in descending order
+  const sortedOrderCount = await Promise.all(
+    Object.values(orderCount)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map(async (order) => await getProductById(store, order.product_id))
+  );
+
+  await setBestSellers(store, sortedOrderCount);
+  // Limit the results to the specified limit
+  return sortedOrderCount;
 };

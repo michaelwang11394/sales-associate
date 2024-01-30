@@ -30,7 +30,7 @@ export const createFinalRunnable = async (
   const systemMessagePrompt =
     SystemMessagePromptTemplate.fromTemplate(systemTemplate);
   const formattedSystemMessagePrompt = await systemMessagePrompt.format({
-    context: context,
+    context: context.join("\r\n"),
   });
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
