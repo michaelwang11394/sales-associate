@@ -170,5 +170,5 @@ LIMIT 5
     }
   }`,
   });
-  console.log(data);
+  console.log(data.body);
 };
