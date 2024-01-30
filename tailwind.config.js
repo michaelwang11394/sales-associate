@@ -5,7 +5,11 @@ module.exports = {
     "./extension/chat-interface/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontSize: {
+        custom: "0.96rem",
+      },
+    },
   },
   plugins: [],
 };
