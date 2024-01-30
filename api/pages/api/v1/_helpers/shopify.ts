@@ -142,16 +142,19 @@ export const computeBestSellers = async (store: string, limit = 10) => {
   do {
     const data = await (
       await createClient(store)
-    ).request<any>({
-      method: "GET",
-      path: "orders",
-      query: {
-        created_at_max: new Date().toISOString(),
-        created_at_min: getTwoWeekAgo().toISOString(),
-        fields: "line_items",
-        limit: 250,
-      },
-    });
+    )
+      // @ts-ignore
+      .request<any>({
+        // @ts-ignore
+        method: "GET",
+        path: "orders",
+        query: {
+          created_at_max: new Date().toISOString(),
+          created_at_min: getTwoWeekAgo().toISOString(),
+          fields: "line_items",
+          limit: 250,
+        },
+      });
 
     // Process each order
     data.body.orders.forEach((order: any) => {
