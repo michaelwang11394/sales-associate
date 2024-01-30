@@ -414,7 +414,7 @@ export default function CommandPalette({ props }) {
                   className="flex-grow h-16 pr-4 text-black border-none rounded-t-lg pl-14 text-center focus:outline-none focus:shadow-none focus:border-none "
                   placeholder={
                     userInput === ""
-                      ? "Ask me anything! I am not your typical search bar."
+                      ? "Ask me anything! See the below hints as examples. I am not your typical search bar."
                       : ""
                   }
                   onFocus={(e) => (e.target.placeholder = "")}
@@ -426,7 +426,7 @@ export default function CommandPalette({ props }) {
                   aria-expanded="false"
                   aria-controls="options"
                 />
-                <button type="submit" disabled={loading}>
+                <button type="submit" disabled={loading} className="pr-6">
                   <svg
                     width="24"
                     height="24"
