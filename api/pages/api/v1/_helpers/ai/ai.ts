@@ -9,7 +9,7 @@ import { AIMessage, HumanMessage } from "langchain/schema";
 import type { EventEmitter } from "events";
 import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
 import { MessageSource, SenderType } from "../../types";
-import { getBestSellers } from "../shopify";
+import { computeBestSellers } from "../shopify";
 import {
   getMessagesFromIds,
   hasItemsInCart,
@@ -81,7 +81,13 @@ export const callOpenai = async (
   }
 
   // Add best sellers from past two weeks ago
-  await getBestSellers(store);
+  const bestSellers = await computeBestSellers(store);
+  if (bestSellers.length > 0) {
+    customerContext.push(
+      "The following are the top selling products of the store, ranked in descending popularity"
+    );
+    customerContext.push(bestSellers.join("\r\n"));
+  }
 
   const history = data.map((m) =>
     m.sender === SenderType.USER

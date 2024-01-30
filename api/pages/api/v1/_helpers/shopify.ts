@@ -1,7 +1,9 @@
 import { LATEST_API_VERSION, shopifyApi } from "@shopify/shopify-api";
 import "@shopify/shopify-api/adapters/node";
 import * as yaml from "js-yaml";
+import { BEST_SELLER_SAMPLE_COUNT } from "../constants";
 import { SupabaseSessionStorage } from "./supabase.session";
+import { getBestSellers, setBestSellers } from "./supabase_queries";
 
 const shopify_client = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY!,
@@ -21,22 +23,11 @@ function stripHttps(url: string): string {
   return url;
 }
 
-const createRestClient = async (store: string) => {
+const createClient = async (store: string) => {
   const session = (
     await new SupabaseSessionStorage().findSessionsByShop(stripHttps(store))
   )[0];
   const client = new shopify_client.Rest({
-    session,
-    apiVersion: LATEST_API_VERSION,
-  });
-  return client;
-};
-
-const createGraphqlClient = async (store: string) => {
-  const session = (
-    await new SupabaseSessionStorage().findSessionsByShop(stripHttps(store))
-  )[0];
-  const client = new shopify_client.Graphql({
     session,
     apiVersion: LATEST_API_VERSION,
   });
@@ -79,7 +70,7 @@ export const isValidProduct = async (
 ): Promise<boolean> => {
   const data = (
     await (
-      await createRestClient(store)
+      await createClient(store)
     ).get<any>({
       path: "products",
       query: { store: store, handle: handle },
@@ -91,7 +82,7 @@ export const isValidProduct = async (
 export const getProducts = async (store: string, limit = 250) => {
   const data = (
     await (
-      await createRestClient(store)
+      await createClient(store)
     ).get<any>({
       path: "products",
     })
@@ -118,6 +109,18 @@ export const getProducts = async (store: string, limit = 250) => {
   return { stringifiedProducts, metadataIds, strippedProducts };
 };
 
+const getProductById = async (store: string, product_id: string) => {
+  const data = (
+    await (
+      await createClient(store)
+    ).get<any>({
+      path: "products/" + product_id,
+    })
+  ).body;
+
+  return yaml.dump(formatCatalogEntry(data?.product));
+};
+
 const getTwoWeekAgo = () => {
   // Get the current date
   const currentDate = new Date();
@@ -128,47 +131,55 @@ const getTwoWeekAgo = () => {
   return twoWeeksAgo;
 };
 
-export const getBestSellers = async (store: string, limit = 10) => {
-  const data = await (
-    await createGraphqlClient(store)
-  ).query({
-    data: `query {
-    shopifyqlQuery(query: "FROM products
-VISUALIZE sum(net_sales) AS product_sales
-TYPE BAR
-GROUP BY product_title
-SINCE last_month UNTIL yesterday
-ORDER BY product_sales DESC
-LIMIT 5
-") {
-      __typename
-      ... on TableResponse {
-        tableData {
-          unformattedData
-          rowData
-          columns {
-            name
-            dataType
-            displayName
-          }
+export const computeBestSellers = async (store: string, limit = 10) => {
+  const cachedBestSellers = await getBestSellers(store);
+  if (cachedBestSellers && cachedBestSellers?.length > 0) {
+    return cachedBestSellers;
+  }
+  let pageInfo;
+  let ordersProcessed = 0;
+  const orderCount: Record<string, { product_id: string; count: number }> = {};
+  do {
+    const data = await (
+      await createClient(store)
+    ).request<any>({
+      method: "GET",
+      path: "orders",
+      query: {
+        created_at_max: new Date().toISOString(),
+        created_at_min: getTwoWeekAgo().toISOString(),
+        fields: "line_items",
+        limit: 250,
+      },
+    });
+
+    // Process each order
+    data.body.orders.forEach((order: any) => {
+      order.line_items.forEach((item: any) => {
+        const key = item.title;
+        if (!orderCount[key]) {
+          orderCount[key] = {
+            product_id: item.product_id,
+            count: 0,
+          };
         }
-      }
-      parseErrors {
-        code
-        message
-        range {
-          start {
-            line
-            character
-          }
-          end {
-            line
-            character
-          }
-        }
-      }
-    }
-  }`,
-  });
-  console.log(data.body);
+        orderCount[key].count += 1; // Increment count
+      });
+    });
+
+    pageInfo = data.pageInfo;
+    ordersProcessed += data.body.orders.length;
+  } while (pageInfo?.nextPage && ordersProcessed < BEST_SELLER_SAMPLE_COUNT);
+
+  // Convert orderCount object to an array of objects and sort by count in descending order
+  const sortedOrderCount = await Promise.all(
+    Object.values(orderCount)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map(async (order) => await getProductById(store, order.product_id))
+  );
+
+  await setBestSellers(store, sortedOrderCount);
+  // Limit the results to the specified limit
+  return sortedOrderCount;
 };

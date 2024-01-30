@@ -311,6 +311,47 @@ export const createEmbeddings = async (store: string) => {
   }
 };
 
+export const getMerchants = async (store: string) => {
+  const { data } = await supabase
+    .from("merchants")
+    .select("*")
+    .eq("domain", store);
+
+  return data;
+};
+
+export const getBestSellers = async (store: string) => {
+  const oneDayAgo = new Date();
+  oneDayAgo.setDate(oneDayAgo.getDay() - 1);
+  const { data } = await supabase
+    .from("merchants")
+    .select("best_sellers")
+    .eq("store", store)
+    .gte("best_seller_updated", oneDayAgo.toISOString());
+
+  return data;
+};
+
+export const setBestSellers = async (store: string, best_sellers: any[]) => {
+  const current = await getMerchants(store);
+  if (current?.length !== 1) {
+    console.log("No merchant entry for store in supabase");
+    return false;
+  }
+  const updatedMerchant = current[0];
+  updatedMerchant.best_seller_updated = new Date().toISOString();
+  updatedMerchant.best_sellers = best_sellers;
+  const { error } = await supabase
+    .from("merchants")
+    .upsert([updatedMerchant])
+    .select();
+  if (error) {
+    console.error(error);
+  }
+
+  return !error;
+};
+
 export type ModelLoggingFields = {
   success: boolean;
   store: string;
