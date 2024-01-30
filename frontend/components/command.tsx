@@ -397,25 +397,36 @@ export default function CommandPalette({ props }) {
   };
 
   return (
-    <div id="overlay" className="h-[80vh] flex flex-col bg-gray-200">
+    <div
+      id="overlay"
+      className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[65rem] w-[80rem] m-auto bg-gray-200 rounded-lg shadow-lg overflow-auto">
       <section
         id={PALETTE_DIV_ID}
-        className="relative overflow-hidden bg-cover flex-grow">
+        className="flex flex-grow overflow-hidden bg-cover w-full">
         <div className="relative flex justify-center flex-grow flex-shrink h-full">
           <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
-            <div className="flex justify-between items-center">
-              <form onSubmit={handleSubmit} className="w-1/2 m-2 flex mx-auto">
+            <div id="search bar" className="flex justify-between items-center">
+              <form onSubmit={handleSubmit} className="w-full m-2 flex mx-auto">
                 <input
                   type="text"
                   value={userInput}
                   onChange={handleInputChange}
-                  className="w-full h-16 pr-4 text-black border-none rounded-t-lg pl-11 focus:outline-none focus:shadow-none focus:border-none "
-                  placeholder="Ask me anything! I am not your typical search bar."
+                  className="flex-grow h-16 pr-4 text-black border-none rounded-t-lg pl-14 text-center focus:outline-none focus:shadow-none focus:border-none "
+                  placeholder={
+                    userInput === ""
+                      ? "Ask me anything! See the below hints as examples. I am not your typical search bar."
+                      : ""
+                  }
+                  onFocus={(e) => (e.target.placeholder = "")}
+                  onBlur={(e) =>
+                    (e.target.placeholder =
+                      "Ask me anything! See the below hints as examples. I am not your typical search bar.")
+                  }
                   role="combobox"
                   aria-expanded="false"
                   aria-controls="options"
                 />
-                <button type="submit" disabled={loading}>
+                <button type="submit" disabled={loading} className="pr-6">
                   <svg
                     width="24"
                     height="24"
@@ -457,24 +468,28 @@ export default function CommandPalette({ props }) {
               </div>
             </div>
             {hints.length > 0 && (
-              <div className="flex justify-center items-center rounded">
+              <div
+                id="hints"
+                className="flex justify-center items-center rounded">
                 {hints.map((hint, index) => (
                   <div
                     key={index}
                     className="hint-bubble border-2 justify-center items-center"
                     onClick={async () => await callOpenaiWithInput(hint)}>
-                    <p>{hint}</p>
+                    <p className="text-custom">{hint}</p>
                   </div>
                 ))}
               </div>
             )}
             {/* Dividing Line. Beginning of product suggestions*/}
 
-            <div className="flex flex-col h-full border-tborder-gray-300 max-h-[calc(80vh-80px)]">
-              <div className="flex h-full">
+            <div
+              id="results and convo"
+              className="flex flex-grow border-tborder-gray-300 max-h-[calc(65rem-80px)]">
+              <div className="flex flex-grow">
                 <div
                   id="product-column"
-                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)]">
+                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(65rem-80px)]">
                   <div className="font-bold mb-2 mt-2 text-center">
                     {suggestions && suggestions.length > 0
                       ? "You might like:"
@@ -519,7 +534,7 @@ export default function CommandPalette({ props }) {
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(80vh-50px)">
+                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(65rem-80px)">
                   {messages
                     .filter((message) => message.content !== undefined)
                     .map((message, index) => (
