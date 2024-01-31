@@ -1,3 +1,4 @@
+import { MERCHANT_CONFIG } from "api/pages/api/v1/_helpers/ai/llmConfig";
 import { isNewCustomer, offerCoupon } from "./supabase"; // Updated reference to refactored supabase functions
 const shopifyRestQuery = async (endpoint) => {
   try {
@@ -129,6 +130,9 @@ export const getProducts = async () => {
   return { stringifiedProducts, metadataIds, strippedProducts };
 };
 
+// Get Merchant Config
+const merchantConfig = MERCHANT_CONFIG;
+
 export const getGreetingMessage = async (event) => {
   return await getEventSpecificMessage(event);
 };
@@ -139,42 +143,54 @@ export const getEventSpecificMessage = async (event) => {
   const newCustomer = await isNewCustomer(event.clientId);
   const isOfferCoupon = await offerCoupon(event.clientId);
   switch (event.name) {
-    // Welcome Intent
+    /* 
+      Welcome Intent
+
+      Notes regarding approach for the prompts:
+      - Experimenting here with specifically identifying yourself as a sales associate. Build a c connection. 
+      - Identify 2 basic capabilities of ways to use SA: answering questions about products and helping find something. As we build more capabilities, we can add them here. 
+      
+      Other Ideas: 
+      - Consider adding more examples. This intent is pretty straight forward, and adding additional tokens contributes to cost.
+      - For welcome back, consider linking directly here to a product that the customer has viewed before or already even has in the cart.  
+      - Consider adding a emoji to the end of the message.
+
+    */
     case "page_viewed":
       if (newCustomer.isNew) {
-        return "This is the user's first time visiting this store. Welcome them and ask them if they have any questions";
+        return `This is the customers's first time visiting our ${merchantConfig["store_type"]} called ${merchantConfig["store_name"]}. Welcome them and ask them if they have any questions. If they have products in their cart or have viewed a product recently, mention the product to them. \nHere are a few examples of a potential good response:\n- Welcome to the store! I'm a sales associate here to help. Let me know if you have any questions about our products.\n- Welcome to the store! Let me know if you have any questions about our products or need help finding something. I'm here to help!`;
       } else {
-        return "Welcome user back to the store and ask if user needs any help.";
+        return `This customer has visited the our ${merchantConfig["store_type"]} called ${merchantConfig["store_name"]} before. Welcome them back and ask them if they have any questions. If they have items in their cart, encourage them to check out or ask them if they have any questions about the products in their cart. If they have viewed a product recently, ask them if they have any questions about that product. Remember to link to the products. \nHere are a few examples of potential good response:\n- Welcome back to the store! `;
       }
-    // Cart Intent
+    /* 
+      Cart Viewed Intent:
+      Notes:
+        - Potentially could be a bad idea to mention other best seller items here if it takes them away from the cart. 
+
+      Other Ideas: 
+      - Get products in their cart 
+    */
     case "cart_viewed":
-      if (isOfferCoupon.offerCoupon === true) {
+      if (
+        isOfferCoupon.offerCoupon === true &&
+        merchantConfig["offer_coupon"] === true
+      ) {
         return "User is looking through cart page. Encourage them to checkout by offering a coupon.";
       } else {
-        return "User is on the cart page. Encourage user to checkout.";
+        return `The customer is on the cart page where they can purchase their items. Compliment them on their excellent product suggestions and encourage user to checkout. Here are a few examples of potential good responses:\n-Great selection! Let me know if you need any help with your purchase.`;
       }
-    // Product Intent
+    /*
+      Product Viewed Intent
+
+      Notes:
+      Join the merchant tactics into a format like the below and add to the end of this message. 
+
+      Other Ideas:
+      - When we ingest reviews, this is where we can potentially recommend other products. 
+      - In general, this is where we can add more contextual information such as a weather API. 
+    */
     case "product_viewed":
       const product = event.detail.productVariant.product.title;
-      return `User is considering purchasing the product ${product}. Explain why this product is great for me and offer to answer any more questions`;
-    // Search Intent
-    case "search_submitted":
-      const searchQuery = event.detail.query;
-      return `The user is searching your store for ${searchQuery}. Offer to assist.`;
-    default:
-      return "Greet the user.";
+      return `User is considering purchasing ${product}. Here are some ideas for how to best sell them on the product:\n-Let the customer know that this product is a best seller and running low on stock. For example: "${product} is one of our best sellers and is running low on stock. I would recommend purchasing it soon!"\n-If the customer has viewed this product before, let them know that you noticed and ask if they have any questions about it. For example: "I see you've been looking at ${product}. Do you have any questions about it?"\n${merchantConfig["merchant_tactics"]}`;
   }
 };
-// Example usage
-/*
-const searchQuery = 'bag';
-getSuggestions(searchQuery)
-  .then((productSuggestions) => {
-    if (productSuggestions.length > 0) {
-      const firstProductSuggestion = productSuggestions[0];
-      console.log(`The title of the first product suggestion is: ${firstProductSuggestion.title}`);
-    } else {
-      console.log('No product suggestions found.');
-    }
-  });
-*/

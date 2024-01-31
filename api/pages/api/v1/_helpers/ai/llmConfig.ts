@@ -52,32 +52,41 @@ export const createModelConfig = (modelType: string, config: any) => {
 
 export const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.CHAT_GREETING]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep all responses to less than 100 characters.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.EMBED]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.HINTS]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
+};
+
+// TODO: Pull from supabase later.
+export const MERCHANT_CONFIG = {
+  store_name: "Sales Associate Demo Store",
+  store_type: "jewelry",
+  offer_coupon: false,
+  merchant_tactics:
+    "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
 };
 
 export const chatResponseSchema = z.object({
   plainText: z
     .string()
     .describe(
-      "The response directly displayed to user. Keep to less than 200 characters"
+      "The response directly displayed to user. Keep to less than 250 characters"
     ),
   products: z
     .array(
