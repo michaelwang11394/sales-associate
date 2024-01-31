@@ -1,5 +1,13 @@
-import { MERCHANT_CONFIG } from "api/pages/api/v1/_helpers/ai/llmConfig";
 import { isNewCustomer, offerCoupon } from "./supabase"; // Updated reference to refactored supabase functions
+
+export const MERCHANT_CONFIG = {
+  store_name: "Sales Associate Demo Store",
+  store_type: "jewelry",
+  offer_coupon: false,
+  merchant_tactics:
+    "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
+};
+
 const shopifyRestQuery = async (endpoint) => {
   try {
     return fetch(window.Shopify.routes.root + endpoint)

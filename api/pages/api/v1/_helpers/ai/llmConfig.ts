@@ -73,15 +73,6 @@ export const LLMConfig: Record<MessageSource, LLMConfigType> = {
   },
 };
 
-// TODO: Pull from supabase later.
-export const MERCHANT_CONFIG = {
-  store_name: "Sales Associate Demo Store",
-  store_type: "jewelry",
-  offer_coupon: false,
-  merchant_tactics:
-    "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
-};
-
 export const chatResponseSchema = z.object({
   plainText: z
     .string()
