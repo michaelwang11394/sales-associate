@@ -1,9 +1,9 @@
-import "vite/modulepreload-polyfill";
-import ReactDOM from "react-dom/client";
-import Icon from "@/components/icon";
 import CommandPalette from "@/components/command";
-import "./section.css";
+import Icon from "@/components/icon";
 import "@/styles/chat.css";
+import ReactDOM from "react-dom/client";
+import "vite/modulepreload-polyfill";
+import "./section.css";
 
 export function createIcon(home, mountDiv, overlayDiv, iconSize) {
   const element = document.getElementById(mountDiv);
@@ -37,6 +37,10 @@ export function createOverlayDiv() {
     overlayDiv.style.height = "100vh";
     overlayDiv.style.zIndex = "1000";
     overlayDiv.style.display = "block";
+    overlayDiv.style.visibility = "hidden";
+    overlayDiv.style.opacity = "0";
+    overlayDiv.style.transition =
+      "opacity 200ms ease, visibility 0s ease 200ms";
     overlayDiv.className = "overlay";
     document.body.appendChild(overlayDiv);
     ReactDOM.createRoot(overlayDiv).render(
