@@ -19,9 +19,24 @@ export const createEmbedRunnable = async (store: string) => {
         ),
     }),
     RunnablePassthrough.assign({
-      products: (previousOutput) =>
+      products: (previousOutput) => {
         // @ts-ignore
-        "Here are relevant products\n" + previousOutput.catalog.join("\r\n"),
+        const products = previousOutput.catalog;
+        let productDetails = "Here are relevant products:\n";
+        // Remove Duplicates
+        const uniqueProductDetails = new Set();
+        //@ts-ignore
+        products.forEach((product) => {
+          const title = product.match(/title: (.*)/)[1];
+          const description = product.match(/description: (.*)/)[1];
+          const uniqueKey = `Title: ${title}, Description: ${description}`;
+          uniqueProductDetails.add(uniqueKey);
+        });
+        uniqueProductDetails.forEach((detail) => {
+          productDetails += `${detail}\n`;
+        });
+        return productDetails;
+      },
     }),
   ]);
 };
