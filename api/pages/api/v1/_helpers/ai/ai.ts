@@ -47,7 +47,6 @@ export const summarizeHistory = async (
     template: `{input}\nConversation to summarize:\n{memory}`,
   });
   const summarizeModel = new ChatOpenAI(summarizeHistoryModelConfig());
-  console.log("Fetched history", history);
   const summary = await chatPrompt.pipe(summarizeModel).invoke(
     {
       input:
@@ -68,7 +67,8 @@ export const summarizeHistory = async (
     clientId,
     "text",
     SenderType.SUMMARY,
-    summary,
+    // @ts-ignore
+    summary?.content,
     requestUuid
   );
 };
