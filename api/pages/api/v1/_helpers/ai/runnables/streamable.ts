@@ -2,6 +2,7 @@ import { parse } from "best-effort-json-parser";
 import type EventEmitter from "events";
 import type { RunnableSequence } from "langchain/schema/runnable";
 import { MessageSource } from "../../../types";
+import { getProductById } from "../../shopify";
 
 export enum StructuredOutputStreamState {
   TEXT = 1,
@@ -97,15 +98,18 @@ export class Streamable {
                 "chunk",
                 productDelimiter
               );
-              const product = data?.products[productSent];
+              const product = await getProductById(
+                store,
+                data?.products[productSent].product_id
+              );
               this.stream.emit(
                 "channel" + requestUuid,
                 "chunk",
                 JSON.stringify({
-                  name: product.name,
-                  handle: product.product_handle,
-                  recommendation: product.recommendation,
-                  image: product.image,
+                  name: product.title,
+                  handle: product.handle,
+                  recommendation: data?.products[productSent].recommendation,
+                  image: product.image_url,
                   variants: product.variants,
                 })
               );
@@ -122,15 +126,19 @@ export class Streamable {
       ) {
         // This state means that there is at least one product that is fully parsed
         this.stream.emit("channel" + requestUuid, "chunk", productDelimiter);
-        const product = parse(response)?.products[productSent];
+        const product = await getProductById(
+          store,
+          parse(response)?.products[productSent].product_id
+        );
         this.stream.emit(
           "channel" + requestUuid,
           "chunk",
           JSON.stringify({
-            name: product.name,
-            handle: product.product_handle,
-            recommendation: product.recommendation,
-            image: product.image,
+            name: product.title,
+            handle: product.handle,
+            recommendation:
+              parse(response)?.products[productSent].recommendation,
+            image: product.image_url,
             variants: product.variants,
           })
         );

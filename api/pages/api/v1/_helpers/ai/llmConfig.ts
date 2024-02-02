@@ -87,32 +87,9 @@ export const chatResponseSchema = z.object({
           .describe(
             "Should be around 500 characters, use bullet points and paragraphs for readability. Detailed breakdown why this product is relevant and a great fit for user. Format is one line summary, followed by a paragraph for reasons why this is relevant."
           ),
-        name: z.string().describe("The name of the product"),
-        product_handle: z.string().describe("The product handle"),
-        image: z
+        product_id: z
           .string()
-          .includes("cdn.shopify.com", {
-            message: "Must include cdn.shopify.com",
-          })
-          .describe(
-            "The image url of the product. Must include cdn.shopify.com"
-          ),
-        variants: z
-          .array(
-            z
-              .object({
-                id: z.string().describe("The id of this variant"),
-                title: z.string().describe("The title of this variant"),
-                price: z.number().describe("The price of the product"),
-                featured_image: z
-                  .string()
-                  .url()
-                  .describe("The featured image of the product variant"),
-              })
-              .describe("A variant of product that has a specific price")
-          )
-          .describe("Array of variants of product if not empty")
-          .optional(),
+          .describe("The product id that is referred to in recommendation"),
       })
     )
     .describe("A list of products referred to in the response"),

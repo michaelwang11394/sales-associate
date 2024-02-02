@@ -44,23 +44,6 @@ export const createFinalRunnable = async (
     Do not create structured output with the embed greeting
    */
   const salesModel = new ChatOpenAI(salesModelConfig());
-  /*
-  const lastRunnable =
-    messageSource === MessageSource.CHAT
-      ? chatPrompt.pipe(
-          salesModel.bind({
-            functions: [
-              {
-                name: "output_formatter",
-                description: "Always use to properly format output",
-                parameters: zodToJsonSchema(chatResponseSchema),
-              },
-            ],
-            function_call: { name: "output_formatter" },
-          })
-        )
-      : chatPrompt.pipe(salesModel);
-      */
   const lastRunnable = await getLastRunnable(
     messageSource,
     chatPrompt,
