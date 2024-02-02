@@ -2,6 +2,7 @@ export enum SenderType {
   AI = "ai",
   USER = "user",
   SYSTEM = "system", // Generated greetings, noninteractive
+  SUMMARY = "summary", // Summary of messages, should not be used on client
 }
 
 export enum MessageSource {

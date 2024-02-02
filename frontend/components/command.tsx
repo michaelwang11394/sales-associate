@@ -1,5 +1,4 @@
 import {
-  MESSAGES_HISTORY_LIMIT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
@@ -10,7 +9,7 @@ import {
   type FormattedMessage,
   type Product,
 } from "@/constants/types";
-import { callHints, callOpenai } from "@/helper/ai";
+import { callHints, callOpenai, summarizeHistory } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
@@ -57,9 +56,9 @@ export default function CommandPalette({ props }) {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
-          const messages = data
-            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
-            .reverse();
+          const messages = data.data!.map((messageRow: DBMessage) =>
+            formatDBMessage(messageRow)
+          );
           setMessages((prevMessages) => messages.concat(prevMessages));
           refreshHints();
         }
@@ -77,10 +76,7 @@ export default function CommandPalette({ props }) {
             greetingPrompt,
             clientId!,
             uuid,
-            MessageSource.CHAT_GREETING,
-            messages
-              .slice(-1 * MESSAGES_HISTORY_LIMIT)
-              .map((m) => String(m.id!))
+            MessageSource.CHAT_GREETING
           )
             .then(async (reader) => {
               setMessages((prevMessages) => [
@@ -172,11 +168,7 @@ export default function CommandPalette({ props }) {
       "User has just opened a text box for a chat bot. Recommend three questions or requests they can ask to learn more about the store or continue the conversation",
       clientId!,
       uuid,
-      MessageSource.HINTS,
-      messages
-        .slice(-1 * MESSAGES_HISTORY_LIMIT)
-        .filter((m) => !isNaN(m.id!))
-        .map((m) => String(m.id!))
+      MessageSource.HINTS
     )
       .then((res) => {
         const hints = JSON.parse(
@@ -244,13 +236,7 @@ export default function CommandPalette({ props }) {
       sender: SenderType.AI,
       content: [""],
     };
-    callOpenai(
-      input,
-      clientId!,
-      uuid,
-      MessageSource.CHAT,
-      messages.slice(-1 - MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
-    )
+    callOpenai(input, clientId!, uuid, MessageSource.CHAT)
       .then(async (reader) => {
         const linkMessage = {
           type: "link",
@@ -364,6 +350,8 @@ export default function CommandPalette({ props }) {
             uuid
           );
         }
+        const summarize_uuid = uuidv4();
+        await summarizeHistory(clientId!, summarize_uuid);
         refreshHints();
 
         setLoading(false);
