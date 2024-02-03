@@ -1,6 +1,6 @@
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { OPENAI_KEY, RETURN_TOP_N_SIMILARITY_DOCS } from "../../constants";
+import { RETURN_TOP_N_SIMILARITY_DOCS } from "../../constants";
 import { getProducts } from "../shopify";
 import { supabase } from "../supabase_queries";
 import { EMBEDDING_SMALL_MODEL } from "./constants";
@@ -12,7 +12,10 @@ export const runEmbeddingsAndSearch = async (store: string, query: string) => {
   let relevantDocs;
   try {
     vectorStore = new SupabaseVectorStore(
-      new OpenAIEmbeddings({ openAIApiKey: OPENAI_KEY }),
+      new OpenAIEmbeddings({
+        modelName: EMBEDDING_SMALL_MODEL,
+        openAIApiKey: process.env.OPENAI_KEY,
+      }),
       {
         client: supabase,
         tableName: "vector_catalog",
