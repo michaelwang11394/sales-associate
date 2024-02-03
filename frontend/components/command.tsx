@@ -295,7 +295,7 @@ export default function CommandPalette({ props }) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === linkMessage) {
-                    msg.content[i] = {
+                    msg.content[i - 1] = {
                       ...JSON.parse(splitChunks[i][0]),
                       recommendation: splitChunks[i][1],
                     };
@@ -341,17 +341,19 @@ export default function CommandPalette({ props }) {
         const finalSplit: string[][] = response
           .split(productDelimiter)
           .filter((chunk) => chunk.trim() !== "")
+          .splice(1)
           .map((chunk) =>
             chunk
               .split(recDelimiter)
               .filter((innerChunk) => innerChunk.trim() !== "")
           )
-          .map((chunk) => ({
-            ...JSON.parse(chunk[0]),
-            recommendation: chunk[1],
-          }));
+          .map((chunk) => {
+            return {
+              ...JSON.parse(chunk[0]),
+              recommendation: chunk[1],
+            };
+          });
         if (finalSplit.length > 0) {
-          console.log(linkMessage);
           linkMessage.id = await handleNewMessage(
             clientId,
             {

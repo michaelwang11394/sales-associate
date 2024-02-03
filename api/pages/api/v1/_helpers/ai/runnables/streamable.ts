@@ -61,7 +61,9 @@ export class Streamable {
       let response = "";
       let state = StructuredOutputStreamState.TEXT;
       let productSentCount = 0;
-      let productsSent: { product_id: string; recommendation: string }[] = [];
+      let productsSent: { product_id?: string; recommendation?: string }[] =
+        Array(10).fill({});
+
       let sentParsedText = ``;
       for await (const chunk of res) {
         // Collect each chunk
@@ -100,14 +102,14 @@ export class Streamable {
           if (state === StructuredOutputStreamState.PRODUCT) {
             for (let i = productSentCount; i < data?.products?.length; i++) {
               if (
-                !productsSent[productSentCount]?.product_id &&
-                data?.products[productSentCount]?.product_id?.length === 14
+                productsSent[productSentCount]?.product_id === undefined &&
+                data?.products[productSentCount]?.recommendation
               ) {
-                productsSent.push({
+                productsSent[productSentCount] = {
                   product_id: data?.products[productSentCount]
                     ?.product_id as string,
                   recommendation: "",
-                });
+                };
                 const product =
                   this.productMappings[
                     data?.products[productSentCount].product_id as string
@@ -127,22 +129,9 @@ export class Streamable {
                   "chunk",
                   recDelimiter
                 );
-                this.stream.emit(
-                  "channel" + requestUuid,
-                  "chunk",
-                  Streamable.getDiff(
-                    productsSent[productSentCount].recommendation,
-                    data?.products[productSentCount].recommendation ?? ""
-                  )
-                );
-                productsSent[productSentCount].recommendation =
-                  data?.products[productSentCount].recommendation ?? "";
               }
               // product_id has been completed and recommendation has already been started
-              if (
-                productsSent[productSentCount]?.product_id &&
-                productsSent[productSentCount]?.recommendation
-              ) {
+              if (productsSent[productSentCount]?.product_id) {
                 if (
                   productsSent[productSentCount].recommendation ===
                   data?.products[productSentCount].recommendation
@@ -159,12 +148,21 @@ export class Streamable {
                     "channel" + requestUuid,
                     "chunk",
                     Streamable.getDiff(
-                      productsSent[productSentCount].recommendation,
+                      productsSent[productSentCount].recommendation!,
                       data?.products[productSentCount].recommendation
                     )
                   );
                   productsSent[productSentCount].recommendation =
                     data?.products[productSentCount].recommendation;
+                  // If this product is already completed and next product has been started
+                  if (i < data?.products?.length - 1) {
+                    productSentCount++;
+                    this.stream.emit(
+                      "channel" + requestUuid,
+                      "chunk",
+                      productDelimiter
+                    );
+                  }
                 }
               }
             }
