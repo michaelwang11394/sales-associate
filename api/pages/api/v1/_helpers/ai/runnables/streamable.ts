@@ -2,7 +2,6 @@ import { parse } from "best-effort-json-parser";
 import type EventEmitter from "events";
 import type { RunnableSequence } from "langchain/schema/runnable";
 import { MessageSource } from "../../../types";
-import { getProductById } from "../../shopify";
 
 export enum StructuredOutputStreamState {
   TEXT = 1,
@@ -14,9 +13,11 @@ export const productDelimiter = "====PRODUCT====";
 export class Streamable {
   constructor(
     private runnable: RunnableSequence,
+    private productMappings: { [key: string]: any },
     private stream: EventEmitter
   ) {
     this.runnable = runnable;
+    this.productMappings = productMappings;
     this.stream = stream;
   }
 
@@ -60,7 +61,6 @@ export class Streamable {
       let state = StructuredOutputStreamState.TEXT;
       let productSent = 0;
       let sentParsedText = ``;
-
       for await (const chunk of res) {
         // Collect each chunk
         chunks.push(JSON.stringify(chunk));
@@ -98,10 +98,10 @@ export class Streamable {
                 "chunk",
                 productDelimiter
               );
-              const product = await getProductById(
-                store,
-                data?.products[productSent].product_id
-              );
+              const product =
+                this.productMappings[
+                  data?.products[productSent].product_id as string
+                ];
               this.stream.emit(
                 "channel" + requestUuid,
                 "chunk",
@@ -126,10 +126,10 @@ export class Streamable {
       ) {
         // This state means that there is at least one product that is fully parsed
         this.stream.emit("channel" + requestUuid, "chunk", productDelimiter);
-        const product = await getProductById(
-          store,
-          parse(response)?.products[productSent].product_id
-        );
+        const product =
+          this.productMappings[
+            parse(response)?.products[productSent].product_id as string
+          ];
         this.stream.emit(
           "channel" + requestUuid,
           "chunk",

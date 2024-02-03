@@ -23,7 +23,7 @@ export const createFinalRunnable = async (
   llmConfig: LLMConfigType,
   memory: BufferMemory,
   messageSource: MessageSource,
-  previous_chain?: RunnableSequence // If chaining, what is the previous chain
+  embeddings: string[]
 ) => {
   const systemTemplate = llmConfig.prompt;
 
@@ -53,7 +53,7 @@ export const createFinalRunnable = async (
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
       memory: () => memory.loadMemoryVariables({}),
-      products: (input) => input.products ?? "No relevant products",
+      products: (_) => "Here are relevant products\n" + embeddings.join("\r\n"),
     }),
     RunnablePassthrough.assign({
       history: (previousOutput) => {
@@ -65,7 +65,7 @@ export const createFinalRunnable = async (
     lastRunnable,
   ]);
 
-  return previous_chain ? previous_chain.pipe(salesChain) : salesChain;
+  return salesChain;
 };
 
 const getLastRunnable = async (

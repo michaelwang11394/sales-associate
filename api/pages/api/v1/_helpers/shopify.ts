@@ -106,7 +106,15 @@ export const getProducts = async (store: string, limit = 250) => {
     return yaml.dump(product);
   });
 
-  return { stringifiedProducts, metadataIds, strippedProducts };
+  const lookUpProducts = formattedProducts.reduce(
+    (acc: Record<string, any>, product: any) => {
+      acc[product.id] = product;
+      return acc;
+    },
+    {}
+  );
+
+  return { stringifiedProducts, metadataIds, strippedProducts, lookUpProducts };
 };
 
 const getProductByIdYaml = async (store: string, product_id: string) => {

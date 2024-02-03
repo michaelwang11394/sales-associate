@@ -9,7 +9,7 @@ import { AIMessage, HumanMessage } from "langchain/schema";
 import type { EventEmitter } from "events";
 import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
 import { MessageSource, SenderType } from "../../types";
-import { computeBestSellers } from "../shopify";
+import { getProducts } from "../shopify";
 import {
   getMessagesFromIds,
   hasItemsInCart,
@@ -17,10 +17,9 @@ import {
   isNewCustomer,
 } from "../supabase_queries";
 import { MESSAGE_SUMMARY_FLUSH_THRESHOLD } from "./constants";
+import { runEmbeddingsAndSearch } from "./embeddings";
 import { LLMConfig, summarizeHistoryModelConfig } from "./llmConfig";
-import { createSimpleSearchRunnable } from "./runnables/catalogSearchRunnable";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
-import { createEmbedRunnable } from "./runnables/embedRunnable";
 import { Runnable } from "./runnables/runnable";
 import { Streamable } from "./runnables/streamable";
 
@@ -80,15 +79,6 @@ export const callOpenai = async (
     }
   }
 
-  // Add best sellers from past two weeks ago
-  const bestSellers = await computeBestSellers(store);
-  if (bestSellers.length > 0) {
-    customerContext.push(
-      "The following are the top selling products of the store, ranked in descending popularity"
-    );
-    customerContext.push(bestSellers.join("\r\n"));
-  }
-
   const history = data.map((m) =>
     m.sender === SenderType.USER
       ? new HumanMessage(m.content)
@@ -107,20 +97,29 @@ export const callOpenai = async (
   // Langchain quirk, the summarization and threshold enforce only happens on saveContext. Since we instantiate memory on every request, we need to prune here
   await memory.prune();
 
+  let embeddings, productMappings;
+  await Promise.all([
+    (async () => {
+      embeddings = await runEmbeddingsAndSearch(store, input);
+    })(),
+    (async () => {
+      const { lookUpProducts } = await getProducts(store);
+      productMappings = lookUpProducts;
+    })(),
+  ]);
+
   const finalChain = await createFinalRunnable(
     customerContext,
     llmConfig,
     memory,
     source,
-    llmConfig.include_embeddings
-      ? await createEmbedRunnable(store)
-      : await createSimpleSearchRunnable(store)
+    embeddings!
   );
 
   const response =
     source === MessageSource.HINTS
       ? await new Runnable(finalChain).run(input, store, clientId, requestUuid)
-      : await new Streamable(finalChain, streamWriter!).run(
+      : await new Streamable(finalChain, productMappings!, streamWriter!).run(
           input,
           store,
           source,
