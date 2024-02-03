@@ -118,24 +118,28 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
       {/* Existing Element */}
       <div>
         {/* Card */}
-        <div className="product-card-shadow">
-          <a
-            href={`https://${host}/products/${content[active].handle}`}
-            target="_blank"
-            rel="noopener noreferrer">
-            <img
-              src={content[active].image}
-              alt={content[active].name}
-              className="w-full object-cover"
-            />
-            <div className="flex flex-col p-3">
-              <h2 className="text-xxl font-semibold">{content[active].name}</h2>
-              <p className="text-lg font-medium text-gray-500 mb-4">
-                {content[active].price ? "$" + content[active].price : ""}
-              </p>
-            </div>
-          </a>
-        </div>
+        {content[active] && (
+          <div className="product-card-shadow">
+            <a
+              href={`https://${host}/products/${content[active].handle}`}
+              target="_blank"
+              rel="noopener noreferrer">
+              <img
+                src={content[active].image}
+                alt={content[active].name}
+                className="w-full object-cover"
+              />
+              <div className="flex flex-col p-3">
+                <h2 className="text-xxl font-semibold">
+                  {content[active].name}
+                </h2>
+                <p className="text-lg font-medium text-gray-500 mb-4">
+                  {content[active].price ? "$" + content[active].price : ""}
+                </p>
+              </div>
+            </a>
+          </div>
+        )}
 
         {content.length > 1 && (
           <div className="w-full pt-8 grid grid-cols-3 items-center">
@@ -190,7 +194,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
 
       <div>
         <p className="text-base sm:text-xl md:text-xl lg:text-3xl ai-grey-text leading-relaxed mb-4 p-8">
-          {content[active].recommendation}
+          {content[active]?.recommendation ?? ""}
         </p>
         {/* Add any additional styling or elements for the recommendation input */}
       </div>

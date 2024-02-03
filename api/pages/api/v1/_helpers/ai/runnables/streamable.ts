@@ -9,6 +9,7 @@ export enum StructuredOutputStreamState {
 }
 
 export const productDelimiter = "====PRODUCT====";
+export const recDelimiter = "====REC====";
 
 export class Streamable {
   constructor(
@@ -59,7 +60,8 @@ export class Streamable {
       const chunks: string[] = [];
       let response = "";
       let state = StructuredOutputStreamState.TEXT;
-      let productSent = 0;
+      let productSentCount = 0;
+      let productsSent: { product_id: string; recommendation: string }[] = [];
       let sentParsedText = ``;
       for await (const chunk of res) {
         // Collect each chunk
@@ -81,6 +83,11 @@ export class Streamable {
               continue;
             } else if (sentParsedText === parsedText) {
               state = StructuredOutputStreamState.PRODUCT;
+              this.stream.emit(
+                "channel" + requestUuid,
+                "chunk",
+                productDelimiter
+              );
             } else {
               this.stream.emit(
                 "channel" + requestUuid,
@@ -91,58 +98,80 @@ export class Streamable {
             }
           }
           if (state === StructuredOutputStreamState.PRODUCT) {
-            while (data?.products?.length > productSent + 1) {
-              // This state means that there is at least one product that is fully parsed
-              this.stream.emit(
-                "channel" + requestUuid,
-                "chunk",
-                productDelimiter
-              );
-              const product =
-                this.productMappings[
-                  data?.products[productSent].product_id as string
-                ];
-              this.stream.emit(
-                "channel" + requestUuid,
-                "chunk",
-                JSON.stringify({
-                  name: product.title,
-                  handle: product.handle,
-                  recommendation: data?.products[productSent].recommendation,
-                  image: product.image_url,
-                  variants: product.variants,
-                })
-              );
-              productSent++;
+            for (let i = productSentCount; i < data?.products?.length; i++) {
+              if (
+                !productsSent[productSentCount]?.product_id &&
+                data?.products[productSentCount]?.product_id?.length === 14
+              ) {
+                productsSent.push({
+                  product_id: data?.products[productSentCount]
+                    ?.product_id as string,
+                  recommendation: "",
+                });
+                const product =
+                  this.productMappings[
+                    data?.products[productSentCount].product_id as string
+                  ];
+                this.stream.emit(
+                  "channel" + requestUuid,
+                  "chunk",
+                  JSON.stringify({
+                    name: product.title,
+                    handle: product.handle,
+                    image: product.image_url,
+                    variants: product.variants,
+                  })
+                );
+                this.stream.emit(
+                  "channel" + requestUuid,
+                  "chunk",
+                  recDelimiter
+                );
+                this.stream.emit(
+                  "channel" + requestUuid,
+                  "chunk",
+                  Streamable.getDiff(
+                    productsSent[productSentCount].recommendation,
+                    data?.products[productSentCount].recommendation ?? ""
+                  )
+                );
+                productsSent[productSentCount].recommendation =
+                  data?.products[productSentCount].recommendation ?? "";
+              }
+              // product_id has been completed and recommendation has already been started
+              if (
+                productsSent[productSentCount]?.product_id &&
+                productsSent[productSentCount]?.recommendation
+              ) {
+                if (
+                  productsSent[productSentCount].recommendation ===
+                  data?.products[productSentCount].recommendation
+                ) {
+                  productSentCount++;
+                  this.stream.emit(
+                    "channel" + requestUuid,
+                    "chunk",
+                    productDelimiter
+                  );
+                } else {
+                  // Means we are still getting recommendation streaming
+                  this.stream.emit(
+                    "channel" + requestUuid,
+                    "chunk",
+                    Streamable.getDiff(
+                      productsSent[productSentCount].recommendation,
+                      data?.products[productSentCount].recommendation
+                    )
+                  );
+                  productsSent[productSentCount].recommendation =
+                    data?.products[productSentCount].recommendation;
+                }
+              }
             }
           }
         } else {
           this.stream.emit("channel" + requestUuid, "chunk", chunk?.content);
         }
-      }
-      while (
-        messageSource === MessageSource.CHAT &&
-        parse(response)?.products.length > productSent
-      ) {
-        // This state means that there is at least one product that is fully parsed
-        this.stream.emit("channel" + requestUuid, "chunk", productDelimiter);
-        const product =
-          this.productMappings[
-            parse(response)?.products[productSent].product_id as string
-          ];
-        this.stream.emit(
-          "channel" + requestUuid,
-          "chunk",
-          JSON.stringify({
-            name: product.title,
-            handle: product.handle,
-            recommendation:
-              parse(response)?.products[productSent].recommendation,
-            image: product.image_url,
-            variants: product.variants,
-          })
-        );
-        productSent++;
       }
 
       this.stream.emit("channel" + requestUuid, "end", "");

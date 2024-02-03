@@ -81,14 +81,14 @@ export const chatResponseSchema = z.object({
   products: z
     .array(
       z.object({
+        product_id: z
+          .string()
+          .describe("The product id that is referred to in recommendation"),
         recommendation: z
           .string()
           .describe(
             "Should be around 500 characters, use bullet points and paragraphs for readability. Detailed breakdown why this product is relevant and a great fit for user. Format is one line summary, followed by a paragraph for reasons why this is relevant."
           ),
-        product_id: z
-          .string()
-          .describe("The product id that is referred to in recommendation"),
       })
     )
     .describe("A list of products referred to in the response"),
