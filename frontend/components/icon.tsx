@@ -46,9 +46,9 @@ export default function Icon({ props }) {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
-          const messages = data
-            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
-            .reverse();
+          const messages = data.data!.map((messageRow: DBMessage) =>
+            formatDBMessage(messageRow)
+          );
           getLastPixelEvent(clientId).then((d) => {
             d.data?.forEach(async (event) => {
               const uuid = uuidv4();

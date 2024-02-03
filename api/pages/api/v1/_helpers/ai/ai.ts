@@ -1,27 +1,76 @@
 import "@shopify/shopify-api/adapters/node";
-import { ChatOpenAI } from "langchain/chat_models/openai";
-import {
-  ChatMessageHistory,
-  ConversationSummaryBufferMemory,
-} from "langchain/memory";
-import { AIMessage, HumanMessage } from "langchain/schema";
 
 import type { EventEmitter } from "events";
-import { RECENTLY_VIEWED_PRODUCTS_COUNT } from "../../constants";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { PromptTemplate } from "langchain/prompts";
+import {
+  RECENTLY_VIEWED_PRODUCTS_COUNT,
+  SUPABASE_MESSAGES_RETRIEVED,
+} from "../../constants";
 import { MessageSource, SenderType } from "../../types";
 import { getProducts } from "../shopify";
 import {
-  getMessagesFromIds,
+  getLastSummaryMessage,
+  getMessages,
   hasItemsInCart,
   hasViewedProducts,
+  insertMessage,
   isNewCustomer,
 } from "../supabase_queries";
-import { MESSAGE_SUMMARY_FLUSH_THRESHOLD } from "./constants";
 import { runEmbeddingsAndSearch } from "./embeddings";
 import { LLMConfig, summarizeHistoryModelConfig } from "./llmConfig";
 import { createFinalRunnable } from "./runnables/createFinalRunnable";
 import { Runnable } from "./runnables/runnable";
 import { Streamable } from "./runnables/streamable";
+
+export const summarizeHistory = async (
+  store: string,
+  clientId: string,
+  requestUuid: string
+) => {
+  const { data } = await getMessages(
+    store,
+    clientId,
+    true,
+    SUPABASE_MESSAGES_RETRIEVED
+  );
+  if (data?.length === 0) {
+    return;
+  }
+  const history = data!.map((m) =>
+    m.sender === SenderType.USER ? "user: " + m.content : "system: " + m.content
+  );
+
+  const chatPrompt = new PromptTemplate({
+    inputVariables: ["input", "memory"],
+    template: `{input}\nConversation to summarize:\n{memory}`,
+  });
+  const summarizeModel = new ChatOpenAI(summarizeHistoryModelConfig());
+  const summary = await chatPrompt.pipe(summarizeModel).invoke(
+    {
+      input:
+        "Summarize the following conversation thread, ensure that all mentioned products are included. Ensure summary is in sequential order",
+      memory: history.join("\n"),
+    },
+    {
+      metadata: {
+        requestUuid: requestUuid,
+        store: store,
+        clientId: clientId,
+      },
+    }
+  );
+
+  await insertMessage(
+    store,
+    clientId,
+    "text",
+    SenderType.SUMMARY,
+    // @ts-ignore
+    summary?.content,
+    requestUuid
+  );
+};
 
 export const callOpenai = async (
   input: string,
@@ -29,28 +78,8 @@ export const callOpenai = async (
   clientId: string,
   requestUuid: string,
   source: MessageSource,
-  messageIds: string[] | undefined,
   streamWriter?: EventEmitter
 ) => {
-  // Some weird Typescript issue where I can't use lambda, convert with for loop
-  const numberArray: number[] = [];
-
-  for (let i = 0; messageIds !== undefined && i < messageIds?.length; i++) {
-    numberArray.push(parseInt(messageIds[i], 10));
-  }
-
-  // At this point user input should already be in messages, hence the + 1
-  const { success, data } = await getMessagesFromIds(
-    store,
-    clientId,
-    numberArray
-  );
-  if (!success || !data) {
-    console.error(numberArray);
-    throw new Error(
-      "message history could not be retrieved or not all ids could be matched"
-    );
-  }
   /* CUSTOMER INFORMATION CONTEXT */
   let customerContext: string[] = [];
 
@@ -78,24 +107,9 @@ export const callOpenai = async (
       customerContext.push(productsViewed.message);
     }
   }
-
-  const history = data.map((m) =>
-    m.sender === SenderType.USER
-      ? new HumanMessage(m.content)
-      : new AIMessage(m.content)
-  );
   const llmConfig = LLMConfig[source];
 
-  // This memory will only store the input and the FINAL output. If chains are linked, intermediate output will not be recorded here
-  const memory = new ConversationSummaryBufferMemory({
-    chatHistory: new ChatMessageHistory(history),
-    maxTokenLimit: MESSAGE_SUMMARY_FLUSH_THRESHOLD,
-    llm: new ChatOpenAI(summarizeHistoryModelConfig()),
-    returnMessages: true,
-  });
-
-  // Langchain quirk, the summarization and threshold enforce only happens on saveContext. Since we instantiate memory on every request, we need to prune here
-  await memory.prune();
+  const { data: lastSummary } = await getLastSummaryMessage(store, clientId);
 
   let embeddings, productMappings;
   await Promise.all([
@@ -111,7 +125,7 @@ export const callOpenai = async (
   const finalChain = await createFinalRunnable(
     customerContext,
     llmConfig,
-    memory,
+    lastSummary?.length === 1 ? lastSummary[0].content : "",
     source,
     embeddings!
   );

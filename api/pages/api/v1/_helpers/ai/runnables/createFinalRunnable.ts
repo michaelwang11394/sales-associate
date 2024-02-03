@@ -1,8 +1,6 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
-import type { BufferMemory } from "langchain/memory";
 import {
   ChatPromptTemplate,
-  MessagesPlaceholder,
   SystemMessagePromptTemplate,
 } from "langchain/prompts";
 import {
@@ -21,7 +19,7 @@ import type { LLMConfigType } from "../types";
 export const createFinalRunnable = async (
   context: string[],
   llmConfig: LLMConfigType,
-  memory: BufferMemory,
+  chat_history_summary: string,
   messageSource: MessageSource,
   embeddings: string[]
 ) => {
@@ -35,7 +33,7 @@ export const createFinalRunnable = async (
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
     formattedSystemMessagePrompt,
-    new MessagesPlaceholder("history"),
+    ["system", "{history}"],
     ["system", "{products}"],
     [messageSource === MessageSource.CHAT ? "user" : "system", "{input}"],
   ]);
@@ -52,15 +50,10 @@ export const createFinalRunnable = async (
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
-      memory: () => memory.loadMemoryVariables({}),
       products: (_) => "Here are relevant products\n" + embeddings.join("\r\n"),
     }),
     RunnablePassthrough.assign({
-      history: (previousOutput) => {
-        // @ts-ignore
-        const mem = previousOutput.memory.history;
-        return mem;
-      },
+      history: (_) => chat_history_summary,
     }),
     lastRunnable,
   ]);

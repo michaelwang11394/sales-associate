@@ -4,7 +4,6 @@ import { OPENAI_KEY, REPLICATE_KEY } from "../../constants";
 import { HalluctinationCheckSeverity, MessageSource } from "../../types";
 import {
   GPT_3_5_TURBO_16K_MODEL,
-  GPT_3_5_TURBO_MODEL,
   GPT_4_TURBO_16K_MODEL,
   Platforms,
 } from "./constants";
@@ -117,7 +116,10 @@ export const summarizeHistoryModelConfig = () => {
   return createModelConfig("chatOpenAI", {
     apiKey: OPENAI_KEY,
     temperature: 1.0,
-    modelName: GPT_3_5_TURBO_MODEL,
+    modelName: GPT_4_TURBO_16K_MODEL,
+    callbacks: [
+      new SupabaseCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
+    ],
   });
 };
 
