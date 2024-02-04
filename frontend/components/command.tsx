@@ -24,6 +24,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ChatBubble } from "./chat";
 
 export const productDelimiter = "====PRODUCT====";
+export const recDelimiter = "====REC====";
 export enum StructuredOutputStreamState {
   TEXT = 1,
   PRODUCT = 2,
@@ -259,14 +260,19 @@ export default function CommandPalette({ props }) {
           response += chunk;
           if (response.includes(productDelimiter)) {
             // plainText is completed
-            const splitChunks: string[] = response
+            const splitChunks: string[][] = response
               .split(productDelimiter)
-              .filter((chunk) => chunk.trim() !== "");
+              .filter((chunk) => chunk.trim() !== "")
+              .map((chunk) =>
+                chunk
+                  .split(recDelimiter)
+                  .filter((innerChunk) => innerChunk.trim() !== "")
+              );
             if (state === StructuredOutputStreamState.TEXT) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === newResponseMessage) {
-                    msg.content = [splitChunks[0]];
+                    msg.content = [splitChunks[0][0]];
                   }
                   return msg;
                 })
@@ -277,25 +283,26 @@ export default function CommandPalette({ props }) {
                 {
                   type: "text",
                   sender: SenderType.AI,
-                  content: [splitChunks[0]],
+                  content: [splitChunks[0][0]],
                 },
                 uuid
               );
               plainTextInserted = true;
+              setMessages((prevMessages) => [...prevMessages, linkMessage]);
             }
             for (let i = productInserted + 1; i < splitChunks.length; i++) {
-              if (productInserted === 0) {
-                setMessages((prevMessages) => [...prevMessages, linkMessage]);
-              }
+              productInserted = Math.max(productInserted, i - 1);
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === linkMessage) {
-                    msg.content = [...msg.content, JSON.parse(splitChunks[i])];
+                    msg.content[i - 1] = {
+                      ...JSON.parse(splitChunks[i][0]),
+                      recommendation: splitChunks[i][1],
+                    };
                   }
                   return msg;
                 })
               );
-              productInserted++;
             }
           } else {
             // Still in plainText field
@@ -310,13 +317,6 @@ export default function CommandPalette({ props }) {
           }
         }
 
-        const finalSplit: string[] = response
-          .split(productDelimiter)
-          .filter((chunk) => chunk.trim() !== "")
-          .splice(1)
-          .map((p) => {
-            return JSON.parse(p);
-          });
         // Occurs if there are no elements in product field
         if (!plainTextInserted) {
           setMessages((prevMessages) =>
@@ -338,8 +338,22 @@ export default function CommandPalette({ props }) {
           );
         }
 
-        if (productInserted > 0) {
-          console.log(linkMessage);
+        const finalSplit: string[][] = response
+          .split(productDelimiter)
+          .filter((chunk) => chunk.trim() !== "")
+          .splice(1)
+          .map((chunk) =>
+            chunk
+              .split(recDelimiter)
+              .filter((innerChunk) => innerChunk.trim() !== "")
+          )
+          .map((chunk) => {
+            return {
+              ...JSON.parse(chunk[0]),
+              recommendation: chunk[1],
+            };
+          });
+        if (finalSplit.length > 0) {
           linkMessage.id = await handleNewMessage(
             clientId,
             {
