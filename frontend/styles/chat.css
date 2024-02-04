@@ -12,13 +12,17 @@ body {
 .product-column {
   flex: 0 0 auto;
   width: 33%;
+  border-top: #d9dce2;
+}
+.divider {
+  background-color: #d9dce2;
 }
 .chat-column {
   flex: 0 0 auto;
-  border-radius: 10px;
   background: var(--White, #fff);
   max-height: calc(65rem-80px);
-  width: 67%;
+  border-top: #d9dce2;
+  width: 65%;
 }
 /* Media query for mobile devices */
 @media (max-width: 768px) {

@@ -493,7 +493,8 @@ export default function CommandPalette({ props }) {
                 ))}
               </div>
             )}
-            {/* Dividing Line. Beginning of product suggestions*/}
+            {/* Vertical Line Element */}
+            <div className="flex divider w-full h-1"></div>
 
             <div
               id="results and convo"
@@ -502,7 +503,7 @@ export default function CommandPalette({ props }) {
                 {!isMobile && (
                   <div
                     id="product-column"
-                    className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(65rem-80px)]">
+                    className="product-column min-w-0 p-6 overflow-y-auto p-4 max-h-[calc(65rem-80px)]">
                     <div className="font-bold mb-2 mt-2 text-center">
                       {suggestions && suggestions.length > 0
                         ? "You might like:"
@@ -544,11 +545,15 @@ export default function CommandPalette({ props }) {
                       ))}
                   </div>
                 )}
+                {/* Vertical Line Element */}
+                {!isMobile && (
+                  <div className="flex divider h-[calc(100vh)] w-1"></div>
+                )}
 
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 mobile-chat-column">
+                  className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column">
                   {messages
                     .filter((message) => message.content !== undefined)
                     .map((message, index) => (
