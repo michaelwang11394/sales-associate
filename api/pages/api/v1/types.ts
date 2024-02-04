@@ -22,6 +22,7 @@ export enum SenderType {
   AI = "ai",
   USER = "user",
   SYSTEM = "system", // Generated greetings, noninteractive
+  SUMMARY = "summary", // Summary of all messages up until then
 }
 
 export class HallucinationError extends Error {
