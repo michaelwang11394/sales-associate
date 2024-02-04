@@ -10,7 +10,7 @@ CAUTION: KEEP THIS SECTION IN SYNC WITH frontend/constants/constants.ts
 */
 export const VERCEL_URL =
   import.meta.env.VITE_VERCEL_LOCATION ??
-  "https://sales-associate-backend.vercel.app";
+  "https://sales-associate-backend-69cd426431e1.herokuapp.com";
 export const V1 = "api/v1";
 export const SUPABASE_PATH = "supabase";
 export const SUPABASE_MESSAGES_TABLE = "messages";

@@ -10,7 +10,7 @@ const shopify_client = shopifyApi({
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: LATEST_API_VERSION,
   scopes: ["read_products"],
-  hostName: process.env.VERCEL_HOST ?? "sales-associate-backend.vercel.app",
+  hostName: process.env.VERCEL_HOST ?? "sales-associate-backend-69cd426431e1.herokuapp.com",
   hostScheme: process.env.VERCEL_HOST === undefined ? "https" : "http",
   isEmbeddedApp: false,
 }).clients;
