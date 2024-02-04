@@ -60,7 +60,7 @@ export interface ChatMessage {
 }
 
 export interface ChatBubbleProps {
-  key?: number;
+  key: number;
   type: string;
   isAISender: boolean;
   content: any;
@@ -76,6 +76,7 @@ export interface ImageMessageProps {
 }
 
 export interface LinkMessageProps {
+  key: number;
   host: string;
   content: any[];
 }
