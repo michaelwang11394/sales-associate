@@ -9,7 +9,7 @@ import {
   type FormattedMessage,
   type Product,
 } from "@/constants/types";
-import { callHints, callOpenai, summarizeHistory } from "@/helper/ai";
+import { callHints, callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
@@ -364,8 +364,10 @@ export default function CommandPalette({ props }) {
             uuid
           );
         }
+        /* TODO: Taking too long and delaying next entry
         const summarize_uuid = uuidv4();
         await summarizeHistory(clientId!, summarize_uuid);
+        */
         refreshHints();
 
         setLoading(false);

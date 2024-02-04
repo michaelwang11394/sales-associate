@@ -10,7 +10,6 @@ import {
 import { MessageSource, SenderType } from "../../types";
 import { getProducts } from "../shopify";
 import {
-  getLastSummaryMessage,
   getMessages,
   hasItemsInCart,
   hasViewedProducts,
@@ -109,7 +108,12 @@ export const callOpenai = async (
   }
   const llmConfig = LLMConfig[source];
 
-  const { data: lastSummary } = await getLastSummaryMessage(store, clientId);
+  const { data } = await getMessages(
+    store,
+    clientId,
+    true,
+    SUPABASE_MESSAGES_RETRIEVED
+  );
 
   let embeddings, productMappings;
   await Promise.all([
@@ -125,7 +129,9 @@ export const callOpenai = async (
   const finalChain = await createFinalRunnable(
     customerContext,
     llmConfig,
-    lastSummary?.length === 1 ? lastSummary[0].content : "",
+    data?.length && data?.length > 0
+      ? data.map((msg) => msg.content).join("\n")
+      : "",
     source,
     embeddings!
   );
