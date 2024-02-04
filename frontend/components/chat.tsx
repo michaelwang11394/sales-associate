@@ -84,7 +84,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
 
   // For running binary search to find font size to match card
   const [recFontSize, setRecFontSize] = useState(12);
-  const [min, setMin] = useState(1);
+  const [min, setMin] = useState(8);
   const [max, setMax] = useState(50);
   const recRef = useRef(null);
   const cardRef = useRef(null);
@@ -94,7 +94,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   const [recDimensions, setRecDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    setMin(1);
+    setMin(8);
     setMax(recFontSize);
   }, [content[active]?.recommendation]);
 
