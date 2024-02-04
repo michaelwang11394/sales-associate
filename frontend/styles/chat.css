@@ -66,7 +66,14 @@ body {
   margin: 40px;
   position: relative;
   height: auto;
+  width: 400px;
   background-color: white;
+}
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+  .mobile-talk-bubble {
+    width: 200%; /* Adjust this value as needed */
+  }
 }
 .link-card-arrow {
   cursor: pointer;

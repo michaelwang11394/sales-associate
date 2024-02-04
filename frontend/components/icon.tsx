@@ -120,10 +120,9 @@ export default function Icon({ props }) {
       {/* Overlay Bubble */}
       {props.mountDiv === "embed" && iconRef.current && (
         <div
-          className="talk-bubble"
+          className="talk-bubble mobile-talk-bubble"
           style={{
             position: "absolute",
-            width: "400px",
             bottom: iconRef.current.offsetTop + iconSize / 2 + "px",
             right: iconRef.current.offsetLeft + iconSize / 3 + "px",
           }}>
