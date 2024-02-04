@@ -34,7 +34,6 @@ export default async function handler(
   const clientId = request.query.clientId as string;
   const requestUuid = request.query.requestUuid as string;
   const source = request.query.source as MessageSource;
-  const messageIds = request.query.ids as string[];
   stream.on("channel" + requestUuid, async function (event, data) {
     if (event === "chunk") {
       await new Promise<void>((resolve) => {
@@ -48,27 +47,5 @@ export default async function handler(
     }
   });
 
-  await callOpenai(
-    input,
-    store,
-    clientId,
-    requestUuid,
-    source,
-    messageIds,
-    stream
-  );
-
-  /*
-  try {
-    return httpResponse(
-      request,
-      response,
-      200,
-      "Openai call finished with",
-      await callOpenai(input, store, clientId, requestUuid, source, messageIds)
-    );
-  } catch (error: any) {
-    return httpResponse(request, response, 404, error.message);
-  }
-  */
+  await callOpenai(input, store, clientId, requestUuid, source, stream);
 }

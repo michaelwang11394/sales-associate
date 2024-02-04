@@ -1,8 +1,6 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
-import type { BufferMemory } from "langchain/memory";
 import {
   ChatPromptTemplate,
-  MessagesPlaceholder,
   SystemMessagePromptTemplate,
 } from "langchain/prompts";
 import {
@@ -21,9 +19,9 @@ import type { LLMConfigType } from "../types";
 export const createFinalRunnable = async (
   context: string[],
   llmConfig: LLMConfigType,
-  memory: BufferMemory,
+  chat_history_summary: string,
   messageSource: MessageSource,
-  previous_chain?: RunnableSequence // If chaining, what is the previous chain
+  embeddings: string[]
 ) => {
   const systemTemplate = llmConfig.prompt;
 
@@ -35,7 +33,7 @@ export const createFinalRunnable = async (
 
   const chatPrompt = ChatPromptTemplate.fromMessages([
     formattedSystemMessagePrompt,
-    new MessagesPlaceholder("history"),
+    ["system", "{history}"],
     ["system", "{products}"],
     [messageSource === MessageSource.CHAT ? "user" : "system", "{input}"],
   ]);
@@ -44,23 +42,6 @@ export const createFinalRunnable = async (
     Do not create structured output with the embed greeting
    */
   const salesModel = new ChatOpenAI(salesModelConfig());
-  /*
-  const lastRunnable =
-    messageSource === MessageSource.CHAT
-      ? chatPrompt.pipe(
-          salesModel.bind({
-            functions: [
-              {
-                name: "output_formatter",
-                description: "Always use to properly format output",
-                parameters: zodToJsonSchema(chatResponseSchema),
-              },
-            ],
-            function_call: { name: "output_formatter" },
-          })
-        )
-      : chatPrompt.pipe(salesModel);
-      */
   const lastRunnable = await getLastRunnable(
     messageSource,
     chatPrompt,
@@ -69,20 +50,15 @@ export const createFinalRunnable = async (
 
   const salesChain = RunnableSequence.from([
     RunnablePassthrough.assign({
-      memory: () => memory.loadMemoryVariables({}),
-      products: (input) => input.products ?? "No relevant products",
+      products: (_) => "Here are relevant products\n" + embeddings.join("\r\n"),
     }),
     RunnablePassthrough.assign({
-      history: (previousOutput) => {
-        // @ts-ignore
-        const mem = previousOutput.memory.history;
-        return mem;
-      },
+      history: (_) => chat_history_summary,
     }),
     lastRunnable,
   ]);
 
-  return previous_chain ? previous_chain.pipe(salesChain) : salesChain;
+  return salesChain;
 };
 
 const getLastRunnable = async (

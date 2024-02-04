@@ -1,5 +1,4 @@
 import {
-  MESSAGES_HISTORY_LIMIT,
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
 } from "@/constants/constants";
@@ -25,6 +24,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ChatBubble } from "./chat";
 
 export const productDelimiter = "====PRODUCT====";
+export const recDelimiter = "====REC====";
 export enum StructuredOutputStreamState {
   TEXT = 1,
   PRODUCT = 2,
@@ -48,8 +48,16 @@ export default function CommandPalette({ props }) {
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [hints, setHints] = useState<string[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
   const clientId = window.localStorage.getItem("webPixelShopifyClientId");
   const host = window.location.host;
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    setIsMobile(/iphone|ipad|ipod|android/i.test(userAgent));
+
+    // Other useEffect code
+  }, []);
 
   useEffect(() => {
     if (clientId) {
@@ -57,9 +65,9 @@ export default function CommandPalette({ props }) {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
-          const messages = data
-            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
-            .reverse();
+          const messages = data.data!.map((messageRow: DBMessage) =>
+            formatDBMessage(messageRow)
+          );
           setMessages((prevMessages) => messages.concat(prevMessages));
           refreshHints();
         }
@@ -77,10 +85,7 @@ export default function CommandPalette({ props }) {
             greetingPrompt,
             clientId!,
             uuid,
-            MessageSource.CHAT_GREETING,
-            messages
-              .slice(-1 * MESSAGES_HISTORY_LIMIT)
-              .map((m) => String(m.id!))
+            MessageSource.CHAT_GREETING
           )
             .then(async (reader) => {
               setMessages((prevMessages) => [
@@ -172,11 +177,7 @@ export default function CommandPalette({ props }) {
       "User has just opened a text box for a chat bot. Recommend three questions or requests they can ask to learn more about the store or continue the conversation",
       clientId!,
       uuid,
-      MessageSource.HINTS,
-      messages
-        .slice(-1 * MESSAGES_HISTORY_LIMIT)
-        .filter((m) => !isNaN(m.id!))
-        .map((m) => String(m.id!))
+      MessageSource.HINTS
     )
       .then((res) => {
         const hints = JSON.parse(
@@ -244,13 +245,7 @@ export default function CommandPalette({ props }) {
       sender: SenderType.AI,
       content: [""],
     };
-    callOpenai(
-      input,
-      clientId!,
-      uuid,
-      MessageSource.CHAT,
-      messages.slice(-1 - MESSAGES_HISTORY_LIMIT).map((m) => String(m.id!))
-    )
+    callOpenai(input, clientId!, uuid, MessageSource.CHAT)
       .then(async (reader) => {
         const linkMessage = {
           type: "link",
@@ -273,14 +268,19 @@ export default function CommandPalette({ props }) {
           response += chunk;
           if (response.includes(productDelimiter)) {
             // plainText is completed
-            const splitChunks: string[] = response
+            const splitChunks: string[][] = response
               .split(productDelimiter)
-              .filter((chunk) => chunk.trim() !== "");
+              .filter((chunk) => chunk.trim() !== "")
+              .map((chunk) =>
+                chunk
+                  .split(recDelimiter)
+                  .filter((innerChunk) => innerChunk.trim() !== "")
+              );
             if (state === StructuredOutputStreamState.TEXT) {
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === newResponseMessage) {
-                    msg.content = [splitChunks[0]];
+                    msg.content = [splitChunks[0][0]];
                   }
                   return msg;
                 })
@@ -291,25 +291,26 @@ export default function CommandPalette({ props }) {
                 {
                   type: "text",
                   sender: SenderType.AI,
-                  content: [splitChunks[0]],
+                  content: [splitChunks[0][0]],
                 },
                 uuid
               );
               plainTextInserted = true;
+              setMessages((prevMessages) => [...prevMessages, linkMessage]);
             }
             for (let i = productInserted + 1; i < splitChunks.length; i++) {
-              if (productInserted === 0) {
-                setMessages((prevMessages) => [...prevMessages, linkMessage]);
-              }
+              productInserted = Math.max(productInserted, i - 1);
               setMessages((prevMessages) =>
                 prevMessages.map((msg) => {
                   if (msg === linkMessage) {
-                    msg.content = [...msg.content, JSON.parse(splitChunks[i])];
+                    msg.content[i - 1] = {
+                      ...JSON.parse(splitChunks[i][0]),
+                      recommendation: splitChunks[i][1],
+                    };
                   }
                   return msg;
                 })
               );
-              productInserted++;
             }
           } else {
             // Still in plainText field
@@ -324,13 +325,6 @@ export default function CommandPalette({ props }) {
           }
         }
 
-        const finalSplit: string[] = response
-          .split(productDelimiter)
-          .filter((chunk) => chunk.trim() !== "")
-          .splice(1)
-          .map((p) => {
-            return JSON.parse(p);
-          });
         // Occurs if there are no elements in product field
         if (!plainTextInserted) {
           setMessages((prevMessages) =>
@@ -352,8 +346,22 @@ export default function CommandPalette({ props }) {
           );
         }
 
-        if (productInserted > 0) {
-          console.log(linkMessage);
+        const finalSplit: string[][] = response
+          .split(productDelimiter)
+          .filter((chunk) => chunk.trim() !== "")
+          .splice(1)
+          .map((chunk) =>
+            chunk
+              .split(recDelimiter)
+              .filter((innerChunk) => innerChunk.trim() !== "")
+          )
+          .map((chunk) => {
+            return {
+              ...JSON.parse(chunk[0]),
+              recommendation: chunk[1],
+            };
+          });
+        if (finalSplit.length > 0) {
           linkMessage.id = await handleNewMessage(
             clientId,
             {
@@ -364,6 +372,10 @@ export default function CommandPalette({ props }) {
             uuid
           );
         }
+        /* TODO: Taking too long and delaying next entry
+        const summarize_uuid = uuidv4();
+        await summarizeHistory(clientId!, summarize_uuid);
+        */
         refreshHints();
 
         setLoading(false);
@@ -399,7 +411,7 @@ export default function CommandPalette({ props }) {
   return (
     <div
       id="overlay"
-      className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[65rem] w-[80rem] m-auto bg-gray-200 rounded-lg shadow-lg overflow-auto">
+      className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 rounded-lg shadow-lg overflow-auto">
       <section
         id={PALETTE_DIV_ID}
         className="flex flex-grow overflow-hidden bg-cover w-full">
@@ -487,54 +499,56 @@ export default function CommandPalette({ props }) {
               id="results and convo"
               className="flex flex-grow border-tborder-gray-300 max-h-[calc(65rem-80px)]">
               <div className="flex flex-grow">
-                <div
-                  id="product-column"
-                  className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(65rem-80px)]">
-                  <div className="font-bold mb-2 mt-2 text-center">
-                    {suggestions && suggestions.length > 0
-                      ? "You might like:"
-                      : "We're sorry, no results matches this search"}
+                {!isMobile && (
+                  <div
+                    id="product-column"
+                    className="product-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(65rem-80px)]">
+                    <div className="font-bold mb-2 mt-2 text-center">
+                      {suggestions && suggestions.length > 0
+                        ? "You might like:"
+                        : "We're sorry, no results matches this search"}
+                    </div>
+
+                    {suggestions.length > 0 &&
+                      suggestions.slice(0, 10).map((product, index) => (
+                        <a
+                          key={index}
+                          href={`https://${host}/products/${product.handle}`}
+                          className="p-2"
+                          target="_blank"
+                          rel="noopener noreferrer">
+                          <div className="flex flex-grow product-card-shadow p-2 m-1">
+                            {/* Product Image */}
+                            <div className="w-1/3 h-40">
+                              <img
+                                src={product.featured_image.url}
+                                alt={product.featured_image.alt}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+
+                            {/* Product Details */}
+                            <div className="w-2/3 flex flex-grow flex-col space-y-1">
+                              {/* Product Name */}
+                              <div className="h-8 search-card-header flex-grow">
+                                {product.title}
+                              </div>
+
+                              {/* Product Price */}
+                              <div>
+                                {product.price ? "$" + product.price : ""}
+                              </div>
+                            </div>
+                          </div>
+                        </a>
+                      ))}
                   </div>
-
-                  {suggestions.length > 0 &&
-                    suggestions.slice(0, 10).map((product, index) => (
-                      <a
-                        key={index}
-                        href={`https://${host}/products/${product.handle}`}
-                        className="p-2"
-                        target="_blank"
-                        rel="noopener noreferrer">
-                        <div className="flex flex-grow product-card-shadow p-2 m-1">
-                          {/* Product Image */}
-                          <div className="w-1/3 h-40">
-                            <img
-                              src={product.featured_image.url}
-                              alt={product.featured_image.alt}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-
-                          {/* Product Details */}
-                          <div className="w-2/3 flex flex-grow flex-col space-y-1">
-                            {/* Product Name */}
-                            <div className="h-8 search-card-header flex-grow">
-                              {product.title}
-                            </div>
-
-                            {/* Product Price */}
-                            <div>
-                              {product.price ? "$" + product.price : ""}
-                            </div>
-                          </div>
-                        </div>
-                      </a>
-                    ))}
-                </div>
+                )}
 
                 {/* Chat Column*/}
                 <div
                   id="chat-column"
-                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 max-h-[calc(65rem-80px)">
+                  className="chat-column min-w-0 p-6 overflow-y-auto border-2 p-4 mobile-chat-column">
                   {messages
                     .filter((message) => message.content !== undefined)
                     .map((message, index) => (

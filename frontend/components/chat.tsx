@@ -5,7 +5,7 @@ import type {
   TextMessageProps,
 } from "@/constants/types";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const TextMessage: React.FC<TextMessageProps> = ({
   text,
@@ -76,22 +76,79 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
 */
 
 const LinkMessage: React.FC<LinkMessageProps> = ({
+  key,
   host,
   content,
 }): React.JSX.Element => {
   const [active, setActive] = useState(0);
 
+  // For running binary search to find font size to match card
+  const [recFontSize, setRecFontSize] = useState(12);
+  const [min, setMin] = useState(8);
+  const [max, setMax] = useState(50);
+  const recRef = useRef(null);
+  const cardRef = useRef(null);
+  const overFlowAllowance = 1.05; // For resizing font
+
+  // State to track the dimensions of recRef
+  const [recDimensions, setRecDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setMin(8);
+    setMax(recFontSize);
+  }, [content[active]?.recommendation]);
+
+  useEffect(() => {
+    const recDiv = recRef.current;
+    if (recDiv) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const { width, height } = entry.contentRect;
+          setRecDimensions({ width, height });
+        }
+      });
+      resizeObserver.observe(recDiv);
+      return () => resizeObserver.unobserve(recDiv);
+    }
+  }, [recRef]);
+
+  useEffect(() => {
+    const adjustFontSize = () => {
+      const recDiv = recRef.current;
+      const cardDiv = cardRef.current;
+      if (!recDiv || !cardDiv) return;
+
+      const recHeight = recDiv.clientHeight;
+      const cardHeight = cardDiv.clientHeight;
+
+      // Check if recHeight is within 110% of cardHeight
+      if (
+        recHeight <= cardHeight * overFlowAllowance &&
+        recHeight >= cardHeight
+      ) {
+        return;
+      }
+
+      if (recHeight > cardHeight * overFlowAllowance) {
+        setMax(recFontSize);
+        setRecFontSize((prevFontSize) => (min + prevFontSize) / 2);
+      } else {
+        setMin(recFontSize);
+        setRecFontSize((prevFontSize) => (max + prevFontSize) / 2);
+      }
+    };
+
+    adjustFontSize();
+  }, [recDimensions, recFontSize, min, max, active, recRef, cardRef]);
+
   const handleRightClick = () => {
     // Add your click handler logic here
     setActive(Math.min(active + 1, content.length - 1));
-    console.log("Right clicked", active);
-    console.log(content);
   };
 
   const handleLeftClick = () => {
     // Add your click handler logic here
     setActive(Math.max(active - 1, 0));
-    console.log("Left clicked", active);
   };
 
   const renderDots = () => {
@@ -116,26 +173,33 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   return (
     <div className="w-full grid grid-cols-2 gap-4">
       {/* Existing Element */}
-      <div>
+      <div className="relative">
         {/* Card */}
-        <div className="product-card-shadow">
-          <a
-            href={`https://${host}/products/${content[active].handle}`}
-            target="_blank"
-            rel="noopener noreferrer">
-            <img
-              src={content[active].image}
-              alt={content[active].name}
-              className="w-full object-cover"
-            />
-            <div className="flex flex-col p-3">
-              <h2 className="text-xxl font-semibold">{content[active].name}</h2>
-              <p className="text-lg font-medium text-gray-500 mb-4">
-                {content[active].price ? "$" + content[active].price : ""}
-              </p>
-            </div>
-          </a>
-        </div>
+        {content[active] && (
+          <div
+            ref={cardRef}
+            className="product-card-shadow"
+            id="existing-element">
+            <a
+              href={`https://${host}/products/${content[active].handle}`}
+              target="_blank"
+              rel="noopener noreferrer">
+              <img
+                src={content[active].image}
+                alt={content[active].name}
+                className="w-full object-cover"
+              />
+              <div className="flex flex-col p-3">
+                <h2 className="text-xxl font-semibold">
+                  {content[active].name}
+                </h2>
+                <p className="text-lg font-medium text-gray-500 mb-4">
+                  {content[active].price ? "$" + content[active].price : ""}
+                </p>
+              </div>
+            </a>
+          </div>
+        )}
 
         {content.length > 1 && (
           <div className="w-full pt-8 grid grid-cols-3 items-center">
@@ -188,9 +252,15 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
         )}
       </div>
 
-      <div>
-        <p className="text-base sm:text-xl md:text-xl lg:text-3xl ai-grey-text leading-relaxed mb-4 p-8">
-          {content[active].recommendation}
+      <div className="relative" style={{ display: "inline-block" }}>
+        <p
+          ref={recRef}
+          id="rec"
+          className="ai-grey-text leading-relaxed mb-4 p-8"
+          style={{
+            fontSize: `${recFontSize}px`,
+          }}>
+          {content[active]?.recommendation ?? ""}
         </p>
         {/* Add any additional styling or elements for the recommendation input */}
       </div>
@@ -199,6 +269,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
 };
 
 export const ChatBubble = ({
+  key,
   type,
   isAISender,
   content,
@@ -213,7 +284,7 @@ export const ChatBubble = ({
         // TODO Add IMG
         return <ImageMessage src={content || ""} />;
       case "link":
-        return <LinkMessage content={content} host={host} />;
+        return <LinkMessage key={key} content={content} host={host} />;
       default:
         return <TextMessage text={content[0] || ""} isAISender={isAISender} />;
     }
