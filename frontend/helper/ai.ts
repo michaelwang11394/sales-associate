@@ -7,7 +7,7 @@ import {
 } from "@/constants/constants";
 import { HTTPHelper } from "./http";
 
-export const callOpenai = async (
+export const callOpenaiStreaming = async (
   input: string,
   clientId: string,
   requestUuid: string,
@@ -25,6 +25,22 @@ export const callOpenai = async (
     method: "POST",
   });
   return res?.body?.getReader();
+};
+
+export const callOpenaiInvoke = async (
+  input: string,
+  clientId: string,
+  requestUuid: string,
+  source: string
+) => {
+  const res: Response = await HTTPHelper.get(VERCEL_URL, [V1, OPENAI_PATH], {
+    input: input,
+    store: location.host,
+    clientId: clientId,
+    requestUuid: requestUuid,
+    source: source,
+  });
+  return res?.body;
 };
 
 export const callHints = async (

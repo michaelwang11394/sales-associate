@@ -24,10 +24,10 @@ const createChatOpenAIConfig = (
   };
 };
 
-const createReplicateConfig = (apiKey: string, modelName: string) => {
+const createReplicateConfig = (apiKey: string, model: string) => {
   return {
     apiKey,
-    modelName,
+    model,
   };
 };
 
@@ -131,7 +131,12 @@ export const salesModelConfig = () => {
     callbacks: [
       new SupabaseCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
     ],
-  });
+  }) as {
+    apiKey: string;
+    temperature: number;
+    modelName: string;
+    callbacks: any[];
+  };
 };
 
 export const simpleSearchModelConfig = () => {
@@ -139,13 +144,20 @@ export const simpleSearchModelConfig = () => {
     apiKey: OPENAI_KEY,
     temperature: 1.0,
     modelName: GPT_3_5_TURBO_16K_MODEL,
-  });
+  }) as {
+    apiKey: string;
+    temperature: number;
+    modelName: string;
+  };
 };
 
 export const replicateMistralModelConfig = () => {
   return createModelConfig("replicate", {
     apiKey: REPLICATE_KEY,
-    modelName:
+    model:
       "mistralai/mixtral-8x7b-instruct-v0.1:7b3212fbaf88310cfef07a061ce94224e82efc8403c26fc67e8f6c065de51f21",
-  });
+  }) as {
+    apiKey: string;
+    model: `${string}/${string}:${string}`;
+  };
 };

@@ -137,14 +137,14 @@ export const callOpenai = async (
   );
 
   const response =
-    source === MessageSource.HINTS
-      ? await new Runnable(finalChain).run(input, store, clientId, requestUuid)
-      : await new Streamable(finalChain, productMappings!, streamWriter!).run(
+    source === MessageSource.CHAT
+      ? await new Streamable(finalChain, productMappings!, streamWriter!).run(
           input,
           store,
           source,
           clientId,
           requestUuid
-        );
+        )
+      : await new Runnable(finalChain).run(input, store, clientId, requestUuid);
   return { show: true, openai: response };
 };

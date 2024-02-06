@@ -34,7 +34,7 @@ export default async function handler(
   const clientId = request.query.clientId as string;
   const requestUuid = request.query.requestUuid as string;
   const source = request.query.source as MessageSource;
-  stream.on("channel" + requestUuid, async function (event, data) {
+  const listener = async function (event: string, data: any) {
     if (event === "chunk") {
       await new Promise<void>((resolve) => {
         response.write(data, "utf-8", () => resolve());
@@ -45,7 +45,9 @@ export default async function handler(
       response.destroy();
       stream.removeAllListeners("channel" + requestUuid);
     }
-  });
+  };
+  stream.on("channel" + requestUuid, listener);
 
   await callOpenai(input, store, clientId, requestUuid, source, stream);
+  stream.removeListener("channel" + requestUuid, listener);
 }
