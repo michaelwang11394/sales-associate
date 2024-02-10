@@ -10,7 +10,7 @@ const shopify_client = shopifyApi({
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: LATEST_API_VERSION,
   scopes: ["read_products"],
-  hostName: process.env.VERCEL_HOST ?? "sales-associate-backend.vercel.app",
+  hostName: process.env.VERCEL_HOST ?? "sales-associate-backend-69cd426431e1.herokuapp.com",
   hostScheme: process.env.VERCEL_HOST === undefined ? "https" : "http",
   isEmbeddedApp: false,
 }).clients;
@@ -106,10 +106,18 @@ export const getProducts = async (store: string, limit = 250) => {
     return yaml.dump(product);
   });
 
-  return { stringifiedProducts, metadataIds, strippedProducts };
+  const lookUpProducts = formattedProducts.reduce(
+    (acc: Record<string, any>, product: any) => {
+      acc[product.id] = product;
+      return acc;
+    },
+    {}
+  );
+
+  return { stringifiedProducts, metadataIds, strippedProducts, lookUpProducts };
 };
 
-const getProductById = async (store: string, product_id: string) => {
+const getProductByIdYaml = async (store: string, product_id: string) => {
   const data = (
     await (
       await createClient(store)
@@ -119,6 +127,18 @@ const getProductById = async (store: string, product_id: string) => {
   ).body;
 
   return yaml.dump(formatCatalogEntry(data?.product));
+};
+
+export const getProductById = async (store: string, product_id: string) => {
+  const data = (
+    await (
+      await createClient(store)
+    ).get<any>({
+      path: "products/" + product_id,
+    })
+  ).body;
+
+  return formatCatalogEntry(data?.product);
 };
 
 const getTwoWeekAgo = () => {
@@ -179,7 +199,7 @@ export const computeBestSellers = async (store: string, limit = 10) => {
     Object.values(orderCount)
       .sort((a, b) => b.count - a.count)
       .slice(0, limit)
-      .map(async (order) => await getProductById(store, order.product_id))
+      .map(async (order) => await getProductByIdYaml(store, order.product_id))
   );
 
   await setBestSellers(store, sortedOrderCount);

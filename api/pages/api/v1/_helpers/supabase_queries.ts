@@ -24,7 +24,33 @@ export const getMessages = async (
       .eq("clientId", clientId)
       .eq("store", store)
       .neq("sender", filterSystem ? SenderType.SYSTEM : null)
+      .neq("sender", SenderType.SUMMARY)
       .limit(limit);
+
+    if (error) {
+      console.error("Error", error);
+      return { success: false, message: "Error getting messages." };
+    }
+    return { success: true, data: data.reverse() };
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const getLastSummaryMessage = async (
+  store: string,
+  clientId: string
+) => {
+  try {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .eq("clientId", clientId)
+      .eq("store", store)
+      .eq("sender", SenderType.SUMMARY)
+      .limit(1);
 
     if (error) {
       console.error("Error", error);
@@ -235,7 +261,14 @@ export const hasViewedProducts = async (
     }
 
     if (data.length > 0) {
-      const products = data.map((item) => yaml.dump(item.detail));
+      // Extract titles
+      const titles = data.map(
+        (item) => item.detail.productVariant.product.title
+      );
+      // Remove duplicates by converting to Set and back to Array
+      const uniqueTitles = Array.from(new Set(titles));
+      // Convert to YAML
+      const products = uniqueTitles.map((title) => yaml.dump(title));
       return {
         hasViewed: true,
         message: `This customer has viewed the following products:\n${products.join(

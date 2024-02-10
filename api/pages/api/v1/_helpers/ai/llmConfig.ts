@@ -4,7 +4,6 @@ import { OPENAI_KEY, REPLICATE_KEY } from "../../constants";
 import { HalluctinationCheckSeverity, MessageSource } from "../../types";
 import {
   GPT_3_5_TURBO_16K_MODEL,
-  GPT_3_5_TURBO_MODEL,
   GPT_4_TURBO_16K_MODEL,
   Platforms,
 } from "./constants";
@@ -52,22 +51,22 @@ export const createModelConfig = (modelType: string, config: any) => {
 
 export const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.CHAT_GREETING]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep all responses to less than 100 characters.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.EMBED]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.HINTS]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer to the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
@@ -77,42 +76,19 @@ export const chatResponseSchema = z.object({
   plainText: z
     .string()
     .describe(
-      "The response directly displayed to user. Keep to less than 200 characters"
+      "The response directly displayed to user. Keep to less than 250 characters"
     ),
   products: z
     .array(
       z.object({
+        product_id: z
+          .string()
+          .describe("The product id that is referred to in recommendation"),
         recommendation: z
           .string()
           .describe(
             "Should be around 500 characters, use bullet points and paragraphs for readability. Detailed breakdown why this product is relevant and a great fit for user. Format is one line summary, followed by a paragraph for reasons why this is relevant."
           ),
-        name: z.string().describe("The name of the product"),
-        product_handle: z.string().describe("The product handle"),
-        image: z
-          .string()
-          .includes("cdn.shopify.com", {
-            message: "Must include cdn.shopify.com",
-          })
-          .describe(
-            "The image url of the product. Must include cdn.shopify.com"
-          ),
-        variants: z
-          .array(
-            z
-              .object({
-                id: z.string().describe("The id of this variant"),
-                title: z.string().describe("The title of this variant"),
-                price: z.number().describe("The price of the product"),
-                featured_image: z
-                  .string()
-                  .url()
-                  .describe("The featured image of the product variant"),
-              })
-              .describe("A variant of product that has a specific price")
-          )
-          .describe("Array of variants of product if not empty")
-          .optional(),
       })
     )
     .describe("A list of products referred to in the response"),
@@ -140,7 +116,10 @@ export const summarizeHistoryModelConfig = () => {
   return createModelConfig("chatOpenAI", {
     apiKey: OPENAI_KEY,
     temperature: 1.0,
-    modelName: GPT_3_5_TURBO_MODEL,
+    modelName: GPT_4_TURBO_16K_MODEL,
+    callbacks: [
+      new SupabaseCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
+    ],
   });
 };
 

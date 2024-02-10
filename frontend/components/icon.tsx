@@ -46,9 +46,9 @@ export default function Icon({ props }) {
         if (!data) {
           console.error("Message history could not be fetched");
         } else {
-          const messages = data
-            .data!.map((messageRow: DBMessage) => formatDBMessage(messageRow))
-            .reverse();
+          const messages = data.data!.map((messageRow: DBMessage) =>
+            formatDBMessage(messageRow)
+          );
           getLastPixelEvent(clientId).then((d) => {
             d.data?.forEach(async (event) => {
               const uuid = uuidv4();
@@ -120,10 +120,9 @@ export default function Icon({ props }) {
       {/* Overlay Bubble */}
       {props.mountDiv === "embed" && iconRef.current && (
         <div
-          className="talk-bubble"
+          className="talk-bubble mobile-talk-bubble"
           style={{
             position: "absolute",
-            width: "400px",
             bottom: iconRef.current.offsetTop + iconSize / 2 + "px",
             right: iconRef.current.offsetLeft + iconSize / 3 + "px",
           }}>
