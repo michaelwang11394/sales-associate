@@ -11,6 +11,7 @@ import {
 } from "@/constants/types";
 import { callHints, callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
+import { expose } from "@/helper/experiment";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
   getLastPixelEvent,
@@ -19,7 +20,7 @@ import {
   insertMessage,
 } from "@/helper/supabase";
 import { debounce } from "lodash";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ChatBubble } from "./chat";
 
@@ -49,7 +50,9 @@ export default function CommandPalette({ props }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [hints, setHints] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
-  const clientId = window.localStorage.getItem("webPixelShopifyClientId");
+  const clientId = useRef(
+    window.localStorage.getItem("webPixelShopifyClientId")
+  );
   const host = window.location.host;
 
   useEffect(() => {
@@ -60,77 +63,100 @@ export default function CommandPalette({ props }) {
   }, []);
 
   useEffect(() => {
-    if (clientId) {
-      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
-        if (!data) {
-          console.error("Message history could not be fetched");
-        } else {
-          const messages = data.data!.map((messageRow: DBMessage) =>
-            formatDBMessage(messageRow)
-          );
-          setMessages((prevMessages) => messages.concat(prevMessages));
-          refreshHints();
+    const attemptToFetchAndProcessEvents = async (retryCount = 0) => {
+      clientId.current = window.localStorage.getItem("webPixelShopifyClientId");
+      if (clientId.current) {
+        const variant = await expose(clientId.current);
+        if (variant === "control") {
+          // If we're in control group avoid any unnecessary supabase or openai calls
+          return;
         }
-      });
-      getLastPixelEvent(clientId).then((data) => {
-        data.data?.forEach(async (event) => {
-          const greetingPrompt = await getGreetingMessage(event);
-          const uuid = uuidv4();
-          const newResponseMessage: FormattedMessage = {
-            type: "text",
-            sender: SenderType.SYSTEM,
-            content: [""],
-          };
-          callOpenai(
-            greetingPrompt,
-            clientId!,
-            uuid,
-            MessageSource.CHAT_GREETING
-          )
-            .then(async (reader) => {
-              setMessages((prevMessages) => [
-                ...prevMessages,
-                newResponseMessage,
-              ]);
-              let full = "";
-              let streamDone = false;
-              while (true && !streamDone) {
-                const { done, value } = await reader!.read();
-                streamDone = done;
-                if (streamDone) {
-                  // Do something with last chunk of data then exit reader
-                  reader?.cancel();
-                  break;
-                }
-                let chunk = new TextDecoder("utf-8").decode(value);
-                full += chunk;
-                setMessages((prevMessages) =>
-                  prevMessages.map((msg) => {
-                    if (msg === newResponseMessage) {
-                      msg.content = [full];
-                    }
-                    return msg;
-                  })
-                );
-              }
-              await handleNewMessage(clientId, newResponseMessage, uuid);
-            })
-            .catch((err) => {
-              setMessages((prevMessages) =>
-                prevMessages.filter((message) => message !== newResponseMessage)
+        getMessages(clientId.current, SUPABASE_MESSAGES_RETRIEVED).then(
+          (data) => {
+            if (!data) {
+              console.error("Message history could not be fetched");
+            } else {
+              const messages = data.data!.map((messageRow: DBMessage) =>
+                formatDBMessage(messageRow)
               );
-              console.error(err);
-            });
+              setMessages((prevMessages) => messages.concat(prevMessages));
+              refreshHints();
+            }
+          }
+        );
+        getLastPixelEvent(clientId.current).then((data) => {
+          data.data?.forEach(async (event) => {
+            const greetingPrompt = await getGreetingMessage(event);
+            const uuid = uuidv4();
+            const newResponseMessage: FormattedMessage = {
+              type: "text",
+              sender: SenderType.SYSTEM,
+              content: [""],
+            };
+            callOpenai(
+              greetingPrompt,
+              clientId.current!,
+              uuid,
+              MessageSource.CHAT_GREETING
+            )
+              .then(async (reader) => {
+                setMessages((prevMessages) => [
+                  ...prevMessages,
+                  newResponseMessage,
+                ]);
+                let full = "";
+                let streamDone = false;
+                while (true && !streamDone) {
+                  const { done, value } = await reader!.read();
+                  streamDone = done;
+                  if (streamDone) {
+                    // Do something with last chunk of data then exit reader
+                    reader?.cancel();
+                    break;
+                  }
+                  let chunk = new TextDecoder("utf-8").decode(value);
+                  full += chunk;
+                  setMessages((prevMessages) =>
+                    prevMessages.map((msg) => {
+                      if (msg === newResponseMessage) {
+                        msg.content = [full];
+                      }
+                      return msg;
+                    })
+                  );
+                }
+                await handleNewMessage(
+                  clientId.current,
+                  newResponseMessage,
+                  uuid
+                );
+              })
+              .catch((err) => {
+                setMessages((prevMessages) =>
+                  prevMessages.filter(
+                    (message) => message !== newResponseMessage
+                  )
+                );
+                console.error(err);
+              });
+          });
         });
-      });
-    }
+      } else if (retryCount < 5) {
+        // Limit the number of retries to prevent infinite loop
+        setTimeout(() => {
+          attemptToFetchAndProcessEvents(retryCount + 1);
+        }, 500);
+      }
+    };
+
+    attemptToFetchAndProcessEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(
     () => {
-      if (clientId) {
-        getMentionedProducts(clientId).then((data) => {
+      if (clientId.current) {
+        getMentionedProducts(clientId.current).then((data) => {
           if (!data) {
             console.error("Product mentions could not be fetched");
           } else {
@@ -175,7 +201,7 @@ export default function CommandPalette({ props }) {
     const uuid = uuidv4();
     callHints(
       "User has just opened a text box for a chat bot. Recommend three questions or requests they can ask to learn more about the store or continue the conversation",
-      clientId!,
+      clientId.current!,
       uuid,
       MessageSource.HINTS
     )
@@ -239,13 +265,13 @@ export default function CommandPalette({ props }) {
     };
     const uuid = uuidv4();
     setMessages((prevMessages) => [...prevMessages, newUserMessage]);
-    await handleNewMessage(clientId, newUserMessage, uuid);
+    await handleNewMessage(clientId.current, newUserMessage, uuid);
     const newResponseMessage: FormattedMessage = {
       type: "text",
       sender: SenderType.AI,
       content: [""],
     };
-    callOpenai(input, clientId!, uuid, MessageSource.CHAT)
+    callOpenai(input, clientId.current!, uuid, MessageSource.CHAT)
       .then(async (reader) => {
         const linkMessage = {
           type: "link",
@@ -287,7 +313,7 @@ export default function CommandPalette({ props }) {
               );
               state = StructuredOutputStreamState.PRODUCT;
               newResponseMessage.id = await handleNewMessage(
-                clientId,
+                clientId.current,
                 {
                   type: "text",
                   sender: SenderType.AI,
@@ -336,7 +362,7 @@ export default function CommandPalette({ props }) {
             })
           );
           newResponseMessage.id = await handleNewMessage(
-            clientId,
+            clientId.current,
             {
               type: "text",
               sender: SenderType.AI,
@@ -363,7 +389,7 @@ export default function CommandPalette({ props }) {
           });
         if (finalSplit.length > 0) {
           linkMessage.id = await handleNewMessage(
-            clientId,
+            clientId.current,
             {
               type: "link",
               sender: SenderType.AI,
@@ -385,7 +411,7 @@ export default function CommandPalette({ props }) {
           prevMessages.filter((message) => message !== newResponseMessage)
         );
         await handleNewMessage(
-          clientId,
+          clientId.current,
           {
             type: "text",
             content: ["AI has encountered an error. Please try agian."],
