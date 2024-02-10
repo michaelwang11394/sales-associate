@@ -33,3 +33,4 @@ export const SUPABASE_EMBEDDINGS_CREATE_ENDPOINT = "create";
 export const OPENAI_PATH = "openai";
 export const HINTS_PATH = "hints";
 export const SUMMARIZE_PATH = "summarize";
+export const EXPERIMENT_PATH = "experiment";
