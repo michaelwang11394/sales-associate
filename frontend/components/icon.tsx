@@ -1,22 +1,13 @@
-import {
-  MESSAGES_HISTORY_LIMIT,
-  PALETTE_DIV_ID,
-  SUPABASE_MESSAGES_RETRIEVED,
-} from "@/constants/constants";
-import { MessageSource, SenderType, type DBMessage } from "@/constants/types";
+import { PALETTE_DIV_ID } from "@/constants/constants";
+import { MessageSource, SenderType } from "@/constants/types";
 import { callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage } from "@/helper/shopify";
 import { v4 as uuidv4 } from "uuid";
 
-import {
-  getLastPixelEvent,
-  getMessages,
-  insertMessage,
-} from "@/helper/supabase";
+import { getLastPixelEvent, insertMessage } from "@/helper/supabase";
 import "@/styles/chat.css";
 import { useEffect, useRef, useState } from "react";
-import { formatDBMessage } from "./command";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
@@ -41,54 +32,47 @@ export default function Icon({ props }) {
     };
 
     document.addEventListener("click", handleClickOutside);
-    if (clientId && props.mountDiv === "embed") {
-      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
-        if (!data) {
-          console.error("Message history could not be fetched");
-        } else {
-          const messages = data.data!.map((messageRow: DBMessage) =>
-            formatDBMessage(messageRow)
-          );
-          getLastPixelEvent(clientId).then((d) => {
-            d.data?.forEach(async (event) => {
-              const uuid = uuidv4();
-              const greetingPrompt = await getGreetingMessage(event);
-              callOpenai(
-                greetingPrompt,
-                clientId!,
-                uuid,
-                MessageSource.EMBED,
-                messages
-                  .slice(-1 * MESSAGES_HISTORY_LIMIT)
-                  .map((m) => String(m.id!))
-              )
-                .then(async (reader) => {
-                  let full = "";
-                  while (true) {
-                    const { done, value } = await reader!.read();
-                    if (done) {
-                      // Do something with last chunk of data then exit reader
-                      reader?.cancel();
-                      break;
-                    }
-                    let chunk = new TextDecoder("utf-8").decode(value);
-                    full += chunk;
-                    setGreeting(full);
+    const attemptToFetchAndProcessEvents = (retryCount = 0) => {
+      const clientId = window.localStorage.getItem("webPixelShopifyClientId");
+      if (clientId && props.mountDiv === "embed") {
+        getLastPixelEvent(clientId).then((d) => {
+          d.data?.forEach(async (event) => {
+            const uuid = uuidv4();
+            const greetingPrompt = await getGreetingMessage(event);
+            callOpenai(greetingPrompt, clientId, uuid, MessageSource.EMBED)
+              .then(async (reader) => {
+                let full = "";
+                while (true) {
+                  const { done, value } = await reader!.read();
+                  if (done) {
+                    reader!.cancel();
+                    break;
                   }
-                  await insertMessage(
-                    clientId,
-                    "text",
-                    SenderType.SYSTEM,
-                    [full],
-                    uuid
-                  );
-                })
-                .catch((err) => console.error(err));
-            });
+                  let chunk = new TextDecoder("utf-8").decode(value);
+                  full += chunk;
+                  setGreeting(full);
+                }
+                await insertMessage(
+                  clientId,
+                  "text",
+                  SenderType.SYSTEM,
+                  [full],
+                  uuid
+                );
+              })
+              .catch((err) => console.error(err));
           });
-        }
-      });
-    }
+        });
+      } else if (retryCount < 5) {
+        // Limit the number of retries to prevent infinite loop
+        setTimeout(() => {
+          attemptToFetchAndProcessEvents(retryCount + 1);
+        }, 500);
+      }
+    };
+
+    attemptToFetchAndProcessEvents();
+
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };

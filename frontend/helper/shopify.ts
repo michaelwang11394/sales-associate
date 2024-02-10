@@ -203,5 +203,7 @@ export const getEventSpecificMessage = async (event) => {
     case "product_viewed":
       const product = event.detail.productVariant.product.title;
       return `User is considering purchasing ${product}. Here are some ideas for how to best sell them on the product:\n-Let the customer know that this product is a best seller and running low on stock. For example: "${product} is one of our best sellers and is running low on stock. I would recommend purchasing it soon!"\n-If the customer has viewed this product before, let them know that you noticed and ask if they have any questions about it. For example: "I see you've been looking at ${product}. Do you have any questions about it?"\n${merchantConfig["merchant_tactics"]}`;
+    default:
+      return `Welcome user to store`;
   }
 };

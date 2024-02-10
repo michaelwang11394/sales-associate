@@ -60,70 +60,82 @@ export default function CommandPalette({ props }) {
   }, []);
 
   useEffect(() => {
-    if (clientId) {
-      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
-        if (!data) {
-          console.error("Message history could not be fetched");
-        } else {
-          const messages = data.data!.map((messageRow: DBMessage) =>
-            formatDBMessage(messageRow)
-          );
-          setMessages((prevMessages) => messages.concat(prevMessages));
-          refreshHints();
-        }
-      });
-      getLastPixelEvent(clientId).then((data) => {
-        data.data?.forEach(async (event) => {
-          const greetingPrompt = await getGreetingMessage(event);
-          const uuid = uuidv4();
-          const newResponseMessage: FormattedMessage = {
-            type: "text",
-            sender: SenderType.SYSTEM,
-            content: [""],
-          };
-          callOpenai(
-            greetingPrompt,
-            clientId!,
-            uuid,
-            MessageSource.CHAT_GREETING
-          )
-            .then(async (reader) => {
-              setMessages((prevMessages) => [
-                ...prevMessages,
-                newResponseMessage,
-              ]);
-              let full = "";
-              let streamDone = false;
-              while (true && !streamDone) {
-                const { done, value } = await reader!.read();
-                streamDone = done;
-                if (streamDone) {
-                  // Do something with last chunk of data then exit reader
-                  reader?.cancel();
-                  break;
-                }
-                let chunk = new TextDecoder("utf-8").decode(value);
-                full += chunk;
-                setMessages((prevMessages) =>
-                  prevMessages.map((msg) => {
-                    if (msg === newResponseMessage) {
-                      msg.content = [full];
-                    }
-                    return msg;
-                  })
-                );
-              }
-              await handleNewMessage(clientId, newResponseMessage, uuid);
-            })
-            .catch((err) => {
-              setMessages((prevMessages) =>
-                prevMessages.filter((message) => message !== newResponseMessage)
-              );
-              console.error(err);
-            });
+    const attemptToFetchAndProcessEvents = (retryCount = 0) => {
+      const clientId = window.localStorage.getItem("webPixelShopifyClientId");
+      if (clientId) {
+        getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
+          if (!data) {
+            console.error("Message history could not be fetched");
+          } else {
+            const messages = data.data!.map((messageRow: DBMessage) =>
+              formatDBMessage(messageRow)
+            );
+            setMessages((prevMessages) => messages.concat(prevMessages));
+            refreshHints();
+          }
         });
-      });
-    }
+        getLastPixelEvent(clientId).then((data) => {
+          data.data?.forEach(async (event) => {
+            const greetingPrompt = await getGreetingMessage(event);
+            const uuid = uuidv4();
+            const newResponseMessage: FormattedMessage = {
+              type: "text",
+              sender: SenderType.SYSTEM,
+              content: [""],
+            };
+            callOpenai(
+              greetingPrompt,
+              clientId!,
+              uuid,
+              MessageSource.CHAT_GREETING
+            )
+              .then(async (reader) => {
+                setMessages((prevMessages) => [
+                  ...prevMessages,
+                  newResponseMessage,
+                ]);
+                let full = "";
+                let streamDone = false;
+                while (true && !streamDone) {
+                  const { done, value } = await reader!.read();
+                  streamDone = done;
+                  if (streamDone) {
+                    // Do something with last chunk of data then exit reader
+                    reader?.cancel();
+                    break;
+                  }
+                  let chunk = new TextDecoder("utf-8").decode(value);
+                  full += chunk;
+                  setMessages((prevMessages) =>
+                    prevMessages.map((msg) => {
+                      if (msg === newResponseMessage) {
+                        msg.content = [full];
+                      }
+                      return msg;
+                    })
+                  );
+                }
+                await handleNewMessage(clientId, newResponseMessage, uuid);
+              })
+              .catch((err) => {
+                setMessages((prevMessages) =>
+                  prevMessages.filter(
+                    (message) => message !== newResponseMessage
+                  )
+                );
+                console.error(err);
+              });
+          });
+        });
+      } else if (retryCount < 5) {
+        // Limit the number of retries to prevent infinite loop
+        setTimeout(() => {
+          attemptToFetchAndProcessEvents(retryCount + 1);
+        }, 500);
+      }
+    };
+
+    attemptToFetchAndProcessEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
