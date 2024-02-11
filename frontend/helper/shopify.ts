@@ -1,13 +1,27 @@
 import { isNewCustomer, offerCoupon } from "./supabase"; // Updated reference to refactored supabase functions
 
+// TODO: Change for fly by Jing
+// export const MERCHANT_CONFIG = {
+//   store_name: "Sales Associate Demo Store",
+//   store_type: "jewelry",
+//   offer_coupon: false,
+//   merchant_tactics: [
+//     "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
+
+//     "Offer them a 30 day money back guarantee. For example: 'We offer a 30 day money back guarantee, so you can try it out risk free.'",
+//   ],
+// };
+
 export const MERCHANT_CONFIG = {
-  store_name: "Sales Associate Demo Store",
-  store_type: "jewelry",
+  store_name: "Fly By Jing",
+  store_type: "food and spices",
   offer_coupon: false,
   merchant_tactics: [
-    "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
+    `
+    If the customer has chendu crunch, sichuan chili crisp, or zong sauce in their cart, recommend that they instead purchase Year of the Dragon Triple Threat Pack. For example: "Have you considered the Year of the Dragon Triple Threat Pack? It will save you 10% and includes all three of our best sellers."\n
 
-    "Offer them a 30 day money back guarantee. For example: 'We offer a 30 day money back guarantee, so you can try it out risk free.'",
+    Use holidays and other approaching deadlines to create pressure on the customer. For example: Chinese New Year is coming up, and this would make a great spice for all your food!\n
+    `,
   ],
 };
 
@@ -171,7 +185,7 @@ export const getEventSpecificMessage = async (event) => {
       if (newCustomer.isNew) {
         return `This is the customers's first time visiting our ${merchantConfig["store_type"]} called ${merchantConfig["store_name"]}. Welcome them and ask them if they have any questions. If they have products in their cart or have viewed a product recently, mention the product to them. \nHere are a few examples of a potential good response:\n- Welcome to the store! I'm a sales associate here to help. Let me know if you have any questions about our products.\n- Welcome to the store! Let me know if you have any questions about our products or need help finding something. I'm here to help!`;
       } else {
-        return `This customer has visited the our ${merchantConfig["store_type"]} called ${merchantConfig["store_name"]} before. Welcome them back and ask them if they have any questions. If they have items in their cart, encourage them to check out or ask them if they have any questions about the products in their cart. If they have viewed a product recently, ask them if they have any questions about that product. Remember to link to the products. \nHere are a few examples of potential good response:\n- Welcome back to the store! `;
+        return `This customer has visited the our ${merchantConfig["store_type"]} called ${merchantConfig["store_name"]} before. Welcome them back and ask them if they have any questions. If they have items in their cart, encourage them to check out or ask them if they have any questions about the products in their cart. If they have viewed a product recently, ask them if they have any questions about that product. Encourage the customer to join the membership program where they can get 20% off of every order, free shipping on all orders, and much more. \nHere are a few examples of potential good response:\n- Welcome back to the store! `;
       }
     /* 
       Cart Viewed Intent:
