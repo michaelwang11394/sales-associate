@@ -1,5 +1,6 @@
 import { register } from "@shopify/web-pixels-extension";
 import supabase from "extensions/web-pixel/helpers/supabase";
+import { PostHog } from "posthog-node";
 
 register(async ({ analytics, browser, settings }) => {
   // subscribe to events
@@ -9,6 +10,9 @@ register(async ({ analytics, browser, settings }) => {
     const { clientId, context, id, name, timestamp } = event;
     browser.localStorage.setItem("webPixelShopifyClientId", clientId);
     const detail = (event as any).data;
+    const client = new PostHog(
+      "phc_6YNAbj13W6OWd4CsBcXtyhy4zWUG3SNRb9EkXYjiGk4"
+    );
 
     const pathname = context.document.location.pathname;
     const host = context.document.location.host;
@@ -28,6 +32,18 @@ register(async ({ analytics, browser, settings }) => {
             store: host,
           },
         ]);
+        client.capture({
+          distinctId: host + clientId,
+          event: name,
+          properties: {
+            id: id,
+            timestamp: timestamp,
+            detail: detail, // convert data object to JSON string
+            clientId: clientId,
+            context: context, // convert context object to JSON string
+            store: host,
+          },
+        });
 
         if (error) {
           console.error("Error during insert:", error);
@@ -36,5 +52,6 @@ register(async ({ analytics, browser, settings }) => {
         console.error("Error during fetch:", error);
       }
     }
+    await client.shutdownAsync();
   });
 });
