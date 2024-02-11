@@ -1,6 +1,7 @@
 import CommandPalette from "@/components/command";
 import Icon from "@/components/icon";
 import "@/styles/chat.css";
+import { PostHogProvider } from "posthog-js/react";
 import ReactDOM from "react-dom/client";
 import "vite/modulepreload-polyfill";
 import "./section.css";
@@ -11,14 +12,16 @@ export function createIcon(home, mountDiv, overlayDiv, iconSize) {
     throw new Error(`Element with id "${mountDiv}" not found`);
   }
   ReactDOM.createRoot(element).render(
-    <Icon
-      props={{
-        home: home,
-        mountDiv: mountDiv,
-        overlayDiv: overlayDiv,
-        iconSize: iconSize,
-      }}
-    />
+    <PostHogProvider apiKey="phc_6YNAbj13W6OWd4CsBcXtyhy4zWUG3SNRb9EkXYjiGk4">
+      <Icon
+        props={{
+          home: home,
+          mountDiv: mountDiv,
+          overlayDiv: overlayDiv,
+          iconSize: iconSize,
+        }}
+      />
+    </PostHogProvider>
   );
 }
 
@@ -44,7 +47,9 @@ export function createOverlayDiv() {
     overlayDiv.className = "overlay";
     document.body.appendChild(overlayDiv);
     ReactDOM.createRoot(overlayDiv).render(
-      <CommandPalette props={{ overlayDiv: overlayDiv }} />
+      <PostHogProvider apiKey="phc_6YNAbj13W6OWd4CsBcXtyhy4zWUG3SNRb9EkXYjiGk4">
+        <CommandPalette props={{ overlayDiv: overlayDiv }} />
+      </PostHogProvider>
     );
   }
 
