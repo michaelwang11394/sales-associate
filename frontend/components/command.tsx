@@ -58,10 +58,11 @@ export default function CommandPalette({ props }) {
   const variant = useFeatureFlagVariantKey("enabled");
 
   useEffect(() => {
+    // posthog.featureFlags.override({ enabled: "test" }); If you want to override feature flag
     if (clientId.current) {
       posthog?.identify(window.location.host + clientId.current);
     }
-    if (variant === "control") {
+    if (!variant || variant === "control") {
       // If we're in the control group, avoid any unnecessary supabase or openai calls
       return;
     }

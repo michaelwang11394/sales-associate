@@ -22,6 +22,7 @@ export default function Icon({ props }) {
   );
 
   useEffect(() => {
+    // posthog.featureFlags.override({ enabled: "test" }); If you want to override feature flag
     if (clientId.current) {
       posthog?.identify(window.location.host + clientId.current);
     }
