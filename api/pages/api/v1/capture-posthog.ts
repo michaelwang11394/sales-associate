@@ -20,7 +20,7 @@ export default async function handler(
     request,
     response,
     200,
-    "Exposed with posthog successfully",
+    "Logged pixel event successfully",
     await captureEvent(client, store, clientId, propertiesBlob)
   );
   await client.shutdownAsync(); // TIP: On program exit, call shutdown to stop pending pollers and flush any remaining events
