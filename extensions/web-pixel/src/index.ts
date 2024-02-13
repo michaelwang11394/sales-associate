@@ -12,7 +12,13 @@ register(async ({ analytics, browser, settings }) => {
     console.log("web pixel event:", event);
 
     const { clientId, context, id, name, timestamp } = event;
-    browser.localStorage.setItem("webPixelShopifyClientId", clientId);
+    const relevantClientId =
+      (await browser.localStorage.getItem("webPixelShopifyClientId")) ??
+      clientId;
+    await browser.localStorage.setItem(
+      "webPixelShopifyClientId",
+      relevantClientId
+    );
     const detail = (event as any).data;
 
     const pathname = context.document.location.pathname;
@@ -27,12 +33,12 @@ register(async ({ analytics, browser, settings }) => {
           [V1, EXPERIMENT_PATH],
           {
             store: host,
-            clientId: clientId,
+            clientId: relevantClientId,
             properties: JSON.stringify({
               id: id,
               timestamp: timestamp,
               detail: detail, // convert data object to JSON string
-              clientId: clientId,
+              clientId: relevantClientId,
               context: context, // convert context object to JSON string
               name: name,
               store: host,
