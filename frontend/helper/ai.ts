@@ -1,9 +1,9 @@
 import {
+  API_URL,
   HINTS_PATH,
   OPENAI_PATH,
   SUMMARIZE_PATH,
   V1,
-  VERCEL_URL,
 } from "@/constants/constants";
 import { HTTPHelper } from "./http";
 
@@ -13,7 +13,7 @@ export const callOpenai = async (
   requestUuid: string,
   source: string
 ) => {
-  const url = HTTPHelper.assembleUrl(VERCEL_URL, [V1, OPENAI_PATH], {
+  const url = HTTPHelper.assembleUrl(API_URL, [V1, OPENAI_PATH], {
     input: input,
     store: location.host,
     clientId: clientId,
@@ -33,7 +33,7 @@ export const callHints = async (
   requestUuid: string,
   source: string
 ) => {
-  const res: Response = await HTTPHelper.get(VERCEL_URL, [V1, HINTS_PATH], {
+  const res: Response = await HTTPHelper.get(API_URL, [V1, HINTS_PATH], {
     input: input,
     store: location.host,
     clientId: clientId,
@@ -47,7 +47,7 @@ export const summarizeHistory = async (
   clientId: string,
   requestUuid: string
 ) => {
-  const res: Response = await HTTPHelper.get(VERCEL_URL, [V1, SUMMARIZE_PATH], {
+  const res: Response = await HTTPHelper.get(API_URL, [V1, SUMMARIZE_PATH], {
     store: location.host,
     clientId: clientId,
     requestUuid: requestUuid,

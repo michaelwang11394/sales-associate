@@ -1,11 +1,10 @@
+import { EXPERIMENT_PATH, HEROKU_URL, V1 } from "@/constants/constants";
 import type { ApiResponse } from "@/constants/types";
 import { HTTPHelper } from "@/helper/http";
 import { register } from "@shopify/web-pixels-extension";
-export const VERCEL_URL =
-  process.env.VITE_VERCEL_LOCATION ??
-  "https://sales-associate-backend-69cd426431e1.herokuapp.com";
-export const V1 = "api/v1";
-export const EXPERIMENT_PATH = "capture-posthog";
+// Define here separate from @/constants/constants.ts as environment variables are set up differently in vite compiled theme app than this web pixel extension
+export const PIXEL_SPECIFIC_API_URL =
+  process.env.VITE_VERCEL_LOCATION ?? HEROKU_URL;
 
 register(async ({ analytics, browser, settings }) => {
   // subscribe to events
@@ -23,19 +22,23 @@ register(async ({ analytics, browser, settings }) => {
       return;
     } else {
       try {
-        await HTTPHelper.get<ApiResponse>(VERCEL_URL, [V1, EXPERIMENT_PATH], {
-          store: host,
-          clientId: clientId,
-          properties: JSON.stringify({
-            id: id,
-            timestamp: timestamp,
-            detail: detail, // convert data object to JSON string
-            clientId: clientId,
-            context: context, // convert context object to JSON string
-            name: name,
+        await HTTPHelper.get<ApiResponse>(
+          PIXEL_SPECIFIC_API_URL,
+          [V1, EXPERIMENT_PATH],
+          {
             store: host,
-          }),
-        });
+            clientId: clientId,
+            properties: JSON.stringify({
+              id: id,
+              timestamp: timestamp,
+              detail: detail, // convert data object to JSON string
+              clientId: clientId,
+              context: context, // convert context object to JSON string
+              name: name,
+              store: host,
+            }),
+          }
+        );
       } catch (error) {
         console.error("Error during fetch:", error);
       }

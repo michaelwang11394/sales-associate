@@ -8,9 +8,11 @@ export const RECENTLY_VIEWED_PRODUCTS_COUNT = 5;
 /*
 CAUTION: KEEP THIS SECTION IN SYNC WITH frontend/constants/constants.ts
 */
-export const VERCEL_URL =
-  (import.meta && import.meta.env && import.meta.env.VITE_VERCEL_LOCATION) ??
+export const HEROKU_URL =
   "https://sales-associate-backend-69cd426431e1.herokuapp.com";
+export const API_URL =
+  (import.meta && import.meta.env && import.meta.env.VITE_VERCEL_LOCATION) ??
+  HEROKU_URL;
 export const V1 = "api/v1";
 export const SUPABASE_PATH = "supabase";
 export const SUPABASE_MESSAGES_TABLE = "messages";

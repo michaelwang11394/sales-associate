@@ -1,4 +1,5 @@
 import {
+  API_URL,
   SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
   SUPABASE_EVENTS_LAST_EVENT_ENDPOINT,
   SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
@@ -11,7 +12,6 @@ import {
   SUPABASE_MESSAGES_TABLE,
   SUPABASE_PATH,
   V1,
-  VERCEL_URL,
 } from "@/constants/constants";
 import type { ApiResponse } from "@/constants/types";
 import { HTTPHelper } from "./http";
@@ -20,7 +20,7 @@ const store = location.host;
 export const getMessages = async (clientId, limit) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
-      VERCEL_URL,
+      API_URL,
       [
         V1,
         SUPABASE_PATH,
@@ -39,7 +39,7 @@ export const getMessages = async (clientId, limit) => {
 export const getMentionedProducts = async (clientId) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
-      VERCEL_URL,
+      API_URL,
       [
         V1,
         SUPABASE_PATH,
@@ -63,7 +63,7 @@ export const insertMessage = async (
   requestUuid
 ) => {
   const res = await HTTPHelper.get<ApiResponse>(
-    VERCEL_URL,
+    API_URL,
     [
       V1,
       SUPABASE_PATH,
@@ -85,7 +85,7 @@ export const insertMessage = async (
 export const getLastPixelEvent = async (clientId) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
-      VERCEL_URL,
+      API_URL,
       [
         V1,
         SUPABASE_PATH,
@@ -104,7 +104,7 @@ export const getLastPixelEvent = async (clientId) => {
 export const isNewCustomer = async (clientId) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
-      VERCEL_URL,
+      API_URL,
       [
         V1,
         SUPABASE_PATH,
@@ -123,7 +123,7 @@ export const isNewCustomer = async (clientId) => {
 export const hasItemsInCart = async (clientId) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
-      VERCEL_URL,
+      API_URL,
       [
         V1,
         SUPABASE_PATH,
@@ -142,7 +142,7 @@ export const hasItemsInCart = async (clientId) => {
 export const hasViewedProducts = async (clientId, count: number) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
-      VERCEL_URL,
+      API_URL,
       [
         V1,
         SUPABASE_PATH,
@@ -161,7 +161,7 @@ export const hasViewedProducts = async (clientId, count: number) => {
 export const offerCoupon = async (clientId) => {
   try {
     const res = await HTTPHelper.get<ApiResponse>(
-      VERCEL_URL,
+      API_URL,
       [
         V1,
         SUPABASE_PATH,
