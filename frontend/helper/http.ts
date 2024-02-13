@@ -77,28 +77,3 @@ export class HTTPHelper {
     }
   }
 }
-
-/*
-// Example usage:
-
-// Making a GET request with query parameters
-const getExampleWithQueryParams = async () => {
-  try {
-    const queryParams = {
-      userId: 1,
-      category: "technology",
-    };
-
-    const data = await HTTPHelper.get<{ title: string }>(
-      "https://jsonplaceholder.typicode.com/posts",
-      queryParams
-    );
-    console.log("GET Request Result:", data);
-  } catch (error) {
-    console.error("Error in GET example with query parameters:", error);
-  }
-};
-
-// Call the example
-getExampleWithQueryParams();
-*/

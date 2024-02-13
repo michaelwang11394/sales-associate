@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -16,6 +16,7 @@
     "crypto": "^1.0.1",
     "langchain": "^0.0.209",
     "next": "14.0.4",
+    "posthog-node": "^3.6.2",
     "react": "^18",
     "react-dom": "^18",
     "supabase": "^1.123.4",

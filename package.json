@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "run-p -sr vite:dev shopify:dev",
-    "dev:vercel": "VITE_VERCEL_LOCATION=http://localhost:3000 run-p -sr vite:dev shopify:dev",
+    "dev:vercel": "VITE_VERCEL_LOCATION=https://localhost:3000 run-p -sr vite:dev shopify:dev",
     "build": "run-s vite:build shopify:build",
     "deploy:extension": "run-s vite:build cleanup shopify:deploy",
     "shopify": "shopify",
@@ -24,7 +24,7 @@
     "setup": "prisma generate && prisma migrate deploy",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "prisma": "prisma",
-    "dev:vercel-api": "cd api && VERCEL_HOST=localhost:3000 vercel dev",
+    "dev:vercel-api": "cd api && VERCEL_HOST=https://localhost:3000 npm run dev",
     "deploy:vercel-api": "cd api && vercel deploy",
     "dev:run-full-stack": "run-p -rs dev:vercel-api dev:vercel"
   },
@@ -57,7 +57,6 @@
     "postcss": "^8.4.31",
     "postcss-cli": "^10.1.0",
     "posthog-js": "^1.105.7",
-    "posthog-node": "^3.6.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "replicate": "^0.18.1",

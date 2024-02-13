@@ -1,6 +1,11 @@
+import type { ApiResponse } from "@/constants/types";
+import { HTTPHelper } from "@/helper/http";
 import { register } from "@shopify/web-pixels-extension";
-import supabase from "extensions/web-pixel/helpers/supabase";
-import { PostHog } from "posthog-node";
+export const VERCEL_URL =
+  process.env.VITE_VERCEL_LOCATION ??
+  "https://sales-associate-backend-69cd426431e1.herokuapp.com";
+export const V1 = "api/v1";
+export const EXPERIMENT_PATH = "capture-posthog";
 
 register(async ({ analytics, browser, settings }) => {
   // subscribe to events
@@ -10,9 +15,6 @@ register(async ({ analytics, browser, settings }) => {
     const { clientId, context, id, name, timestamp } = event;
     browser.localStorage.setItem("webPixelShopifyClientId", clientId);
     const detail = (event as any).data;
-    const client = new PostHog(
-      "phc_6YNAbj13W6OWd4CsBcXtyhy4zWUG3SNRb9EkXYjiGk4"
-    );
 
     const pathname = context.document.location.pathname;
     const host = context.document.location.host;
@@ -21,8 +23,10 @@ register(async ({ analytics, browser, settings }) => {
       return;
     } else {
       try {
-        const { error } = await supabase.from("events").insert([
-          {
+        await HTTPHelper.get<ApiResponse>(VERCEL_URL, [V1, EXPERIMENT_PATH], {
+          store: host,
+          clientId: clientId,
+          properties: JSON.stringify({
             id: id,
             timestamp: timestamp,
             detail: detail, // convert data object to JSON string
@@ -30,28 +34,11 @@ register(async ({ analytics, browser, settings }) => {
             context: context, // convert context object to JSON string
             name: name,
             store: host,
-          },
-        ]);
-        client.capture({
-          distinctId: host + clientId,
-          event: name,
-          properties: {
-            id: id,
-            timestamp: timestamp,
-            detail: detail, // convert data object to JSON string
-            clientId: clientId,
-            context: context, // convert context object to JSON string
-            store: host,
-          },
+          }),
         });
-
-        if (error) {
-          console.error("Error during insert:", error);
-        }
       } catch (error) {
         console.error("Error during fetch:", error);
       }
     }
-    await client.shutdownAsync();
   });
 });

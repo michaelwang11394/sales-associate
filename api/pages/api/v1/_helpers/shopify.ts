@@ -9,8 +9,12 @@ const shopify_client = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY!,
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: LATEST_API_VERSION,
-  scopes: ["read_products"],
-  hostName: process.env.VERCEL_HOST ?? "sales-associate-backend-69cd426431e1.herokuapp.com",
+  scopes: [
+    "write_pixels,read_customer_events,read_reports,read_customers,read_fulfillments,read_inventory,read_orders,read_products",
+  ],
+  hostName:
+    process.env.VERCEL_HOST ??
+    "sales-associate-backend-69cd426431e1.herokuapp.com",
   hostScheme: process.env.VERCEL_HOST === undefined ? "https" : "http",
   isEmbeddedApp: false,
 }).clients;
