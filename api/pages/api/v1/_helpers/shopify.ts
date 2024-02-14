@@ -39,15 +39,15 @@ const createClient = async (store: string) => {
 };
 
 interface ProductEntry {
-  id: any;
-  title: any;
-  description: any;
+  title: string;
+  description: string;
   variants: any[];
+  id?: string;
   handle?: string; // Optional property
   image_url?: string; // Optional property
 }
 
-const formatCatalogEntry = (product: any, includeUrl = true) => {
+const formatCatalogEntry = (product: any, includeFullMetadata = true) => {
   const {
     id,
     title,
@@ -58,24 +58,30 @@ const formatCatalogEntry = (product: any, includeUrl = true) => {
   } = product;
 
   const formattedVariants = variants?.map((variant: any) => {
-    return {
-      id: variant.id,
+    const baseVariant = {
       price: variant.price,
-      product_id: variant.product_id,
       title: variant.title,
     };
+    if (includeFullMetadata) {
+      return {
+        ...baseVariant,
+        id: variant.id,
+        product_id: variant.product_id,
+      };
+    }
+    return baseVariant;
   });
 
   let entry: ProductEntry = {
-    id,
     title,
     description,
     variants: formattedVariants,
   };
 
-  if (includeUrl) {
+  if (includeFullMetadata) {
     entry = {
       ...entry,
+      id,
       handle,
       image_url: images.length > 0 ? images[0].src : "",
     };
