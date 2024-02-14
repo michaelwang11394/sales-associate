@@ -1,22 +1,14 @@
-import {
-  MESSAGES_HISTORY_LIMIT,
-  PALETTE_DIV_ID,
-  SUPABASE_MESSAGES_RETRIEVED,
-} from "@/constants/constants";
-import { MessageSource, SenderType, type DBMessage } from "@/constants/types";
+import { PALETTE_DIV_ID } from "@/constants/constants";
+import { MessageSource, SenderType } from "@/constants/types";
 import { callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage } from "@/helper/shopify";
 import { v4 as uuidv4 } from "uuid";
 
-import {
-  getLastPixelEvent,
-  getMessages,
-  insertMessage,
-} from "@/helper/supabase";
+import { getLastPixelEvent, insertMessage } from "@/helper/supabase";
 import "@/styles/chat.css";
+import { PostHogFeature, usePostHog } from "posthog-js/react";
 import { useEffect, useRef, useState } from "react";
-import { formatDBMessage } from "./command";
 
 export default function Icon({ props }) {
   const [greeting, setGreeting] = useState(
@@ -24,7 +16,17 @@ export default function Icon({ props }) {
   );
   const iconRef = useRef(null);
   const iconSize = props.iconSize;
-  const clientId = window.localStorage.getItem("webPixelShopifyClientId");
+  const posthog = usePostHog();
+  const clientId = useRef(
+    window.localStorage.getItem("webPixelShopifyClientId")
+  );
+
+  useEffect(() => {
+    // posthog.featureFlags.override({ enabled: "test" }); If you want to override feature flag
+    if (clientId.current) {
+      posthog?.identify(window.location.host + clientId.current);
+    }
+  }, [posthog, clientId]);
 
   useEffect(() => {
     // Add event listener to close overlay when clicking outside of it
@@ -41,54 +43,52 @@ export default function Icon({ props }) {
     };
 
     document.addEventListener("click", handleClickOutside);
-    if (clientId && props.mountDiv === "embed") {
-      getMessages(clientId, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
-        if (!data) {
-          console.error("Message history could not be fetched");
-        } else {
-          const messages = data.data!.map((messageRow: DBMessage) =>
-            formatDBMessage(messageRow)
-          );
-          getLastPixelEvent(clientId).then((d) => {
-            d.data?.forEach(async (event) => {
-              const uuid = uuidv4();
-              const greetingPrompt = await getGreetingMessage(event);
-              callOpenai(
-                greetingPrompt,
-                clientId!,
-                uuid,
-                MessageSource.EMBED,
-                messages
-                  .slice(-1 * MESSAGES_HISTORY_LIMIT)
-                  .map((m) => String(m.id!))
-              )
-                .then(async (reader) => {
-                  let full = "";
-                  while (true) {
-                    const { done, value } = await reader!.read();
-                    if (done) {
-                      // Do something with last chunk of data then exit reader
-                      reader?.cancel();
-                      break;
-                    }
-                    let chunk = new TextDecoder("utf-8").decode(value);
-                    full += chunk;
-                    setGreeting(full);
+    const attemptToFetchAndProcessEvents = (retryCount = 0) => {
+      clientId.current = window.localStorage.getItem("webPixelShopifyClientId");
+      if (clientId.current && props.mountDiv === "embed") {
+        getLastPixelEvent(clientId.current).then((d) => {
+          d.data?.forEach(async (event) => {
+            const uuid = uuidv4();
+            const greetingPrompt = await getGreetingMessage(event);
+            callOpenai(
+              greetingPrompt,
+              clientId.current!,
+              uuid,
+              MessageSource.EMBED
+            )
+              .then(async (reader) => {
+                let full = "";
+                while (true) {
+                  const { done, value } = await reader!.read();
+                  if (done) {
+                    reader!.cancel();
+                    break;
                   }
-                  await insertMessage(
-                    clientId,
-                    "text",
-                    SenderType.SYSTEM,
-                    [full],
-                    uuid
-                  );
-                })
-                .catch((err) => console.error(err));
-            });
+                  let chunk = new TextDecoder("utf-8").decode(value);
+                  full += chunk;
+                  setGreeting(full);
+                }
+                await insertMessage(
+                  clientId.current,
+                  "text",
+                  SenderType.SYSTEM,
+                  [full],
+                  uuid
+                );
+              })
+              .catch((err) => console.error(err));
           });
-        }
-      });
-    }
+        });
+      } else if (retryCount < 5) {
+        // Limit the number of retries to prevent infinite loop
+        setTimeout(() => {
+          attemptToFetchAndProcessEvents(retryCount + 1);
+        }, 500);
+      }
+    };
+
+    attemptToFetchAndProcessEvents();
+
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
@@ -101,36 +101,40 @@ export default function Icon({ props }) {
   };
 
   return (
-    <div
-      className="mt-4"
-      style={{ position: "relative", cursor: "pointer" }}
-      onClick={handleIconClick}>
-      {/* Icon */}
-      <div ref={iconRef}>
-        <img
-          src="https://cdn.shopify.com/s/files/1/0847/3011/8437/files/icon12001200.png?v=1703370084"
-          alt="Chat Icon"
-          width={iconSize + "px"}
-          style={{
-            borderRadius: "50%", // Make it circular
-          }}
-        />
-      </div>
-
-      {/* Overlay Bubble */}
-      {props.mountDiv === "embed" && iconRef.current && (
+    clientId.current && (
+      <PostHogFeature flag="enabled" match={"test"}>
         <div
-          className="talk-bubble mobile-talk-bubble"
-          style={{
-            position: "absolute",
-            bottom: iconRef.current.offsetTop + iconSize / 2 + "px",
-            right: iconRef.current.offsetLeft + iconSize / 3 + "px",
-          }}>
-          <div className="talktext flex-1" style={{ whiteSpace: "normal" }}>
-            <p>{greeting}</p>
+          className="mt-4"
+          style={{ position: "relative", cursor: "pointer" }}
+          onClick={handleIconClick}>
+          {/* Icon */}
+          <div ref={iconRef}>
+            <img
+              src="https://cdn.shopify.com/s/files/1/0847/3011/8437/files/icon12001200.png?v=1703370084"
+              alt="Chat Icon"
+              width={iconSize + "px"}
+              style={{
+                borderRadius: "50%", // Make it circular
+              }}
+            />
           </div>
+
+          {/* Overlay Bubble */}
+          {props.mountDiv === "embed" && iconRef.current && (
+            <div
+              className="talk-bubble mobile-talk-bubble"
+              style={{
+                position: "absolute",
+                bottom: iconRef.current.offsetTop + iconSize / 2 + "px",
+                right: iconRef.current.offsetLeft + iconSize / 3 + "px",
+              }}>
+              <div className="talktext flex-1" style={{ whiteSpace: "normal" }}>
+                <p>{greeting}</p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </PostHogFeature>
+    )
   );
 }

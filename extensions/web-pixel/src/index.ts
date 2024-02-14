@@ -1,5 +1,10 @@
+import { EXPERIMENT_PATH, HEROKU_URL, V1 } from "@/constants/constants";
+import type { ApiResponse } from "@/constants/types";
+import { HTTPHelper } from "@/helper/http";
 import { register } from "@shopify/web-pixels-extension";
-import supabase from "extensions/web-pixel/helpers/supabase";
+// Define here separate from @/constants/constants.ts as environment variables are set up differently in vite compiled theme app than this web pixel extension
+export const PIXEL_SPECIFIC_API_URL =
+  process.env.VITE_VERCEL_LOCATION ?? HEROKU_URL;
 
 register(async ({ analytics, browser, settings }) => {
   // subscribe to events
@@ -7,7 +12,13 @@ register(async ({ analytics, browser, settings }) => {
     console.log("web pixel event:", event);
 
     const { clientId, context, id, name, timestamp } = event;
-    browser.localStorage.setItem("webPixelShopifyClientId", clientId);
+    const relevantClientId =
+      (await browser.localStorage.getItem("webPixelShopifyClientId")) ??
+      clientId;
+    await browser.localStorage.setItem(
+      "webPixelShopifyClientId",
+      relevantClientId
+    );
     const detail = (event as any).data;
 
     const pathname = context.document.location.pathname;
@@ -17,21 +28,23 @@ register(async ({ analytics, browser, settings }) => {
       return;
     } else {
       try {
-        const { error } = await supabase.from("events").insert([
+        await HTTPHelper.get<ApiResponse>(
+          PIXEL_SPECIFIC_API_URL,
+          [V1, EXPERIMENT_PATH],
           {
-            id: id,
-            timestamp: timestamp,
-            detail: detail, // convert data object to JSON string
-            clientId: clientId,
-            context: context, // convert context object to JSON string
-            name: name,
             store: host,
-          },
-        ]);
-
-        if (error) {
-          console.error("Error during insert:", error);
-        }
+            clientId: relevantClientId,
+            properties: JSON.stringify({
+              id: id,
+              timestamp: timestamp,
+              detail: detail, // convert data object to JSON string
+              clientId: relevantClientId,
+              context: context, // convert context object to JSON string
+              name: name,
+              store: host,
+            }),
+          }
+        );
       } catch (error) {
         console.error("Error during fetch:", error);
       }

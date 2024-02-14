@@ -7,7 +7,7 @@
     "jsx": "react-jsx",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
-    "target": "ES2019",
+    "target": "esnext",
     "strict": true,
     "allowJs": true,
     "checkJs": true,
