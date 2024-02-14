@@ -80,21 +80,24 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   host,
   content,
 }): React.JSX.Element => {
+  const minFontSize = 8;
+  const maxFontSize = 50;
+  const startFontSize = 12;
+  const overFlowAllowance = 1.05; // For resizing font
   const [active, setActive] = useState(0);
 
   // For running binary search to find font size to match card
-  const [recFontSize, setRecFontSize] = useState(12);
-  const [min, setMin] = useState(8);
-  const [max, setMax] = useState(50);
+  const [recFontSize, setRecFontSize] = useState(startFontSize);
+  const [min, setMin] = useState(minFontSize);
+  const [max, setMax] = useState(maxFontSize);
   const recRef = useRef(null);
   const cardRef = useRef(null);
-  const overFlowAllowance = 1.05; // For resizing font
 
   // State to track the dimensions of recRef
   const [recDimensions, setRecDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    setMin(8);
+    setMin(minFontSize);
     setMax(recFontSize);
   }, [content[active]?.recommendation]);
 
