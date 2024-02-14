@@ -38,8 +38,16 @@ const createClient = async (store: string) => {
   return client;
 };
 
-const formatCatalogEntry = (product: any) => {
-  // Fields we care about
+interface ProductEntry {
+  title: string;
+  description: string;
+  variants: any[];
+  id?: string;
+  handle?: string; // Optional property
+  image_url?: string; // Optional property
+}
+
+const formatCatalogEntry = (product: any, includeFullMetadata = true) => {
   const {
     id,
     title,
@@ -48,24 +56,38 @@ const formatCatalogEntry = (product: any) => {
     images,
     variants,
   } = product;
-  // There's a image for each variant if any, otherwise it's an array of a single element
+
   const formattedVariants = variants?.map((variant: any) => {
-    return {
-      id: variant.id,
+    const baseVariant = {
       price: variant.price,
-      product_id: variant.product_id,
       title: variant.title,
     };
+    if (includeFullMetadata) {
+      return {
+        ...baseVariant,
+        id: variant.id,
+        product_id: variant.product_id,
+      };
+    }
+    return baseVariant;
   });
-  const image_url = images.length > 0 ? images[0].src : "";
-  return {
-    id,
+
+  let entry: ProductEntry = {
     title,
     description,
-    handle,
-    image_url,
     variants: formattedVariants,
   };
+
+  if (includeFullMetadata) {
+    entry = {
+      ...entry,
+      id,
+      handle,
+      image_url: images.length > 0 ? images[0].src : "",
+    };
+  }
+
+  return entry;
 };
 
 export const isValidProduct = async (
@@ -95,22 +117,27 @@ export const getProducts = async (store: string, limit = 250) => {
     console.error("No catalog exists");
     // throw new Error("No catalog exists")
   }
-  const formattedProducts = data.products.map((product: any) =>
+  const formattedProductsWithUrls = data.products.map((product: any) =>
     formatCatalogEntry(product)
   );
 
-  const stringifiedProducts = formattedProducts
+  const formattedProductsWithoutUrls = data.products.map((product: any) =>
+    formatCatalogEntry(product, false)
+  );
+
+  const stringifiedProducts = formattedProductsWithoutUrls
     .map((product: any) => JSON.stringify(product))
     .join("\r\n");
 
-  // RAG and embeddings pre-processing
-  const metadataIds = formattedProducts.map((product: any) => product.id);
-  const strippedProducts = formattedProducts.map((product: any) => {
-    // Convert each product object to a YAML object. Possibly remove brackets in the future too
+  const metadataIds = formattedProductsWithoutUrls.map(
+    (product: any) => product.id
+  );
+  const strippedProducts = formattedProductsWithoutUrls.map((product: any) => {
     return yaml.dump(product);
   });
 
-  const lookUpProducts = formattedProducts.reduce(
+  // The lookup is done after product_id is returned by OpenAI, so the products must include all info including URLs to render cards
+  const lookUpProducts = formattedProductsWithUrls.reduce(
     (acc: Record<string, any>, product: any) => {
       acc[product.id] = product;
       return acc;
