@@ -20,7 +20,6 @@ body {
 .chat-column {
   flex: 0 0 auto;
   background: var(--White, #fff);
-  max-height: calc(65rem-80px);
   border-top: #d9dce2;
   width: 65%;
 }
@@ -28,8 +27,6 @@ body {
 @media (max-width: 768px) {
   .mobile-chat-column {
     width: 100%; /* Adjust this value as needed */
-    height: 90vh; /* 80% of the viewport height */
-    max-height: 100%;
   }
 }
 

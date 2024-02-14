@@ -457,7 +457,7 @@ export default function CommandPalette({ props }) {
           id={PALETTE_DIV_ID}
           className="flex flex-grow overflow-hidden bg-cover w-full">
           <div className="relative flex justify-center flex-grow flex-shrink h-full">
-            <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex-grow">
+            <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex flex-col flex-grow">
               <div
                 id="search bar"
                 className="flex justify-between items-center">
@@ -543,12 +543,12 @@ export default function CommandPalette({ props }) {
 
               <div
                 id="results and convo"
-                className="flex flex-grow border-tborder-gray-300 max-h-[calc(65rem-80px)] mobile-chat-column">
-                <div className="flex flex-grow">
+                className="flex flex-grow border-tborder-gray-300 mobile-chat-column overflow-y-hidden h-full">
+                <div className="flex">
                   {!isMobile && (
                     <div
                       id="product-column"
-                      className="product-column min-w-0 p-6 overflow-y-auto p-4 max-h-[calc(65rem-80px)]">
+                      className="product-column min-w-0 p-6 overflow-y-auto p-4">
                       <div className="font-bold mb-2 mt-2 text-center">
                         {suggestions && suggestions.length > 0
                           ? "You might like:"
