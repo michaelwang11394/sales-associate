@@ -282,6 +282,7 @@ export default function CommandPalette({ props }) {
         let state = StructuredOutputStreamState.TEXT;
         let plainTextInserted = false;
         let productInserted = 0;
+        let linkMessageInserted = false;
         while (true) {
           const { done, value } = await reader!.read();
           if (done) {
@@ -321,21 +322,34 @@ export default function CommandPalette({ props }) {
                 uuid
               );
               plainTextInserted = true;
-              setMessages((prevMessages) => [...prevMessages, linkMessage]);
             }
             for (let i = productInserted + 1; i < splitChunks.length; i++) {
               productInserted = Math.max(productInserted, i - 1);
-              setMessages((prevMessages) =>
-                prevMessages.map((msg) => {
-                  if (msg === linkMessage) {
-                    msg.content[i - 1] = {
-                      ...JSON.parse(splitChunks[i][0]),
-                      recommendation: splitChunks[i][1],
-                    };
-                  }
-                  return msg;
-                })
-              );
+              // Only insert a linkMessage if products field contains anything
+              if (
+                !linkMessageInserted && // Necessary since messages may not update in time
+                splitChunks[i][0].length > 0 &&
+                !messages.some((msg) => msg === linkMessage)
+              ) {
+                linkMessageInserted = true;
+                linkMessage.content[i - 1] = {
+                  ...JSON.parse(splitChunks[i][0]),
+                  recommendation: splitChunks[i][1],
+                };
+                setMessages((prevMessages) => [...prevMessages, linkMessage]);
+              } else {
+                setMessages((prevMessages) =>
+                  prevMessages.map((msg) => {
+                    if (msg === linkMessage) {
+                      msg.content[i - 1] = {
+                        ...JSON.parse(splitChunks[i][0]),
+                        recommendation: splitChunks[i][1],
+                      };
+                    }
+                    return msg;
+                  })
+                );
+              }
             }
           } else {
             // Still in plainText field
@@ -380,6 +394,7 @@ export default function CommandPalette({ props }) {
               .split(recDelimiter)
               .filter((innerChunk) => innerChunk.trim() !== "")
           )
+          .filter((chunk) => chunk.length > 0)
           .map((chunk) => {
             return {
               ...JSON.parse(chunk[0]),
@@ -528,7 +543,7 @@ export default function CommandPalette({ props }) {
 
               <div
                 id="results and convo"
-                className="flex flex-grow border-tborder-gray-300 max-h-[calc(65rem-80px)]">
+                className="flex flex-grow border-tborder-gray-300 max-h-[calc(65rem-80px)] mobile-chat-column">
                 <div className="flex flex-grow">
                   {!isMobile && (
                     <div
