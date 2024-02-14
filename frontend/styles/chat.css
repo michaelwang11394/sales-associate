@@ -10,18 +10,17 @@ body {
 }
 
 .product-column {
-  flex: 0 0 auto;
-  width: 33%;
+  flex: 1;
   border-top: #d9dce2;
 }
 .divider {
+  flex: 0.01;
   background-color: #d9dce2;
 }
 .chat-column {
-  flex: 0 0 auto;
+  flex: 2;
   background: var(--White, #fff);
   border-top: #d9dce2;
-  width: 65%;
 }
 /* Media query for mobile devices */
 @media (max-width: 768px) {

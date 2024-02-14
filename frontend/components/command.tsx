@@ -543,74 +543,72 @@ export default function CommandPalette({ props }) {
 
               <div
                 id="results and convo"
-                className="flex flex-grow border-tborder-gray-300 mobile-chat-column overflow-y-hidden h-full">
-                <div className="flex">
-                  {!isMobile && (
-                    <div
-                      id="product-column"
-                      className="product-column min-w-0 p-6 overflow-y-auto p-4">
-                      <div className="font-bold mb-2 mt-2 text-center">
-                        {suggestions && suggestions.length > 0
-                          ? "You might like:"
-                          : "We're sorry, no results matches this search"}
-                      </div>
+                className="flex flex-grow border-tborder-gray-300 mobile-chat-column overflow-y-hidden h-full whitespace-normal">
+                {!isMobile && (
+                  <div
+                    id="product-column"
+                    className="product-column min-w-0 p-6 overflow-y-auto p-4">
+                    <div className="font-bold mb-2 mt-2 text-center">
+                      {suggestions && suggestions.length > 0
+                        ? "You might like:"
+                        : "We're sorry, no results matches this search"}
+                    </div>
 
-                      {suggestions.length > 0 &&
-                        suggestions.slice(0, 10).map((product, index) => (
-                          <a
-                            key={index}
-                            href={`https://${host}/products/${product.handle}`}
-                            className="p-2"
-                            target="_blank"
-                            rel="noopener noreferrer">
-                            <div className="flex flex-grow product-card-shadow p-2 m-1">
-                              {/* Product Image */}
-                              <div className="w-1/3 h-40">
-                                <img
-                                  src={product.featured_image.url}
-                                  alt={product.featured_image.alt}
-                                  className="w-full h-full object-contain"
-                                />
+                    {suggestions.length > 0 &&
+                      suggestions.slice(0, 10).map((product, index) => (
+                        <a
+                          key={index}
+                          href={`https://${host}/products/${product.handle}`}
+                          className="p-2"
+                          target="_blank"
+                          rel="noopener noreferrer">
+                          <div className="flex flex-grow product-card-shadow p-2 m-1">
+                            {/* Product Image */}
+                            <div className="w-1/3 h-40">
+                              <img
+                                src={product.featured_image.url}
+                                alt={product.featured_image.alt}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+
+                            {/* Product Details */}
+                            <div className="w-2/3 flex flex-grow flex-col space-y-1">
+                              {/* Product Name */}
+                              <div className="h-8 search-card-header flex-grow">
+                                {product.title}
                               </div>
 
-                              {/* Product Details */}
-                              <div className="w-2/3 flex flex-grow flex-col space-y-1">
-                                {/* Product Name */}
-                                <div className="h-8 search-card-header flex-grow">
-                                  {product.title}
-                                </div>
-
-                                {/* Product Price */}
-                                <div>
-                                  {product.price ? "$" + product.price : ""}
-                                </div>
+                              {/* Product Price */}
+                              <div>
+                                {product.price ? "$" + product.price : ""}
                               </div>
                             </div>
-                          </a>
-                        ))}
-                    </div>
-                  )}
-                  {/* Vertical Line Element */}
-                  {!isMobile && (
-                    <div className="flex divider h-[calc(100vh)] w-1"></div>
-                  )}
-
-                  {/* Chat Column*/}
-                  <div
-                    id="chat-column"
-                    className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column">
-                    {messages
-                      .filter((message) => message.content !== undefined)
-                      .map((message, index) => (
-                        <ChatBubble
-                          key={index}
-                          type={message.type}
-                          isAISender={message.sender !== SenderType.USER}
-                          content={message.content}
-                          host={host}
-                        />
+                          </div>
+                        </a>
                       ))}
                   </div>
+                )}
+                {/* Vertical Line Element */}
+                {!isMobile && (
+                  <div className="flex divider h-[calc(100vh)]"></div>
+                )}
+
+                {/* Chat Column*/}
+                <div
+                  id="chat-column"
+                  className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column">
+                  {messages
+                    .filter((message) => message.content !== undefined)
+                    .map((message, index) => (
+                      <ChatBubble
+                        key={index}
+                        type={message.type}
+                        isAISender={message.sender !== SenderType.USER}
+                        content={message.content}
+                        host={host}
+                      />
+                    ))}
                 </div>
               </div>
             </div>
