@@ -80,7 +80,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   host,
   content,
 }): React.JSX.Element => {
-  const minFontSize = 8;
+  const minFontSize = 10;
   const maxFontSize = 50;
   const startFontSize = 12;
   const overFlowAllowance = 1.05; // For resizing font
@@ -179,99 +179,99 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   };
 
   return (
-    <div className="w-full grid grid-cols-2 gap-4">
-      {/* Existing Element */}
-      <div className="relative">
-        {/* Card */}
-        {content[active] && (
-          <div
-            ref={cardRef}
-            className="product-card-shadow"
-            id="existing-element">
-            <a
-              href={`https://${host}/products/${content[active].handle}`}
-              target="_blank"
-              rel="noopener noreferrer">
-              <img
-                src={content[active].image}
-                alt={content[active].name}
-                className="w-full object-cover"
-              />
-              <div className="flex flex-col p-3">
-                <h2 className="text-xxl font-semibold">
-                  {content[active].name}
-                </h2>
-                <p className="text-lg font-medium text-gray-500 mb-4">
-                  {content[active].price ? "$" + content[active].price : ""}
-                </p>
-              </div>
-            </a>
-          </div>
-        )}
-
-        {content.length > 1 && (
-          <div className="w-full pt-8 grid grid-cols-3 items-center">
-            <div className="flex justify-start">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                onClick={handleLeftClick}
-                className="text-gray-400 link-card-arrow">
-                <g id="Arrows">
-                  <path
-                    id="Icon"
-                    d="M19 12H5M5 12L12 19M5 12L12 5"
-                    stroke={active === 0 ? "#CBD2DD" : "#474B58"}
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </g>
-              </svg>
+    <div>
+      <div className="w-full grid grid-cols-2 gap-4">
+        <div
+          id="recText"
+          className="relative"
+          style={{ display: "inline-block" }}>
+          <p
+            ref={recRef}
+            id="rec"
+            className="ai-grey-text leading-snug mb-4 p-2"
+            style={{
+              fontSize: `${recFontSize}px`,
+            }}>
+            {content[active]?.recommendation ?? ""}
+          </p>
+        </div>
+        {/* Existing Element */}
+        <div id="card" className="relative">
+          {/* Card */}
+          {content[active] && (
+            <div
+              ref={cardRef}
+              className="product-card-shadow"
+              id="existing-element">
+              <a
+                href={`https://${host}/products/${content[active].handle}`}
+                target="_blank"
+                rel="noopener noreferrer">
+                <img
+                  src={content[active].image}
+                  alt={content[active].name}
+                  className="w-full object-cover"
+                />
+                <div className="flex flex-col p-3">
+                  <h2 className="text-xxl font-semibold">
+                    {content[active].name}
+                  </h2>
+                  <p className="text-lg font-medium text-gray-500 mb-4">
+                    {content[active].price ? "$" + content[active].price : ""}
+                  </p>
+                </div>
+              </a>
             </div>
-            <div className="flex justify-center">{renderDots()}</div>
-            <div className="flex justify-end">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                onClick={handleRightClick}
-                className="text-gray-400 link-card-arrow">
-                <g id="Arrows">
-                  <path
-                    id="Icon"
-                    d="M5 12H19M19 12L12 5M19 12L12 19"
-                    stroke={
-                      content.length - 1 === active ? "#CBD2DD" : "#474B58"
-                    }
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </g>
-              </svg>
-            </div>
+          )}
+        </div>
+      </div>
+      {content.length > 1 && (
+        <div className="w-full grid grid-cols-3 items-center">
+          <div className="flex justify-start">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              onClick={handleLeftClick}
+              className="text-gray-400 link-card-arrow">
+              <g id="Arrows">
+                <path
+                  id="Icon"
+                  d="M19 12H5M5 12L12 19M5 12L12 5"
+                  stroke={active === 0 ? "#CBD2DD" : "#474B58"}
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+            </svg>
           </div>
-        )}
-      </div>
-
-      <div className="relative" style={{ display: "inline-block" }}>
-        <p
-          ref={recRef}
-          id="rec"
-          className="ai-grey-text leading-snug mb-4 p-2"
-          style={{
-            fontSize: `${recFontSize}px`,
-          }}>
-          {content[active]?.recommendation ?? ""}
-        </p>
-        {/* Add any additional styling or elements for the recommendation input */}
-      </div>
+          <div className="flex justify-center">{renderDots()}</div>
+          <div className="flex justify-end">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              onClick={handleRightClick}
+              className="text-gray-400 link-card-arrow">
+              <g id="Arrows">
+                <path
+                  id="Icon"
+                  d="M5 12H19M19 12L12 5M19 12L12 19"
+                  stroke={content.length - 1 === active ? "#CBD2DD" : "#474B58"}
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+            </svg>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
