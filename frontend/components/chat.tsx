@@ -98,8 +98,13 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
 
   useEffect(() => {
     setMin(minFontSize);
-    setMax(recFontSize);
-  }, [content[active]?.recommendation]);
+    setMax(recFontSize); // We are changing on a growing recommendation text, we should only be shrinking
+  }, [content[active]?.recommendation, recFontSize]);
+
+  useEffect(() => {
+    setMin(minFontSize);
+    setMax(maxFontSize);
+  }, [active]);
 
   useEffect(() => {
     const recDiv = recRef.current;
@@ -142,7 +147,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
     };
 
     adjustFontSize();
-  }, [recDimensions, recFontSize, min, max, active, recRef, cardRef]);
+  }, [recDimensions, recFontSize, min, max, recRef, cardRef]);
 
   const handleRightClick = () => {
     // Add your click handler logic here
@@ -259,7 +264,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
         <p
           ref={recRef}
           id="rec"
-          className="ai-grey-text leading-relaxed mb-4 p-8"
+          className="ai-grey-text leading-snug mb-4 p-2"
           style={{
             fontSize: `${recFontSize}px`,
           }}>
