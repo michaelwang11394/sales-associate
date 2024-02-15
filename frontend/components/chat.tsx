@@ -80,9 +80,9 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   host,
   content,
 }): React.JSX.Element => {
-  const minFontSize = 10;
+  const minFontSize = 15;
   const maxFontSize = 50;
-  const startFontSize = 12;
+  const startFontSize = 20;
   const overFlowAllowance = 1.05; // For resizing font
   const [active, setActive] = useState(0);
 
@@ -180,23 +180,9 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
 
   return (
     <div>
-      <div className="w-full grid grid-cols-2 gap-4">
-        <div
-          id="recText"
-          className="relative"
-          style={{ display: "inline-block" }}>
-          <p
-            ref={recRef}
-            id="rec"
-            className="ai-grey-text leading-snug mb-4 p-2"
-            style={{
-              fontSize: `${recFontSize}px`,
-            }}>
-            {content[active]?.recommendation ?? ""}
-          </p>
-        </div>
+      <div className="w-full gap-4">
         {/* Existing Element */}
-        <div id="card" className="relative">
+        <div id="card" className="w-1/2 float-right m-3">
           {/* Card */}
           {content[active] && (
             <div
@@ -224,6 +210,15 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
             </div>
           )}
         </div>
+        <p
+          ref={recRef}
+          id="rec"
+          className="ai-grey-text leading-snug mb-4"
+          style={{
+            fontSize: `${recFontSize}px`,
+          }}>
+          {content[active]?.recommendation ?? ""}
+        </p>
       </div>
       {content.length > 1 && (
         <div className="w-full grid grid-cols-3 items-center">
