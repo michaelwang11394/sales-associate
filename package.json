@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "run-p -sr vite:dev shopify:dev",
-    "dev:vercel": "VITE_VERCEL_LOCATION=https://localhost:3000 run-p -sr vite:dev shopify:dev",
+    "dev:vercel": "VITE_POSTHOG_FORCE_FLAG=test VITE_VERCEL_LOCATION=https://localhost:3000 run-p -sr vite:dev shopify:dev",
     "build": "run-s vite:build shopify:build",
     "deploy:extension": "run-s vite:build cleanup shopify:deploy",
     "shopify": "shopify",
