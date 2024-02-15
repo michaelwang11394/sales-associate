@@ -32,7 +32,7 @@ export default function Icon({ props }) {
       });
     }
     if (clientId.current) {
-      posthog?.identify(window.location.host + clientId.current);
+      posthog?.identify(clientId.current, { store: window.location.host });
     }
   }, [posthog, clientId]);
 
