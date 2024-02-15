@@ -8,7 +8,7 @@ export const captureEvent = async (
   properties: any
 ) => {
   client.capture({
-    distinctId: store + clientId,
+    distinctId: clientId,
     event: properties.name,
     properties: properties,
   });

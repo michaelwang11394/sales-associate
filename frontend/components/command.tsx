@@ -68,7 +68,7 @@ export default function CommandPalette({ props }) {
       });
     }
     if (clientId.current) {
-      posthog?.identify(window.location.host + clientId.current);
+      posthog?.identify(clientId.current, { store: window.location.host });
     }
     if (!variant || variant === "control") {
       // If we're in the control group, avoid any unnecessary supabase or openai calls
