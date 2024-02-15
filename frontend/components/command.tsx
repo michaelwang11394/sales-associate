@@ -58,7 +58,15 @@ export default function CommandPalette({ props }) {
   const variant = useFeatureFlagVariantKey("enabled");
 
   useEffect(() => {
-    // posthog.featureFlags.override({ enabled: "test" }); If you want to override feature flag
+    if (import.meta?.env?.VITE_POSTHOG_FORCE_FLAG) {
+      console.log(
+        "Overriding sales associate via posthog feature flag: ",
+        import.meta.env.VITE_POSTHOG_FORCE_FLAG
+      );
+      posthog.featureFlags.override({
+        enabled: import.meta.env.VITE_POSTHOG_FORCE_FLAG,
+      });
+    }
     if (clientId.current) {
       posthog?.identify(window.location.host + clientId.current);
     }
