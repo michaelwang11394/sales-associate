@@ -1,0 +1,446 @@
+import type {
+  ChatBubbleProps,
+  ImageMessageProps,
+  LinkMessageProps,
+  TextMessageProps,
+} from "@/constants/types";
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "~/utils/supabase";
+import "./chat.css";
+
+const TextMessage: React.FC<TextMessageProps> = ({
+  text,
+  isAISender,
+}): React.JSX.Element => {
+  return (
+    <div className="flex items-start">
+      <p className={`text-md inline ${isAISender ? "text-blue-500" : ""}`}>
+        {isAISender ? "Associate: " + text : "User: " + text}
+      </p>
+    </div>
+  );
+};
+
+const ImageMessage: React.FC<ImageMessageProps> = ({
+  src,
+}): React.JSX.Element => {
+  // eslint-disable-next-line jsx-a11y/alt-text
+  return <img src={src} className="w-40 h-40 rounded-lg object-cover" />;
+};
+
+/*
+const LinkMessage: React.FC<LinkMessageProps> = ({
+  name,
+  handle,
+  price,
+  image,
+  host,
+}): React.JSX.Element => {
+  return (
+    <div className="w-64">
+      <img src={image} alt={name} className="w-full h-48 object-cover" />
+      <div className="flex flex-col p-4">
+        <h3 className="text-xl font-semibold mb-2">{name}</h3>
+        <p className="text-lg font-medium text-gray-500 mb-4">
+          {price ? "$" + price : ""}
+        </p>
+        <a
+          href={`https://${host}/products/${handle}`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center justify-center px-4 py-2 bg-white text-black font-semibold rounded-md shadow-md hover:bg-gray-600">
+          View Product
+        </a>
+      </div>
+    </div>
+  );
+};
+*/
+
+const LinkMessage: React.FC<LinkMessageProps> = ({
+  key,
+  host,
+  content,
+}): React.JSX.Element => {
+  const minFontSize = 15;
+  const maxFontSize = 50;
+  const startFontSize = 20;
+  const overFlowAllowance = 1.05; // For resizing font
+  const [active, setActive] = useState(0);
+
+  // For running binary search to find font size to match card
+  const [recFontSize, setRecFontSize] = useState(startFontSize);
+  const [min, setMin] = useState(minFontSize);
+  const [max, setMax] = useState(maxFontSize);
+  const recRef = useRef(null);
+  const cardRef = useRef(null);
+
+  // State to track the dimensions of recRef
+  const [recDimensions, setRecDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    setMin(minFontSize);
+    setMax(recFontSize); // We are changing on a growing recommendation text, we should only be shrinking
+  }, [content[active]?.recommendation, recFontSize]);
+
+  useEffect(() => {
+    setMin(minFontSize);
+    setMax(maxFontSize);
+  }, [active]);
+
+  useEffect(() => {
+    const recDiv = recRef.current;
+    if (recDiv) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const { width, height } = entry.contentRect;
+          setRecDimensions({ width, height });
+        }
+      });
+      resizeObserver.observe(recDiv);
+      return () => resizeObserver.unobserve(recDiv);
+    }
+  }, [recRef]);
+
+  useEffect(() => {
+    const adjustFontSize = () => {
+      const recDiv = recRef.current;
+      const cardDiv = cardRef.current;
+      if (!recDiv || !cardDiv) return;
+
+      const recHeight = recDiv.clientHeight;
+      const cardHeight = cardDiv.clientHeight;
+
+      // Check if recHeight is within 110% of cardHeight
+      if (
+        recHeight <= cardHeight * overFlowAllowance &&
+        recHeight >= cardHeight
+      ) {
+        return;
+      }
+
+      if (recHeight > cardHeight * overFlowAllowance) {
+        setMax(recFontSize);
+        setRecFontSize((prevFontSize) => (min + prevFontSize) / 2);
+      } else {
+        setMin(recFontSize);
+        setRecFontSize((prevFontSize) => (max + prevFontSize) / 2);
+      }
+    };
+
+    adjustFontSize();
+  }, [recDimensions, recFontSize, min, max, recRef, cardRef]);
+
+  const handleRightClick = () => {
+    // Add your click handler logic here
+    setActive(Math.min(active + 1, content.length - 1));
+  };
+
+  const handleLeftClick = () => {
+    // Add your click handler logic here
+    setActive(Math.max(active - 1, 0));
+  };
+
+  const renderDots = () => {
+    return content.map((_, index) => {
+      const fill = active === index ? "#474B58" : "#CBD2DD";
+      return (
+        <svg
+          width="9"
+          key={index}
+          height="9"
+          viewBox="0 0 6 6"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <g id="Icons">
+            <circle id="Ellipse 4" cx="3" cy="3" r="2.5" fill={fill} />
+          </g>
+        </svg>
+      );
+    });
+  };
+
+  return (
+    <div>
+      <div className="w-full gap-4">
+        {/* Existing Element */}
+        <div id="card" className="w-1/2 float-right m-3">
+          {/* Card */}
+          {content[active] && (
+            <div
+              ref={cardRef}
+              className="product-card-shadow"
+              id="existing-element">
+              <a
+                href={`https://${host}/products/${content[active].handle}`}
+                target="_blank"
+                rel="noopener noreferrer">
+                <img
+                  src={content[active].image}
+                  alt={content[active].name}
+                  className="w-full object-cover"
+                />
+                <div className="flex flex-col p-3">
+                  <h2 className="text-xxl font-semibold">
+                    {content[active].name}
+                  </h2>
+                  <p className="text-lg font-medium text-gray-500 mb-4">
+                    {content[active].price ? "$" + content[active].price : ""}
+                  </p>
+                </div>
+              </a>
+            </div>
+          )}
+        </div>
+        <p
+          ref={recRef}
+          id="rec"
+          className="ai-grey-text leading-snug mb-4"
+          style={{
+            fontSize: `${recFontSize}px`,
+          }}>
+          {content[active]?.recommendation ?? ""}
+        </p>
+      </div>
+      {content.length > 1 && (
+        <div className="w-full grid grid-cols-3 items-center">
+          <div className="flex justify-start">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              onClick={handleLeftClick}
+              className="text-gray-400 link-card-arrow">
+              <g id="Arrows">
+                <path
+                  id="Icon"
+                  d="M19 12H5M5 12L12 19M5 12L12 5"
+                  stroke={active === 0 ? "#CBD2DD" : "#474B58"}
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+            </svg>
+          </div>
+          <div className="flex justify-center">{renderDots()}</div>
+          <div className="flex justify-end">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              onClick={handleRightClick}
+              className="text-gray-400 link-card-arrow">
+              <g id="Arrows">
+                <path
+                  id="Icon"
+                  d="M5 12H19M19 12L12 5M19 12L12 19"
+                  stroke={content.length - 1 === active ? "#CBD2DD" : "#474B58"}
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+            </svg>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const ChatBubble = ({
+  key,
+  type,
+  isAISender,
+  content,
+  host,
+}: ChatBubbleProps): React.JSX.Element => {
+  const renderMessage = () => {
+    switch (type) {
+      case "loading":
+      case "text":
+        return <TextMessage text={content || ""} isAISender={isAISender} />;
+      case "img":
+        // TODO Add IMG
+        return <ImageMessage src={content || ""} />;
+      case "link":
+        return <LinkMessage key={key} content={content} host={host} />;
+      default:
+        return <TextMessage text={content[0] || ""} isAISender={isAISender} />;
+    }
+  };
+  // TODO: Figure out better way to use flex. We want to make AI response full width but flex for user input
+  return isAISender ? (
+    <div className={`items-end justify-start py-1 mb-2`}>
+      <div className={`px-4 py-3 min-h-[25px] ai-grey-text mr-2`}>
+        <div className="message">{renderMessage()}</div>
+      </div>
+    </div>
+  ) : (
+    <div className={`flex items-end justify-start py-1 mb-2`}>
+      <div className={`px-4 py-3 min-h-[25px] user-input-text`}>
+        <div className="message">{renderMessage()}</div>
+      </div>
+    </div>
+  );
+};
+
+const ChatModal = ({ isOpen, onClose, chatData, store }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      id="chat-column"
+      className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column"
+      style={{
+        position: "fixed" /* Stay in place */,
+        zIndex: 1 /* Sit on top */,
+        left: 0,
+        top: 0,
+        width: "100%" /* Full width */,
+        height: "100%" /* Full height */,
+        overflow: "auto" /* Enable scroll if needed */,
+        backgroundColor: "rgb(0,0,0)" /* Fallback color */,
+        backgroundColor: "rgba(0,0,0,0.4)" /* Black w/ opacity */,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}>
+      <div
+        style={{
+          backgroundColor: "#fefefe",
+          margin: "auto",
+          padding: "20px",
+          border: "1px solid #888",
+          width: "80%" /* Could be more or less, depending on screen size */,
+          boxShadow:
+            "0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19)",
+          animationName: "animatetop",
+          animationDuration: "0.4s",
+        }}>
+        {chatData
+          .filter((message) => message.message !== undefined)
+          .map((message, index) => (
+            <ChatBubble
+              key={index}
+              type={message.type}
+              isAISender={message.sender !== "user"}
+              content={message.message}
+              host={store}
+            />
+          ))}
+        <button
+          onClick={onClose}
+          style={{
+            backgroundColor: "#4CAF50" /* Green */,
+            color: "white",
+            padding: "14px 20px",
+            margin: "10px 0",
+            border: "none",
+            cursor: "pointer",
+            width: "100%",
+          }}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const UserBreakdown = ({ store }) => {
+  const [data, setData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedChatData, setSelectedChatData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: tableData, error } = await supabase.rpc(
+        "get_event_counts",
+        { store_param: store }
+      );
+      if (error) {
+        console.error("Error fetching data:", error);
+        return;
+      }
+      setData(tableData);
+    };
+
+    fetchData();
+  }, [store]);
+
+  const handleChatLinkClick = async (clientId) => {
+    const { data: chatData, error } = await supabase
+      .from("messages")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .eq("clientId", clientId)
+      .eq("store", store)
+      .neq("sender", "system")
+      .neq("sender", "summary")
+      .limit(20); // TODO paginate here
+
+    if (error) {
+      console.error("Error fetching chat data:", error);
+      return;
+    }
+
+    setSelectedChatData(
+      chatData.reverse().map((row) => ({
+        type: row.type,
+        sender: row.sender,
+        message: JSON.parse(row.content),
+      }))
+    );
+    setIsModalOpen(true);
+  };
+
+  return (
+    <>
+      <table style={{ borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={{ border: "1px solid black" }}>Client ID</th>
+            <th style={{ border: "1px solid black" }}>Most Recent Timestamp</th>
+            <th style={{ border: "1px solid black" }}>Page Viewed Count</th>
+            <th style={{ border: "1px solid black" }}>Product Viewed Count</th>
+            <th style={{ border: "1px solid black" }}>Chat Thread</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, index) => (
+            <tr key={index}>
+              <td style={{ border: "1px solid black" }}>{row.client}</td>
+              <td style={{ border: "1px solid black" }}>
+                {row.newest_timestamp}
+              </td>
+              <td style={{ border: "1px solid black" }}>
+                {row.page_viewed_count}
+              </td>
+              <td style={{ border: "1px solid black" }}>
+                {row.product_viewed_count}
+              </td>
+              <td style={{ border: "1px solid black" }}>
+                <a href="#" onClick={() => handleChatLinkClick(row.client)}>
+                  View Chat
+                </a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <ChatModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        chatData={selectedChatData}
+        store={store}
+      />
+    </>
+  );
+};
+
+export default UserBreakdown;
