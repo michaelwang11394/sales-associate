@@ -462,7 +462,10 @@ const UserBreakdown = ({ store }) => {
                 {row.product_viewed_count}
               </td>
               <td style={{ border: "1px solid black" }}>
-                <a href="#" onClick={() => handleChatLinkClick(row.client)}>
+                <a
+                  href="#"
+                  onClick={() => handleChatLinkClick(row.client)}
+                  style={{ color: "blue", fontWeight: "bold" }}>
                   View Chat
                 </a>
               </td>
