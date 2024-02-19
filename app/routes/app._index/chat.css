@@ -1,0 +1,398 @@
+/* General CSS Setup */
+body {
+  background-color: lightblue;
+  font-family: "Avenir", "Lucida Sans", helvetica, sans;
+}
+
+/* container */
+.container {
+  padding: 5% 5%;
+}
+
+.product-column {
+  flex: 1;
+  border-top: #d9dce2;
+}
+.divider {
+  flex: 0.01;
+  background-color: #d9dce2;
+}
+.chat-column {
+  flex: 2;
+  background: var(--White, #fff);
+  border-top: #d9dce2;
+}
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+  .mobile-chat-column {
+    width: 100%; /* Adjust this value as needed */
+  }
+}
+
+.link-card {
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: var(--White, #fff);
+  width: 50%;
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
+}
+.link-card:hover {
+  background-color: #f0f3f8; /* Change to desired hover background color */
+}
+.rec-text {
+  flex: 0 0 auto;
+  border-radius: 10px;
+  width: 50%;
+}
+.hint-bubble {
+  border-color: #2a33ff;
+  border-radius: 15px;
+  color: #2a33ff;
+  margin: 0px 3px 8px 3px;
+  padding: 5px 10px 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
+}
+
+.hint-bubble:hover {
+  background-color: #f0f3f8; /* Change to desired hover background color */
+}
+
+/* CSS talk bubble */
+.talk-bubble {
+  border-radius: 25px 25px 0px 25px;
+  border: 1px solid var(--Primary-accent, #2a33ff);
+  background: var(--White, #fff);
+  margin: 40px;
+  position: relative;
+  height: auto;
+  width: 400px;
+  background-color: white;
+}
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+  .mobile-talk-bubble {
+    width: 200%; /* Adjust this value as needed */
+  }
+}
+.link-card-arrow {
+  cursor: pointer;
+}
+.overlay-exit-button {
+  cursor: pointer;
+}
+.border {
+  border: 8px solid #666;
+}
+.round {
+  border-radius: 30px;
+  -webkit-border-radius: 30px;
+  -moz-border-radius: 30px;
+}
+.ai-grey-text {
+  color: var(--Secondary-grey, #474b58);
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+}
+.user-input-text {
+  border-radius: 0px 25px 25px 25px;
+  background: var(--Background-grey, #d9dce2);
+  color: var(--Primary-accent, #2a33ff);
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: normal;
+}
+.search-card-header {
+  color: #000;
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+}
+.product-card-shadow {
+  border-radius: 10px;
+  box-shadow: 1px 1px 8px 5px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
+}
+
+.product-card-shadow:hover {
+  background-color: #f0f3f8; /* Change to desired hover background color */
+}
+
+.search-card-border {
+  border: 1px solid var(--Border-darker, #cbd2dd);
+}
+.search-button {
+  border-radius: 10px;
+  background: var(--Background-grey, #2a33ff);
+  color: var(--Primary-accent, #ffffff);
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+/* Right triangle placed top left flush. */
+.tri-right.border.left-top:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -40px;
+  right: auto;
+  top: -8px;
+  bottom: auto;
+  border: 32px solid;
+  border-color: #666 transparent transparent transparent;
+}
+.tri-right.left-top:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -20px;
+  right: auto;
+  top: 0px;
+  bottom: auto;
+  border: 22px solid;
+  border-color: white transparent transparent transparent;
+}
+
+/* Right triangle, left side slightly down */
+.tri-right.border.left-in:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -40px;
+  right: auto;
+  top: 30px;
+  bottom: auto;
+  border: 20px solid;
+  border-color: #666 #666 transparent transparent;
+}
+.tri-right.left-in:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -20px;
+  right: auto;
+  top: 38px;
+  bottom: auto;
+  border: 12px solid;
+  border-color: white white transparent transparent;
+}
+
+/*Right triangle, placed bottom left side slightly in*/
+.tri-right.border.btm-left:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: -8px;
+  right: auto;
+  top: auto;
+  bottom: -40px;
+  border: 32px solid;
+  border-color: transparent transparent transparent #666;
+}
+.tri-right.btm-left:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: 0px;
+  right: auto;
+  top: auto;
+  bottom: -20px;
+  border: 22px solid;
+  border-color: transparent transparent transparent white;
+}
+
+/*Right triangle, placed bottom left side slightly in*/
+.tri-right.border.btm-left-in:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: 30px;
+  right: auto;
+  top: auto;
+  bottom: -40px;
+  border: 20px solid;
+  border-color: #666 transparent transparent #666;
+}
+.tri-right.btm-left-in:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: 38px;
+  right: auto;
+  top: auto;
+  bottom: -20px;
+  border: 12px solid;
+  border-color: white transparent transparent white;
+}
+
+/*Right triangle, placed bottom right side slightly in*/
+.tri-right.border.btm-right-in:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: 30px;
+  bottom: -40px;
+  border: 20px solid;
+  border-color: #666 #666 transparent transparent;
+}
+.tri-right.btm-right-in:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: 38px;
+  bottom: -20px;
+  border: 12px solid;
+  border-color: white white transparent transparent;
+}
+/*
+	left: -8px;
+  right: auto;
+  top: auto;
+	bottom: -40px;
+	border: 32px solid;
+	border-color: transparent transparent transparent #666;
+	left: 0px;
+  right: auto;
+  top: auto;
+	bottom: -20px;
+	border: 22px solid;
+	border-color: transparent transparent transparent white;
+
+/*Right triangle, placed bottom right side slightly in*/
+.tri-right.border.btm-right:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: -8px;
+  bottom: -40px;
+  border: 20px solid;
+  border-color: #666 #666 transparent transparent;
+}
+.tri-right.btm-right:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: 0px;
+  bottom: -20px;
+  border: 12px solid;
+  border-color: white white transparent transparent;
+}
+
+/* Right triangle, right side slightly down*/
+.tri-right.border.right-in:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: -40px;
+  top: 30px;
+  bottom: auto;
+  border: 20px solid;
+  border-color: #666 transparent transparent #666;
+}
+.tri-right.right-in:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: -20px;
+  top: 38px;
+  bottom: auto;
+  border: 12px solid;
+  border-color: white transparent transparent white;
+}
+
+/* Right triangle placed top right flush. */
+.tri-right.border.right-top:before {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: -40px;
+  top: -8px;
+  bottom: auto;
+  border: 32px solid;
+  border-color: #666 transparent transparent transparent;
+}
+.tri-right.right-top:after {
+  content: " ";
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: auto;
+  right: -20px;
+  top: 0px;
+  bottom: auto;
+  border: 20px solid;
+  border-color: white transparent transparent transparent;
+}
+
+/* talk bubble contents */
+.talktext {
+  padding: 1em;
+  text-align: left;
+  line-height: 1.5em;
+}
+.talktext p {
+  color: var(--Primary-accent, #2a33ff);
+
+  /* Body-semibold */
+  font-family: Avenir;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 26px; /* 162.5% */
+
+  /* remove webkit p margins */
+  -webkit-margin-before: 0em;
+  -webkit-margin-after: 0em;
+}
+
+.scrollable-bottom {
+  padding-bottom: 0.5em;
+}
+
+.overlay.visible {
+  opacity: 1;
+  color: black;
+  visibility: visible;
+  transition: opacity 200ms ease, visibility 0s ease 0s;
+}
+
+.overlay {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease, visibility 0s ease 200ms;
+}
