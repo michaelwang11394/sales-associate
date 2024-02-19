@@ -14,9 +14,28 @@ const TextMessage: React.FC<TextMessageProps> = ({
 }): React.JSX.Element => {
   return (
     <div className="flex items-start">
-      <p className={`text-md inline ${isAISender ? "text-blue-500" : ""}`}>
-        {isAISender ? "Associate: " + text : "User: " + text}
-      </p>
+      {isAISender && (
+        <div className="pr-4">
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 30 30"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <g id="star-06">
+              <path
+                id="Icon"
+                d="M5.62549 27.5V21.25M5.62549 8.75V2.5M2.50049 5.625H8.75049M2.50049 24.375H8.75049M16.2505 3.75L14.0828 9.38608C13.7303 10.3026 13.554 10.7609 13.2799 11.1464C13.037 11.488 12.7385 11.7865 12.3968 12.0294C12.0114 12.3035 11.5531 12.4798 10.6366 12.8323L5.00049 15L10.6366 17.1677C11.5531 17.5202 12.0114 17.6965 12.3968 17.9706C12.7385 18.2135 13.037 18.512 13.2799 18.8536C13.554 19.2391 13.7303 19.6974 14.0828 20.6139L16.2505 26.25L18.4182 20.6139C18.7707 19.6974 18.947 19.2391 19.2211 18.8536C19.464 18.512 19.7625 18.2135 20.1041 17.9706C20.4896 17.6965 20.9479 17.5202 21.8644 17.1677L27.5005 15L21.8644 12.8323C20.9479 12.4798 20.4896 12.3035 20.1041 12.0294C19.7625 11.7865 19.464 11.488 19.2211 11.1464C18.947 10.7609 18.7707 10.3026 18.4182 9.38608L16.2505 3.75Z"
+                stroke="#2A33FF"
+                stroke-width="1.875"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </g>
+          </svg>
+        </div>
+      )}
+      <p className="text-md inline">{text}</p>
     </div>
   );
 };
@@ -302,10 +321,10 @@ const ChatModal = ({ isOpen, onClose, chatData, store }) => {
         left: 0,
         top: 0,
         width: "100%" /* Full width */,
-        height: "80%" /* Full height */,
+        height: "100%" /* Full height */,
         backgroundColor: "rgb(0,0,0)" /* Fallback color */,
         backgroundColor: "rgba(0,0,0,0.4)" /* Black w/ opacity */,
-        display: "flex",
+        display: "flex-col",
         justifyContent: "center",
         alignItems: "center",
       }}>
@@ -316,7 +335,7 @@ const ChatModal = ({ isOpen, onClose, chatData, store }) => {
           margin: "auto",
           padding: "20px",
           border: "1px solid #888",
-          width: "80%" /* Could be more or less, depending on screen size */,
+          width: "50%" /* Could be more or less, depending on screen size */,
           height: "80%" /* Full height */,
           overflow: "scroll",
           boxShadow:
@@ -335,6 +354,13 @@ const ChatModal = ({ isOpen, onClose, chatData, store }) => {
               host={store}
             />
           ))}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          width: "100%",
+        }}>
         <button
           onClick={onClose}
           style={{
@@ -344,7 +370,7 @@ const ChatModal = ({ isOpen, onClose, chatData, store }) => {
             margin: "10px 0",
             border: "none",
             cursor: "pointer",
-            width: "100%",
+            width: "50%",
           }}>
           Close
         </button>
