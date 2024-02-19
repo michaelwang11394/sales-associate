@@ -1,11 +1,12 @@
-import { useState } from "react";
 import { json } from "@remix-run/node";
-import { Page, Text, Layout } from "@shopify/polaris";
+import { Layout, Page, Text } from "@shopify/polaris";
+import { useState } from "react";
 
-import { authenticate } from "~/shopify.server";
-import Onboarding from "./onboarding";
-import { supabase } from "~/utils/supabase";
 import { useLoaderData } from "@remix-run/react";
+import { authenticate } from "~/shopify.server";
+import { supabase } from "~/utils/supabase";
+import UserBreakdown from "./analytics";
+import Onboarding from "./onboarding";
 
 export async function loader({ request }) {
   const { admin, session } = await authenticate.admin(request);
@@ -87,6 +88,7 @@ export default function Index() {
           <Text variant="bodyLg" as="p" alignment="center">
             We're glad to have you here. Let's boost your sales together.
           </Text>
+          <UserBreakdown store={shopData.data[0].domain} />
         </Layout.Section>
       </Layout>
     </Page>

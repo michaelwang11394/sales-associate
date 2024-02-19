@@ -2,6 +2,7 @@
 module.exports = {
   content: [
     "./frontend/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx}",
     "./extension/chat-interface/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {

@@ -83,7 +83,7 @@ export const chatResponseSchema = z.object({
       z.object({
         product_id: z
           .string()
-          .describe("The product id that is referred to in recommendation"),
+          .describe("The product id that is referred to in recommendation. This id is a number with around 14 digits"),
         recommendation: z
           .string()
           .describe(
