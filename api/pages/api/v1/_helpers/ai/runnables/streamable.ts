@@ -79,7 +79,6 @@ export class Streamable {
           )
             continue;
           const data = parse(response);
-          console.log(data)
           if (state === StructuredOutputStreamState.TEXT) {
             const parsedText = data?.plainText;
             if (!parsedText) {

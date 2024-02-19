@@ -13,10 +13,6 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 ];
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: "./tailwind.css" },
-];
-
 export default function App() {
   return (
     <html>
