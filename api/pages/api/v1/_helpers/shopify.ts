@@ -42,7 +42,7 @@ interface ProductEntry {
   title: string;
   description: string;
   variants: any[];
-  id?: string;
+  id: string;
   handle?: string; // Optional property
   image_url?: string; // Optional property
 }
@@ -73,6 +73,7 @@ const formatCatalogEntry = (product: any, includeFullMetadata = true) => {
   });
 
   let entry: ProductEntry = {
+    id,
     title,
     description,
     variants: formattedVariants,
@@ -81,7 +82,6 @@ const formatCatalogEntry = (product: any, includeFullMetadata = true) => {
   if (includeFullMetadata) {
     entry = {
       ...entry,
-      id,
       handle,
       image_url: images.length > 0 ? images[0].src : "",
     };
