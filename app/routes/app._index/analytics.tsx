@@ -394,9 +394,8 @@ const UserBreakdown = ({ store }) => {
       const { data: count } = await supabase.rpc("get_unique_client_count", {
         store_param: store,
       });
-      console.log(count);
       setTotalItems(count);
-      setTotalPages(Math.ceil(count! / pageSize));
+      setTotalPages(Math.ceil(count / pageSize));
     };
 
     fetchTotalCount();
