@@ -414,6 +414,26 @@ const UserBreakdown = ({ store }) => {
     fetchData();
   }, [store]);
 
+  useEffect(() => {
+    const paginateClientRows = async () => {
+      const { data: tableData, error } = await supabase.rpc(
+        "get_event_counts",
+        {
+          store_param: store,
+          start_index: clientPage * pageSize,
+          page_size: pageSize,
+        }
+      );
+      if (error) {
+        console.error("Error fetching data:", error);
+        return;
+      }
+      setData(tableData);
+    };
+
+    paginateClientRows();
+  }, [clientPage]);
+
   const handleChatLinkClick = async (clientId) => {
     const { data: chatData, error } = await supabase
       .from("messages")
@@ -502,15 +522,23 @@ const UserBreakdown = ({ store }) => {
           justifyContent: "space-between",
           marginTop: "20px",
         }}>
-        <button onClick={handlePreviousClick} disabled={clientPage === 0}>
+        <button
+          className="hint-bubble"
+          onClick={handlePreviousClick}
+          disabled={clientPage === 0}
+          style={{ visibility: clientPage === 0 ? "hidden" : "visible" }}>
           Previous
         </button>
         <span>
           Page {clientPage + 1} of {totalPages}
         </span>
         <button
+          className="hint-bubble"
           onClick={handleNextClick}
-          disabled={clientPage === totalPages - 1}>
+          disabled={clientPage === totalPages - 1}
+          style={{
+            visibility: clientPage === totalPages - 1 ? "hidden" : "visible",
+          }}>
           Next
         </button>
       </div>
