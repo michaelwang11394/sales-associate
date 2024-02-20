@@ -11,16 +11,17 @@ export const captureEvent = async (
   client?.identify({ distinctId: clientId, properties: { store: store } });
   const variant = await client.getFeatureFlag("enabled", clientId);
 
+  const { context, id, name, timestamp, detail } = properties;
   client.capture({
     distinctId: clientId,
-    event: properties.name,
+    event: name,
     properties: {
       ...properties,
+      order_amount: detail?.checkout?.totalPrice?.amount ?? 0,
       "$feature/enabled": variant, // Odd formatting but this key string gets is necessary for events to show up in posthog's experiment tab
     },
   });
 
-  const { context, id, name, timestamp, detail } = properties;
   const supabaseWritten = await supabase.from("events").insert([
     {
       id: id,
@@ -30,6 +31,7 @@ export const captureEvent = async (
       context: context,
       name: name,
       store: store,
+      order_amount: detail?.checkout?.totalPrice?.amount ?? 0
     },
   ]);
 
