@@ -459,7 +459,6 @@ const UserBreakdown = ({ store }) => {
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
       .eq("store", store)
-      .neq("sender", "system")
       .neq("sender", "summary")
       .limit(100); // TODO paginate here
 
@@ -504,6 +503,9 @@ const UserBreakdown = ({ store }) => {
           <tr>
             <th style={{ border: "1px solid black" }}>Client ID</th>
             <th style={{ border: "1px solid black" }}>Most Recent Timestamp</th>
+            <th style={{ border: "1px solid black" }}>
+              Total Order Amount (USD)
+            </th>
             <th style={{ border: "1px solid black" }}>Page Viewed Count</th>
             <th style={{ border: "1px solid black" }}>Product Viewed Count</th>
             <th style={{ border: "1px solid black" }}>Chat Thread</th>
@@ -515,6 +517,9 @@ const UserBreakdown = ({ store }) => {
               <td style={{ border: "1px solid black" }}>{row.client}</td>
               <td style={{ border: "1px solid black" }}>
                 {row.newest_timestamp}
+              </td>
+              <td style={{ border: "1px solid black" }}>
+                {row.total_order_amount}
               </td>
               <td style={{ border: "1px solid black" }}>
                 {row.page_viewed_count}
