@@ -31,7 +31,8 @@ export const captureEvent = async (
       context: context,
       name: name,
       store: store,
-      order_amount: detail?.checkout?.totalPrice?.amount ?? 0
+      order_amount: detail?.checkout?.totalPrice?.amount ?? 0,
+      enabled: variant !== "control"
     },
   ]);
 
