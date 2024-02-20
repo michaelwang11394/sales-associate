@@ -385,6 +385,8 @@ const UserBreakdown = ({ store }) => {
   const [selectedChatData, setSelectedChatData] = useState([]);
   const [clientPage, setClientPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0); // Total items for pagination
+  const [embedLink, setEmbedLink] = useState<string | null | undefined>(null); // Total items for pagination
+
   const pageSize = 20;
   const [totalPages, setTotalPages] = useState(0); // Total pages for pagination
 
@@ -412,6 +414,22 @@ const UserBreakdown = ({ store }) => {
     };
 
     fetchData();
+
+    const getEmbedLink = async () => {
+      const { data, error } = await supabase
+        .from("merchants")
+        .select("posthog_dashboard")
+        .eq("domain", store);
+      if (error) {
+        console.error("Error fetching data:", error);
+        return;
+      }
+      if (data && data.length === 1) {
+        setEmbedLink(data[0].posthog_dashboard as string);
+      }
+    };
+
+    getEmbedLink();
   }, [store]);
 
   useEffect(() => {
@@ -542,6 +560,15 @@ const UserBreakdown = ({ store }) => {
           Next
         </button>
       </div>
+      {embedLink && (
+        <iframe
+          width="100%"
+          height="400"
+          frameborder="0"
+          allowfullscreen
+          title="Posthog dashboard"
+          src={`https://${embedLink}`}></iframe>
+      )}
       <ChatModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
