@@ -383,12 +383,27 @@ const UserBreakdown = ({ store }) => {
   const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChatData, setSelectedChatData] = useState([]);
+  const [clientPage, setClientPage] = useState(0);
+  const [totalItems, setTotalItems] = useState(0); // Total items for pagination
+  const pageSize = 20;
+  const [totalPages, setTotalPages] = useState(0); // Total pages for pagination
 
   useEffect(() => {
+    const fetchTotalCount = async () => {
+      // Assuming you have a function to fetch total count
+      const { data: count } = await supabase.rpc("get_unique_client_count", {
+        store_param: store,
+      });
+      console.log(count);
+      setTotalItems(count);
+      setTotalPages(Math.ceil(count! / pageSize));
+    };
+
+    fetchTotalCount();
     const fetchData = async () => {
       const { data: tableData, error } = await supabase.rpc(
         "get_event_counts",
-        { store_param: store }
+        { store_param: store, start_index: clientPage, page_size: pageSize }
       );
       if (error) {
         console.error("Error fetching data:", error);
@@ -409,7 +424,7 @@ const UserBreakdown = ({ store }) => {
       .eq("store", store)
       .neq("sender", "system")
       .neq("sender", "summary")
-      .limit(20); // TODO paginate here
+      .limit(100); // TODO paginate here
 
     if (error) {
       console.error("Error fetching chat data:", error);
@@ -435,6 +450,15 @@ const UserBreakdown = ({ store }) => {
     };
     scrollToBottom();
   }, [selectedChatData]);
+
+  // Pagination handlers
+  const handlePreviousClick = () => {
+    setClientPage((prevPage) => Math.max(prevPage - 1, 0));
+  };
+
+  const handleNextClick = () => {
+    setClientPage((prevPage) => Math.min(prevPage + 1, totalPages - 1));
+  };
 
   return (
     <>
@@ -473,6 +497,24 @@ const UserBreakdown = ({ store }) => {
           ))}
         </tbody>
       </table>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginTop: "20px",
+        }}>
+        <button onClick={handlePreviousClick} disabled={clientPage === 0}>
+          Previous
+        </button>
+        <span>
+          Page {clientPage + 1} of {totalPages}
+        </span>
+        <button
+          onClick={handleNextClick}
+          disabled={clientPage === totalPages - 1}>
+          Next
+        </button>
+      </div>
       <ChatModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
