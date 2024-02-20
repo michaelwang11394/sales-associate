@@ -563,7 +563,7 @@ const UserBreakdown = ({ store }) => {
       {embedLink && (
         <iframe
           width="100%"
-          height="400"
+          height="1000"
           frameborder="0"
           allowfullscreen
           title="Posthog dashboard"
