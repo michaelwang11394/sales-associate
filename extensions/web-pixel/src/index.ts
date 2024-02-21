@@ -25,7 +25,7 @@ register(async ({ analytics, browser, settings }) => {
 
 
     await browser.sessionStorage.setItem(
-      "webPixelShopifyLatestEvent" + host,
+      "webPixelShopifyLatestEvents" + host,
       JSON.stringify([...localEvents, {
       id: id,
       timestamp: timestamp,
