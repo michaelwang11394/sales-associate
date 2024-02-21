@@ -1,5 +1,6 @@
 import "vite/modulepreload-polyfill";
+import { createIcon, createOverlayDiv } from "./createElements";
 import "./section.css";
-import { createOverlayDiv, createIcon } from "./createElements";
 
-createIcon(home, "section", createOverlayDiv(), 30);
+const { overlayDiv, mountOverlay } = createOverlayDiv();
+createIcon(home, "section", overlayDiv, mountOverlay, 30);
