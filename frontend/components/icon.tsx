@@ -107,6 +107,7 @@ export default function Icon({ props }) {
   const handleIconClick = (event) => {
     event.stopPropagation();
     const overlayDiv = props.overlayDiv;
+    props.mountOverlay();
     toggleOverlayVisibility(overlayDiv);
   };
 

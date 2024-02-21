@@ -6,7 +6,7 @@ import ReactDOM from "react-dom/client";
 import "vite/modulepreload-polyfill";
 import "./section.css";
 
-export function createIcon(home, mountDiv, overlayDiv, iconSize) {
+export function createIcon(home, mountDiv, overlayDiv, mountOverlay, iconSize) {
   const element = document.getElementById(mountDiv);
   if (!element) {
     throw new Error(`Element with id "${mountDiv}" not found`);
@@ -19,6 +19,7 @@ export function createIcon(home, mountDiv, overlayDiv, iconSize) {
           mountDiv: mountDiv,
           overlayDiv: overlayDiv,
           iconSize: iconSize,
+          mountOverlay: mountOverlay,
         }}
       />
     </PostHogProvider>
@@ -45,13 +46,18 @@ export function createOverlayDiv() {
     overlayDiv.style.transition =
       "opacity 200ms ease, visibility 0s ease 200ms";
     overlayDiv.className = "overlay";
-    document.body.appendChild(overlayDiv);
-    ReactDOM.createRoot(overlayDiv).render(
-      <PostHogProvider apiKey="phc_6YNAbj13W6OWd4CsBcXtyhy4zWUG3SNRb9EkXYjiGk4">
-        <CommandPalette props={{ overlayDiv: overlayDiv }} />
-      </PostHogProvider>
-    );
+  }
+  // Function to append the overlayDiv when needed
+  function mountOverlay() {
+    if (!document.body.contains(overlayDiv)) {
+      document.body.appendChild(overlayDiv);
+      ReactDOM.createRoot(overlayDiv).render(
+        <PostHogProvider apiKey="phc_6YNAbj13W6OWd4CsBcXtyhy4zWUG3SNRb9EkXYjiGk4">
+          <CommandPalette props={{ overlayDiv: overlayDiv }} />
+        </PostHogProvider>
+      );
+    }
   }
 
-  return overlayDiv;
+  return { overlayDiv, mountOverlay };
 }
