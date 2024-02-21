@@ -14,7 +14,7 @@ const createChatOpenAIConfig = (
   apiKey: string,
   temperature: number,
   modelName: string,
-  callbacks = []
+  callbacks: any[] = []
 ) => {
   return {
     apiKey,
@@ -24,44 +24,38 @@ const createChatOpenAIConfig = (
   };
 };
 
-const createReplicateConfig = (apiKey: string, modelName: string) => {
+// Assuming ReplicateInput is defined somewhere, extend it or define it if it's not available
+interface ReplicateInput {
+  apiKey: string;
+  model: `${string}/${string}:${string}`; // This line enforces the template literal type
+}
+
+// Adjust your createReplicateConfig function to explicitly return the ReplicateInput type
+const createReplicateConfig = (apiKey: string, model: `${string}/${string}:${string}`): ReplicateInput => {
   return {
     apiKey,
-    modelName,
+    model,
   };
-};
-
-export const createModelConfig = (modelType: string, config: any) => {
-  switch (modelType) {
-    case "chatOpenAI":
-      return createChatOpenAIConfig(
-        config.apiKey,
-        config.temperature,
-        config.modelName,
-        config.callbacks
-      );
-    case "replicate":
-      return createReplicateConfig(config.apiKey, config.modelName);
-    // Add more model types if needed
-
-    default:
-      throw new Error(`Unsupported model type: ${modelType}`);
-  }
 };
 
 export const LLMConfig: Record<MessageSource, LLMConfigType> = {
   [MessageSource.CHAT]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Do not wrap output in brackets or double quotes.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's question.\nHere is user-specific context if any:\n{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Do not wrap output in brackets or double quotes.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.CHAT_GREETING]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's question.\nHere is user-specific context if any:{context}.\nIf the question is not related to the store or its products, apologize and ask if you can help them another way. Keep all responses to less than 100 characters. Do not wrap output in brackets or double quotes.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely greet the user.\nHere is user-specific context if any:\n{context}.\nKeep all responses to less than 100 characters. Do not wrap output in brackets or double quotes.`,
+    include_embeddings: true,
+    validate_hallucination: HalluctinationCheckSeverity.FILTER,
+  },
+  [MessageSource.EMBED_HOME]: {
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely greet the user.\nHere is user-specific context if any:\n{context}.\nKeep all responses to less than 100 characters. Do not wrap output in brackets or double quotes.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
   [MessageSource.EMBED]: {
-    prompt: `You are a sales assistant for an online store. Your goal is to concisely answer the user's request.\nHere is user-specific context if any:{context}.\nKeep all responses to less than 100 characters. Do not wrap output in brackets or double quotes.`,
+    prompt: `You are a sales assistant for an online store. Your goal is to concisely greet the user.\nHere is user-specific context if any:\n{context}.\nKeep all responses to less than 100 characters. Do not wrap output in brackets or double quotes.`,
     include_embeddings: true,
     validate_hallucination: HalluctinationCheckSeverity.FILTER,
   },
@@ -113,39 +107,41 @@ export const hintsSchema = z.object({
 });
 
 export const summarizeHistoryModelConfig = () => {
-  return createModelConfig("chatOpenAI", {
-    apiKey: OPENAI_KEY,
-    temperature: 1.0,
-    modelName: GPT_4_TURBO_16K_MODEL,
-    callbacks: [
+  return createChatOpenAIConfig(
+    OPENAI_KEY,
+    1.0,
+    GPT_4_TURBO_16K_MODEL,
+    [
       new SupabaseCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
     ],
-  });
+  );
 };
 
 export const salesModelConfig = () => {
-  return createModelConfig("chatOpenAI", {
-    apiKey: OPENAI_KEY,
-    temperature: 0.7,
-    modelName: GPT_4_TURBO_16K_MODEL,
-    callbacks: [
+  return createChatOpenAIConfig(
+    OPENAI_KEY,
+    0.7,
+    GPT_4_TURBO_16K_MODEL,
+    [
       new SupabaseCallbackHandler(Platforms.Openai, GPT_4_TURBO_16K_MODEL),
     ],
-  });
+  );
 };
 
-export const simpleSearchModelConfig = () => {
-  return createModelConfig("chatOpenAI", {
-    apiKey: OPENAI_KEY,
-    temperature: 1.0,
-    modelName: GPT_3_5_TURBO_16K_MODEL,
-  });
+export const gpt35ModelConfig = () => {
+  return createChatOpenAIConfig(
+    OPENAI_KEY,
+    1.0,
+    GPT_3_5_TURBO_16K_MODEL,
+    [
+      new SupabaseCallbackHandler(Platforms.Openai, GPT_3_5_TURBO_16K_MODEL),
+    ],
+  );
 };
 
 export const replicateMistralModelConfig = () => {
-  return createModelConfig("replicate", {
-    apiKey: REPLICATE_KEY,
-    modelName:
-      "mistralai/mixtral-8x7b-instruct-v0.1:7b3212fbaf88310cfef07a061ce94224e82efc8403c26fc67e8f6c065de51f21",
-  });
+  return createReplicateConfig(
+    REPLICATE_KEY,
+    "mistralai/mixtral-8x7b-instruct-v0.1:7b3212fbaf88310cfef07a061ce94224e82efc8403c26fc67e8f6c065de51f21",
+  );
 };

@@ -11,8 +11,9 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { MessageSource } from "../../../types";
 import {
   chatResponseSchema,
+  gpt35ModelConfig,
   hintsSchema,
-  salesModelConfig,
+  salesModelConfig
 } from "../llmConfig";
 import type { LLMConfigType } from "../types";
 
@@ -41,7 +42,7 @@ export const createFinalRunnable = async (
   /* If using replicate, bind will NOT work. So find alternate way for structured output
     Do not create structured output with the embed greeting
    */
-  const salesModel = new ChatOpenAI(salesModelConfig());
+  const salesModel = new ChatOpenAI(messageSource === MessageSource.EMBED_HOME ? gpt35ModelConfig() : salesModelConfig())
   const lastRunnable = await getLastRunnable(
     messageSource,
     chatPrompt,
