@@ -33,6 +33,7 @@ export class HallucinationError extends Error {
 }
 export enum MessageSource {
   EMBED = "embed", // Pop up greeting in app embed
+  EMBED_HOME = "embed_home", // Pop up greeting on home page for embed
   CHAT = "chat", // Conversation/thread with customer
   CHAT_GREETING = "chat_greeting", // Greeting message in palette
   HINTS = "hints", // Hints for possible user inputs

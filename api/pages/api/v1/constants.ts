@@ -3,9 +3,9 @@ export const RETURN_TOP_N_SIMILARITY_DOCS = 5;
 export const RECENTLY_VIEWED_PRODUCTS_COUNT = 5;
 
 // LLM related
-export const OPENAI_KEY = process.env.OPENAI_API_KEY;
+export const OPENAI_KEY = process.env.OPENAI_API_KEY!;
 export const OPENAI_RETRIES = 3;
-export const REPLICATE_KEY = process.env.REPLICATE_KEY;
+export const REPLICATE_KEY = process.env.REPLICATE_KEY!;
 
 // Shopify API constants
 export const BEST_SELLER_SAMPLE_COUNT = 1000;

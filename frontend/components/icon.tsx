@@ -21,6 +21,8 @@ export default function Icon({ props }) {
     window.localStorage.getItem("webPixelShopifyClientId")
   );
 
+  const isHomePage = window.location.pathname === "/";
+
   useEffect(() => {
     if (import.meta?.env?.VITE_POSTHOG_FORCE_FLAG) {
       console.log(
@@ -62,7 +64,7 @@ export default function Icon({ props }) {
               greetingPrompt,
               clientId.current!,
               uuid,
-              MessageSource.EMBED
+              isHomePage ? MessageSource.EMBED_HOME : MessageSource.EMBED
             )
               .then(async (reader) => {
                 let full = "";
