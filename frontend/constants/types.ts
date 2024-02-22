@@ -88,3 +88,12 @@ export interface ApiResponse {
   query: any;
   message: string;
 }
+
+interface ImportMetaEnv {
+  readonly VITE_POSTHOG_FORCE_FLAG: string;
+  // Define other environment variables here as needed
+}
+
+export interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
