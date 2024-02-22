@@ -125,10 +125,6 @@ export const getProducts = async (store: string, limit = 250) => {
     formatCatalogEntry(product, false)
   );
 
-  const stringifiedProducts = formattedProductsWithoutUrls
-    .map((product: any) => JSON.stringify(product))
-    .join("\r\n");
-
   const metadataIds = formattedProductsWithoutUrls.map(
     (product: any) => product.id
   );
@@ -145,7 +141,7 @@ export const getProducts = async (store: string, limit = 250) => {
     {}
   );
 
-  return { stringifiedProducts, metadataIds, strippedProducts, lookUpProducts };
+  return { metadataIds, strippedProducts, lookUpProducts, formattedProductsWithUrls };
 };
 
 const getProductByIdYaml = async (store: string, product_id: string) => {

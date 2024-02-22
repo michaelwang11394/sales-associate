@@ -1,14 +1,80 @@
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { createClient } from "@supabase/supabase-js";
 import * as yaml from "js-yaml";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { SenderType } from "../types";
+import { EMBEDDING_SMALL_MODEL } from "./ai/constants";
 import { getProducts } from "./shopify";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
+
+export const refreshAllStores = async () => {
+  const { data } = await supabase
+    .from("merchants")
+    .select("domain");
+  if (!data || data.length === 0) {
+    console.error("No merchant installs of our app")
+    throw Error("No merchant installs of our app")
+  }
+  await Promise.all(data?.map(merchant => merchant.domain).map(async store => {
+    try {
+      const { formattedProductsWithUrls, strippedProducts } = await getProducts(store);
+      const { data: oldEmbeddings } = await supabase
+        .from("vector_catalog")
+        .select("id")
+        .eq("metadata", store);
+
+      await SupabaseVectorStore.fromTexts(
+        strippedProducts,
+        Array(strippedProducts.length).fill(store),
+        new OpenAIEmbeddings({
+          modelName: EMBEDDING_SMALL_MODEL,
+          openAIApiKey: process.env.OPENAI_KEY,
+        }),
+        {
+          client: supabase,
+          tableName: "vector_catalog",
+          queryName: "match_documents",
+        }
+      );
+
+      const { error: deleteOldEmbedding } = await supabase
+        .from("vector_catalog")
+        .delete()
+        .in("id", oldEmbeddings!.map(embedding => embedding.id));
+      if (deleteOldEmbedding) {
+        throw new Error("error deleting old embed rows");
+      }
+
+      // Update catalog now
+      const timestamp = Date.now();
+      // Insert new catalog
+      const { error: catalogInsertError } = await supabase
+        .from("catalog")
+        .upsert(formattedProductsWithUrls.map((product: any) => ({...product, store, timestamp: timestamp})));
+      if (catalogInsertError) {
+        console.error(catalogInsertError)
+        throw new Error("Error inserting new catalog");
+      }
+
+      // Delete stale catalog entries
+      const { error } = await supabase
+        .from("catalog")
+        .delete()
+        .eq("store", store)
+        .neq("timestamp", timestamp)
+      if (error) {
+        throw new Error("error deleting old catalog rows");
+      }
+    } catch (e) {
+      console.error(`Catalog refresh for store ${store} failed with`, e)
+    }
+  }))
+  return Date.now()
+};
 
 export const getMessages = async (
   store: string,
@@ -311,36 +377,6 @@ export const offerCoupon = async (store: string, clientId: string) => {
   } catch (error) {
     console.error("Error", error);
     return { offerCoupon: false, message: "An unexpected error occurred." };
-  }
-};
-
-export const createEmbeddings = async (store: string) => {
-  try {
-    const { strippedProducts } = await getProducts(store);
-    // Delete existing indices first
-    const { error } = await supabase
-      .from("vector_catalog")
-      .delete()
-      .eq("metadata", store);
-    if (strippedProducts.length === 0 || error) {
-      console.error("Store has no products");
-      return { succes: false };
-    }
-
-    const vectorStore = await SupabaseVectorStore.fromTexts(
-      strippedProducts,
-      Array(strippedProducts.length).fill(store),
-      new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_KEY }),
-      {
-        client: supabase,
-        tableName: "vector_catalog",
-        queryName: "match_documents",
-      }
-    );
-    return { success: true, vectorStore };
-  } catch (error) {
-    console.error("Error with creating product embedding:", error);
-    return { success: false };
   }
 };
 

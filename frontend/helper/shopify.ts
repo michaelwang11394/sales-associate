@@ -117,29 +117,6 @@ export const isValidProduct = async (handle) => {
   return json?.products.length > 0;
 };
 
-export const getProducts = async () => {
-  // TODO: paginate for larger stores
-  const json = await shopifyRestQuery(
-    "products.json?limit=250&status=active&fields=id,body_html,handle,images,options"
-  );
-  const formattedProducts = json?.products?.map((product) =>
-    formatCatalogEntry(product)
-  );
-
-  const stringifiedProducts = formattedProducts
-    .map((product) => JSON.stringify(product))
-    .join("\r\n");
-
-  // RAG and embeddings pre-processing
-  const metadataIds = formattedProducts.map((product) => product.id);
-  const strippedProducts = formattedProducts.map((product) => {
-    // Convert each product object to a string, remove quotes, newlines, and 'id'. Possibly remove brackets in the future too
-    return JSON.stringify(product).replace(/"/g, "").replace(/\n/g, " ");
-  });
-
-  return { stringifiedProducts, metadataIds, strippedProducts };
-};
-
 // Get Merchant Config
 const merchantConfig = MERCHANT_CONFIG;
 

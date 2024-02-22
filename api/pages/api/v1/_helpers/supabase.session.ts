@@ -57,7 +57,7 @@ export class SupabaseSessionStorage implements SessionStorage {
       .select("*")
       .eq("shop", shop);
     if (error || !data) {
-      console.error("No sessions found");
+      console.error("No sessions found", data);
       return [];
     }
     return data;
