@@ -5,7 +5,8 @@ import { toggleOverlayVisibility } from "@/helper/animations";
 import { getGreetingMessage } from "@/helper/shopify";
 import { v4 as uuidv4 } from "uuid";
 
-import { getLastPixelEvent, insertMessage } from "@/helper/supabase";
+import { getMostRecentEvent } from "@/helper/navigation";
+import { insertMessage } from "@/helper/supabase";
 import "@/styles/chat.css";
 import { PostHogFeature, usePostHog } from "posthog-js/react";
 import { useEffect, useRef, useState } from "react";
@@ -56,38 +57,37 @@ export default function Icon({ props }) {
     const attemptToFetchAndProcessEvents = (retryCount = 0) => {
       clientId.current = window.localStorage.getItem("webPixelShopifyClientId");
       if (clientId.current && props.mountDiv === "embed") {
-        getLastPixelEvent(clientId.current).then((d) => {
-          d.data?.forEach(async (event) => {
-            const uuid = uuidv4();
-            const greetingPrompt = await getGreetingMessage(event);
-            callOpenai(
-              greetingPrompt,
-              clientId.current!,
-              uuid,
-              isHomePage ? MessageSource.EMBED_HOME : MessageSource.EMBED
-            )
-              .then(async (reader) => {
-                let full = "";
-                while (true) {
-                  const { done, value } = await reader!.read();
-                  if (done) {
-                    reader!.cancel();
-                    break;
-                  }
-                  let chunk = new TextDecoder("utf-8").decode(value);
-                  full += chunk;
-                  setGreeting(full);
+        getMostRecentEvent(window, window.location.host).then(async (event) => {
+          if (!event) return;
+          const uuid = uuidv4();
+          const greetingPrompt = await getGreetingMessage(event);
+          callOpenai(
+            greetingPrompt,
+            clientId.current!,
+            uuid,
+            isHomePage ? MessageSource.EMBED_HOME : MessageSource.EMBED
+          )
+            .then(async (reader) => {
+              let full = "";
+              while (true) {
+                const { done, value } = await reader!.read();
+                if (done) {
+                  reader!.cancel();
+                  break;
                 }
-                await insertMessage(
-                  clientId.current,
-                  "text",
-                  SenderType.SYSTEM,
-                  JSON.stringify([full]),
-                  uuid
-                );
-              })
-              .catch((err) => console.error(err));
-          });
+                let chunk = new TextDecoder("utf-8").decode(value);
+                full += chunk;
+                setGreeting(full);
+              }
+              await insertMessage(
+                clientId.current,
+                "text",
+                SenderType.SYSTEM,
+                JSON.stringify([full]),
+                uuid
+              );
+            })
+            .catch((err) => console.error(err));
         });
       } else if (retryCount < 5) {
         // Limit the number of retries to prevent infinite loop

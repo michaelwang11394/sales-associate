@@ -11,9 +11,9 @@ import {
 } from "@/constants/types";
 import { callHints, callOpenai } from "@/helper/ai";
 import { toggleOverlayVisibility } from "@/helper/animations";
+import { getMostRecentEvent } from "@/helper/navigation";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
-  getLastPixelEvent,
   getMentionedProducts,
   getMessages,
   insertMessage,
@@ -85,56 +85,52 @@ export default function CommandPalette({ props }) {
         refreshHints();
       }
     });
-    getLastPixelEvent(clientId.current).then((data) => {
-      data.data?.forEach(async (event) => {
-        const greetingPrompt = await getGreetingMessage(event);
-        const uuid = uuidv4();
-        const newResponseMessage: FormattedMessage = {
-          type: "text",
-          sender: SenderType.SYSTEM,
-          content: [""],
-        };
-        callOpenai(
-          greetingPrompt,
-          clientId.current!,
-          uuid,
-          MessageSource.CHAT_GREETING
-        )
-          .then(async (reader) => {
-            setMessages((prevMessages) => [
-              ...prevMessages,
-              newResponseMessage,
-            ]);
-            let full = "";
-            let streamDone = false;
-            while (true && !streamDone) {
-              const { done, value } = await reader!.read();
-              streamDone = done;
-              if (streamDone) {
-                // Do something with last chunk of data then exit reader
-                reader?.cancel();
-                break;
-              }
-              let chunk = new TextDecoder("utf-8").decode(value);
-              full += chunk;
-              setMessages((prevMessages) =>
-                prevMessages.map((msg) => {
-                  if (msg === newResponseMessage) {
-                    msg.content = [full];
-                  }
-                  return msg;
-                })
-              );
+    getMostRecentEvent(window, host).then(async (event) => {
+      if (!event) return;
+      const greetingPrompt = await getGreetingMessage(event);
+      const uuid = uuidv4();
+      const newResponseMessage: FormattedMessage = {
+        type: "text",
+        sender: SenderType.SYSTEM,
+        content: [""],
+      };
+      callOpenai(
+        greetingPrompt,
+        clientId.current!,
+        uuid,
+        MessageSource.CHAT_GREETING
+      )
+        .then(async (reader) => {
+          setMessages((prevMessages) => [...prevMessages, newResponseMessage]);
+          let full = "";
+          let streamDone = false;
+          while (true && !streamDone) {
+            const { done, value } = await reader!.read();
+            streamDone = done;
+            if (streamDone) {
+              // Do something with last chunk of data then exit reader
+              reader?.cancel();
+              break;
             }
-            await handleNewMessage(clientId.current, newResponseMessage, uuid);
-          })
-          .catch((err) => {
+            let chunk = new TextDecoder("utf-8").decode(value);
+            full += chunk;
             setMessages((prevMessages) =>
-              prevMessages.filter((message) => message !== newResponseMessage)
+              prevMessages.map((msg) => {
+                if (msg === newResponseMessage) {
+                  msg.content = [full];
+                }
+                return msg;
+              })
             );
-            console.error(err);
-          });
-      });
+          }
+          await handleNewMessage(clientId.current, newResponseMessage, uuid);
+        })
+        .catch((err) => {
+          setMessages((prevMessages) =>
+            prevMessages.filter((message) => message !== newResponseMessage)
+          );
+          console.error(err);
+        });
     });
   }, [posthog, clientId, variant]);
 
