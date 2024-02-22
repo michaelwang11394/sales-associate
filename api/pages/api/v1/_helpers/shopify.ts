@@ -55,8 +55,8 @@ const formatCatalogEntry = (product: any, includeFullMetadata = true) => {
     title,
     body_html: description,
     handle,
-    images,
-    image_url,
+    images, // This will be null when products are fetched from supabase
+    image_url, // This will be null when products are fetched from Shopify API, will be retrieved from images field
     variants,
   } = product;
 
