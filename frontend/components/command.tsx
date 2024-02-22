@@ -460,84 +460,133 @@ export default function CommandPalette({ props }) {
   };
 
   const renderControlProductColumn = () => {
-    return (
-      <div
-        id="product-column-control"
-        className="product-column min-w-0 p-6 overflow-y-auto">
-        <div className="font-bold mb-2 mt-2 text-center">
-          {suggestions.length > 0
-            ? "You might like:"
-            : "We're sorry, no results match this search"}
-        </div>
-        {/* First row */}
-        <div className="flex justify-center items-center space-x-4 mb-4">
-          {suggestions.slice(0, 3).map((product, index) => (
-            <a
-              key={index}
-              href={`https://${host}/products/${product.handle}`}
-              className="flex-1"
-              target="_blank"
-              rel="noopener noreferrer">
-              <div className="flex flex-col product-card-shadow p-2 m-1 ">
-                <div className="w-full h-40">
-                  <img
-                    src={product.featured_image.url}
-                    alt={product.title}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="flex flex-col p-2">
-                  <div className=" h-16 text-center font-bold">
-                    {product.title}
-                  </div>
-                  <div className="text-center mt-1">
-                    {product.price ? `$${product.price}` : ""}
-                  </div>
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-        {/* Second row */}
-        <div className="flex justify-center items-center space-x-4">
-          {suggestions.slice(3, 6).map((product, index) => (
-            <a
-              key={index}
-              href={`https://${host}/products/${product.handle}`}
-              className="flex-1"
-              target="_blank"
-              rel="noopener noreferrer">
-              <div className="flex flex-col product-card-shadow p-2 m-1">
-                <div className="w-full h-40">
-                  <img
-                    src={product.featured_image.url}
-                    alt={product.title}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="flex flex-col p-2">
-                  <div className=" h-16 text-center font-bold">
-                    {product.title}
-                  </div>
-                  <div className="text-center mt-1">
-                    {product.price ? `$${product.price}` : ""}
-                  </div>
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-        {suggestions.length > 0 && (
-          <div className="flex justify-center mt-12">
-            <button
-              className="bg-black text-white py-2 px-4 rounded hover:bg-opacity-90 focus:outline-none transition ease-in-out duration-150"
-              onClick={() => (window.location.href = `/search?q=${userInput}`)}>
-              View all Results
-            </button>
+    if (!isMobile) {
+      return (
+        <div
+          id="product-column-control"
+          className="product-column min-w-0 p-6 overflow-y-auto">
+          <div className="font-bold mb-2 mt-2 text-center">
+            {suggestions.length > 0
+              ? "You might like:"
+              : "We're sorry, no results match this search"}
           </div>
-        )}
-      </div>
-    );
+          {/* First row */}
+          <div className="flex justify-center items-center space-x-4 mb-4">
+            {suggestions.slice(0, 3).map((product, index) => (
+              <a
+                key={index}
+                href={`https://${host}/products/${product.handle}`}
+                className="flex-1"
+                target="_blank"
+                rel="noopener noreferrer">
+                <div className="flex flex-col product-card-shadow p-2 m-1 ">
+                  <div className="w-full h-40">
+                    <img
+                      src={product.featured_image.url}
+                      alt={product.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex flex-col p-2">
+                    <div className=" h-16 text-center font-bold">
+                      {product.title}
+                    </div>
+                    <div className="text-center mt-1">
+                      {product.price ? `$${product.price}` : ""}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+          {/* Second row */}
+          <div className="flex justify-center items-center space-x-4">
+            {suggestions.slice(3, 6).map((product, index) => (
+              <a
+                key={index}
+                href={`https://${host}/products/${product.handle}`}
+                className="flex-1"
+                target="_blank"
+                rel="noopener noreferrer">
+                <div className="flex flex-col product-card-shadow p-2 m-1">
+                  <div className="w-full h-40">
+                    <img
+                      src={product.featured_image.url}
+                      alt={product.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex flex-col p-2">
+                    <div className=" h-16 text-center font-bold">
+                      {product.title}
+                    </div>
+                    <div className="text-center mt-1">
+                      {product.price ? `$${product.price}` : ""}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+          {suggestions.length > 0 && (
+            <div className="flex justify-center mt-12">
+              <button
+                className="bg-black text-white py-2 px-4 rounded hover:bg-opacity-90 focus:outline-none transition ease-in-out duration-150"
+                onClick={() =>
+                  (window.location.href = `/search?q=${userInput}`)
+                }>
+                View all Results
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    } else if (isMobile) {
+      return (
+        <div id="product-column-control-mobile" className="overflow-y-auto p-4">
+          <div className="font-bold mb-2 text-center">
+            {suggestions.length > 0
+              ? "You might like:"
+              : "We're sorry, no results match this search"}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {suggestions.map((product, index) => (
+              <a
+                key={index}
+                href={`https://${host}/products/${product.handle}`}
+                className="block"
+                target="_blank"
+                rel="noopener noreferrer">
+                <div className="flex flex-col items-center product-card-shadow p-2">
+                  <div className="w-full h-24 mb-2">
+                    <img
+                      src={product.featured_image.url}
+                      alt={product.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="text-center font-bold">{product.title}</div>
+                  <div className="text-center">
+                    {product.price ? `$${product.price}` : ""}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+          {suggestions.length > 0 && (
+            <div className="flex justify-center mt-12">
+              <button
+                className="bg-black text-white py-2 px-4 rounded hover:bg-opacity-90 focus:outline-none transition ease-in-out duration-150"
+                onClick={() =>
+                  (window.location.href = `/search?q=${userInput}`)
+                }>
+                View all Results
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
   };
 
   return (
