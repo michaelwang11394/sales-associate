@@ -21,5 +21,3 @@ yarn.lock
 shopify.app.toml
 .vercel/output
 .vercel/.env*
-
-.vscode
