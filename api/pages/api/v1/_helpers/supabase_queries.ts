@@ -21,7 +21,7 @@ export const refreshAllStores = async () => {
   }
   await Promise.all(data?.map(merchant => merchant.domain).map(async store => {
     try {
-      const { formattedProductsWithUrls, strippedProducts } = await getProducts(store);
+      const { formattedProductsWithUrls, strippedProducts } = await getProducts(store, true);
       const { data: oldEmbeddings } = await supabase
         .from("vector_catalog")
         .select("id")
