@@ -4,6 +4,8 @@ export const MERCHANT_CONFIG = {
   store_name: "Sales Associate Demo Store",
   store_type: "jewelry",
   offer_coupon: false,
+  cart_goals:
+    "If they have an item in their cart, encourage them to join the store's membership program as well where they can get 5% off on all future purchases",
   merchant_tactics: [
     "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
     "Offer them a 30 day money back guarantee. For example: 'We offer a 30 day money back guarantee, so you can try it out risk free.'",
@@ -188,7 +190,7 @@ export const getEventSpecificMessage = async (event) => {
       ) {
         return "User is looking through cart page. Encourage them to checkout by offering a coupon.";
       } else {
-        return `The customer is on the cart page where they can purchase their items. Your goal is to compliment them on their excellent product taste and encourage user to checkout. Here is an example of a good response:\n"Great selection! Let me know if you need any help with your purchase."`;
+        return `The customer is on the cart page where they can purchase their items. Your goal is to compliment them on their excellent product taste and encourage user to checkout. Here is an example of a good response:\n"Great selection! Let me know if you need any help with your purchase. Here are some other goals to accomplish:\n${merchantConfig["cart_goals"]}`;
       }
     /*
       Product Viewed Intent

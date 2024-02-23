@@ -67,7 +67,7 @@ export default function CommandPalette({ props }) {
       );
       posthog.featureFlags.override({
         // @ts-ignore
-        enabled: import.meta.env.VITE_POSTHOG_FORCE_FLAG,
+        enabled: "test",
       });
     }
     if (clientId.current) {
