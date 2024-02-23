@@ -87,8 +87,9 @@ export const getSuggestions = async (query) => {
   // Function to perform a Shopify REST query for a keyword
   const fetchSuggestionsForKeyword = async (keyword) => {
     const json = await shopifyRestQuery(
-      `search/suggest.json?q=${keyword}&resources[type]=product&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`
+      `search/suggest.json?q=${keyword}&resources[type]=product,article,collection,query&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`
     );
+
     return json?.resources?.results?.products || [];
   };
 
