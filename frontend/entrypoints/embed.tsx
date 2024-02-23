@@ -7,7 +7,7 @@ const { overlayDiv, mountOverlay } = createOverlayDiv();
 let iconCreated = false;
 
 posthog.onFeatureFlags(function () {
-  const isEnabledTest = posthog.getFeatureFlag("enabled") == "test";
+  const isEnabledTest = posthog.getFeatureFlag("enabled") !== "control";
   // Only create the icon if it hasn't been created yet and the flag condition is met
   if (!iconCreated && isEnabledTest) {
     createIcon(embed_home, "embed", overlayDiv, mountOverlay, 100);
