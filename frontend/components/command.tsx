@@ -67,7 +67,7 @@ export default function CommandPalette({ props }) {
       );
       posthog.featureFlags.override({
         // @ts-ignore
-        enabled: "test",
+        enabled: import.meta.env.VITE_POSTHOG_FORCE_FLAG,
       });
     }
     if (clientId.current) {
@@ -656,7 +656,7 @@ export default function CommandPalette({ props }) {
                 </svg>
               </div>
             </div>
-            {variant == "control" && hints.length > 0 && (
+            {variant == "test" && hints.length > 0 && (
               <div
                 id="hints"
                 className="flex justify-center items-center rounded">
