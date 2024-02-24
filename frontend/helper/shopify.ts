@@ -4,7 +4,9 @@ export const MERCHANT_CONFIG = {
   store_name: "Sales Associate Demo Store",
   store_type: "jewelry",
   offer_coupon: false,
-  merchant_tactics: [
+  cart_tactics:
+    "If they have an item in their cart, encourage them to join the store's membership program as well where they can get 5% off on all future purchases",
+  product_tactics: [
     "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
     "Offer them a 30 day money back guarantee. For example: 'We offer a 30 day money back guarantee, so you can try it out risk free.'",
   ],
@@ -188,7 +190,7 @@ export const getEventSpecificMessage = async (event) => {
       ) {
         return "User is looking through cart page. Encourage them to checkout by offering a coupon.";
       } else {
-        return `The customer is on the cart page where they can purchase their items. Your goal is to compliment them on their excellent product taste and encourage user to checkout. Here is an example of a good response:\n"Great selection! Let me know if you need any help with your purchase."`;
+        return `The customer is on the cart page where they can purchase their items. Your goal is to compliment them on their excellent product taste and encourage user to checkout. Here is an example of a good response:\n"Great selection! Let me know if you need any help with your purchase. Here are some other goals to accomplish:\n${merchantConfig["cart_tactics"]}`;
       }
     /*
       Product Viewed Intent
@@ -202,7 +204,7 @@ export const getEventSpecificMessage = async (event) => {
     */
     case "product_viewed":
       const product = event.detail.productVariant.product.title;
-      return `User is considering purchasing ${product}. Your goal is to have the user add the item to cart and complete checkout. Here are ways you can accomplish this\nLet the customer know that this product is a best seller and running low on stock. For example: "${product} is one of our best sellers and is running low on stock."\nIf the customer has viewed this product before, let them know that you noticed and ask if they have any questions about it. For example: "I see you've been looking at ${product}. Do you have any questions about it?"\n${merchantConfig["merchant_tactics"]}`;
+      return `User is considering purchasing ${product}. Your goal is to have the user add the item to cart and complete checkout. Here are ways you can accomplish this\nLet the customer know that this product is a best seller and running low on stock. For example: "${product} is one of our best sellers and is running low on stock."\nIf the customer has viewed this product before, let them know that you noticed and ask if they have any questions about it. For example: "I see you've been looking at ${product}. Do you have any questions about it?"\n${merchantConfig["product_tactics"]}`;
     default:
       return `Welcome user to store`;
   }
