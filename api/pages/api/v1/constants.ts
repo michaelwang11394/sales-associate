@@ -30,16 +30,16 @@ export enum SupabaseTables {
   MODELS = "models",
 }
 
-// What the store column name is
+// Corrected SupabaseTableStoreColumnName object definition
 export const SupabaseTableStoreColumnName = {
-  MESSAGES: "store",
-  EVENTS: "store",
-  SESSIONS: "shop",
-  EMBEDDINGS: "metadata", // Cannot be updated as the LangChain Supabase relies on this field name
-  MERCHANTS: "store",
-  CATALOG: "store",
-  POSTHOG: "store",
-  MODELS: "store",
+  [SupabaseTables.MESSAGES]: "store",
+  [SupabaseTables.EVENTS]: "store",
+  [SupabaseTables.SESSIONS]: "shop",
+  [SupabaseTables.EMBEDDINGS]: "metadata",
+  [SupabaseTables.MERCHANTS]: "store",
+  [SupabaseTables.CATALOG]: "store",
+  [SupabaseTables.POSTHOG]: "store",
+  [SupabaseTables.MODELS]: "store",
 };
 
 
@@ -61,3 +61,22 @@ export const OPENAI_PATH = "openai";
 export const HINTS_PATH = "hints";
 export const EXPERIMENT_PATH = "capture-posthog";
 export const UNINSTALL_CHECK = "uninstall-check";
+
+// Ensure every enum in SupabaseTables has a corresponding entry in SupabaseTableStoreColumnName
+function verifySupabaseTableMappings(): boolean {
+  for (const table of Object.values(SupabaseTables)) {
+    if (!(table in SupabaseTableStoreColumnName)) {
+      console.error(`Missing mapping for table: ${table}`);
+      return false; // or throw new Error(`Missing mapping for table: ${table}`);
+    }
+  }
+  console.log("All SupabaseTables have corresponding entries in SupabaseTableStoreColumnName.");
+  return true;
+}
+
+// Example usage
+const mappingsVerified = verifySupabaseTableMappings();
+if (!mappingsVerified) {
+  // Handle the error, e.g., throw an error or log a warning
+  throw new Error("SupabaseTableStoreColumnName mappings are incomplete.");
+}
