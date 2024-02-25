@@ -15,10 +15,33 @@ export const BEST_SELLER_SAMPLE_COUNT = 1000;
 CAUTION: KEEP THIS SECTION IN SYNC WITH frontend/constants/constants.ts
 */
 export const V1 = "api/v1";
-export const SUPABASE_PATH = "supabase";
-export const SUPABASE_MESSAGES_TABLE = "messages";
-export const SUPABASE_EVENTS_TABLE = "events";
-export const SUPABASE_EMBEDDINGS_TABLE = "vector_catalog";
+
+export const SUPABASE_PATH = "supabase"
+
+// All tables
+export enum SupabaseTables {
+  MESSAGES = "messages",
+  EVENTS = "events",
+  SESSIONS = "sessions",
+  EMBEDDINGS = "vector_catalog",
+  MERCHANTS = "merchants",
+  CATALOG = "catalog",
+  POSTHOG = "posthog",
+  MODELS = "models",
+}
+
+// What the store column name is
+export const SupabaseTableStoreColumnName = {
+  MESSAGES: "store",
+  EVENTS: "store",
+  SESSIONS: "shop",
+  EMBEDDINGS: "metadata", // Cannot be updated as the LangChain Supabase relies on this field name
+  MERCHANTS: "store",
+  CATALOG: "store",
+  POSTHOG: "store",
+  MODELS: "store",
+};
+
 
 export const SUPABASE_MESSAGES_HISTORY_ENDPOINT = "history";
 export const SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT =
@@ -37,3 +60,4 @@ export const SUPABASE_CRON_CATALOG = "refresh-catalog";
 export const OPENAI_PATH = "openai";
 export const HINTS_PATH = "hints";
 export const EXPERIMENT_PATH = "capture-posthog";
+export const UNINSTALL_CHECK = "uninstall-check";

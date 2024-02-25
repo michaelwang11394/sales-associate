@@ -419,7 +419,7 @@ const UserBreakdown = ({ store }) => {
       const { data, error } = await supabase
         .from("merchants")
         .select("posthog_dashboard")
-        .eq("domain", store);
+        .eq("store", store);
       if (error) {
         console.error("Error fetching data:", error);
         return;

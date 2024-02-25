@@ -35,7 +35,7 @@ export async function loader({ request }) {
       const { data: merchantInsert } = await supabase.from("merchants").upsert([
         {
           id: shopData.data[0].id,
-          domain: shopData.data[0].domain, // FK to events[store], messages[store], vector_catalog[metadata] tables
+          store: shopData.data[0].domain, // FK to events[store], messages[store], vector_catalog[metadata] tables
           name: shopData.data[0].name,
           plan_name: shopData.data[0].plan_name,
           myshopify_domain: shopData.data[0].myshopify_domain, //FK to sessions[store] table
