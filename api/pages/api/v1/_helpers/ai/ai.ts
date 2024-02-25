@@ -130,7 +130,13 @@ export const callOpenai = async (
     customerContext,
     llmConfig,
     data?.length && data?.length > 0
-      ? data.map((msg) => msg.content).join("\n")
+      ? data.map((msg) => msg.content).map(content => {
+          const parsed = JSON.parse(content);
+          // Exclude image URL
+          return parsed.map((card: { name: string; variants: any; recommendation: string; }) => 
+            JSON.stringify({name: card.name, variants: card.variants, recommendation: card.recommendation})
+          );
+        }).join("\n")
       : "",
     source,
     embeddings!
