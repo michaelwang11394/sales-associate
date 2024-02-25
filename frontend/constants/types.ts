@@ -67,6 +67,8 @@ export interface ChatBubbleProps {
   content: any;
   host: string;
   specialColor: string;
+  systemFontColor: string;
+  userFontColor: string;
 }
 
 export interface TextMessageProps {

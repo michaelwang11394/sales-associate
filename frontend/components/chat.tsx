@@ -279,6 +279,8 @@ export const ChatBubble = ({
   content,
   host,
   specialColor,
+  systemFontColor,
+  userFontColor,
 }: ChatBubbleProps): React.JSX.Element => {
   const renderMessage = () => {
     switch (type) {
@@ -303,13 +305,17 @@ export const ChatBubble = ({
   // TODO: Figure out better way to use flex. We want to make AI response full width but flex for user input
   return isAISender ? (
     <div className={`items-end justify-start py-1 mb-2`}>
-      <div className={`px-4 py-3 min-h-[25px] ai-grey-text mr-2`}>
+      <div
+        className={`px-4 py-3 min-h-[25px] ai-grey-text mr-2`}
+        style={{ color: systemFontColor }}>
         <div className="message">{renderMessage()}</div>
       </div>
     </div>
   ) : (
     <div className={`flex items-end justify-start py-1 mb-2`}>
-      <div className={`px-4 py-3 min-h-[25px] user-input-text`}>
+      <div
+        className={`px-4 py-3 min-h-[25px] user-input-text`}
+        style={{ color: userFontColor }}>
         <div className="message">{renderMessage()}</div>
       </div>
     </div>

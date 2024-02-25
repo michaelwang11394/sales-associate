@@ -789,6 +789,12 @@ export default function CommandPalette({ props }) {
                           specialColor={
                             shopStyleConfig.specialColor || "#2a33ff"
                           }
+                          systemFontColor={
+                            shopStyleConfig.systemFontColor || "#000"
+                          }
+                          userFontColor={
+                            shopStyleConfig.userFontColor || "#2a33ff"
+                          }
                         />
                       ))}
                   </div>
