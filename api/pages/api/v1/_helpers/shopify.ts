@@ -3,9 +3,10 @@ import "@shopify/shopify-api/adapters/node";
 import * as yaml from "js-yaml";
 import { BEST_SELLER_SAMPLE_COUNT } from "../constants";
 import { SupabaseSessionStorage } from "./supabase.session";
-import { getBestSellers, setBestSellers } from "./supabase_queries";
+import { getBestSellers, setBestSellers, supabase } from "./supabase_queries";
 
-const shopify_client = shopifyApi({
+// Do not call or export this for high traffic calls, will get throttled by Shopify API
+const shopify_client_INTERNAL = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY!,
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   apiVersion: LATEST_API_VERSION,
@@ -27,11 +28,12 @@ function stripHttps(url: string): string {
   return url;
 }
 
+// Do not call or export this for high traffic calls, will get throttled by Shopify API
 const createClient = async (store: string) => {
   const session = (
     await new SupabaseSessionStorage().findSessionsByShop(stripHttps(store))
   )[0];
-  const client = new shopify_client.Rest({
+  const client = new shopify_client_INTERNAL.Rest({
     session,
     apiVersion: LATEST_API_VERSION,
   });
@@ -53,7 +55,8 @@ const formatCatalogEntry = (product: any, includeFullMetadata = true) => {
     title,
     body_html: description,
     handle,
-    images,
+    images, // This will be null when products are fetched from supabase
+    image_url, // This will be null when products are fetched from Shopify API, will be retrieved from images field
     variants,
   } = product;
 
@@ -83,51 +86,48 @@ const formatCatalogEntry = (product: any, includeFullMetadata = true) => {
     entry = {
       ...entry,
       handle,
-      image_url: images.length > 0 ? images[0].src : "",
+      image_url: image_url ?? ((images && images.length > 0) ? images[0].src : ""),
     };
   }
 
   return entry;
 };
 
-export const isValidProduct = async (
-  store: string,
-  handle: string
-): Promise<boolean> => {
-  const data = (
-    await (
-      await createClient(store)
-    ).get<any>({
-      path: "products",
-      query: { store: store, handle: handle },
-    })
-  ).body;
-  return data.products.length > 0;
-};
-
-export const getProducts = async (store: string, limit = 250) => {
-  const data = (
-    await (
-      await createClient(store)
-    ).get<any>({
-      path: "products",
-    })
-  ).body;
-  if (data.products === undefined) {
-    console.error("No catalog exists");
-    // throw new Error("No catalog exists")
+export const getProducts = async (store: string, useShopifyApi=false) => {
+  let products: any[] | undefined = undefined;
+  if (useShopifyApi) {
+    products = (
+      await (
+        await createClient(store)
+      ).get<any>({
+        path: "products",
+        query: {
+          "limit": 250
+        }
+      })
+    ).body.products;
+  } else {
+    const { data: precomputed, error } = await supabase
+      .from("catalog")
+      .select("*")
+      .eq("store", store);
+    if (error || !precomputed || precomputed.length === 0) {
+      console.error(error)
+    } else {
+      products = precomputed
+    }
   }
-  const formattedProductsWithUrls = data.products.map((product: any) =>
+  if (products === undefined) {
+    console.error("No catalog exists");
+    throw new Error("No catalog exists")
+  }
+  const formattedProductsWithUrls = products.map((product: any) =>
     formatCatalogEntry(product)
   );
 
-  const formattedProductsWithoutUrls = data.products.map((product: any) =>
+  const formattedProductsWithoutUrls = products.map((product: any) =>
     formatCatalogEntry(product, false)
   );
-
-  const stringifiedProducts = formattedProductsWithoutUrls
-    .map((product: any) => JSON.stringify(product))
-    .join("\r\n");
 
   const metadataIds = formattedProductsWithoutUrls.map(
     (product: any) => product.id
@@ -145,31 +145,39 @@ export const getProducts = async (store: string, limit = 250) => {
     {}
   );
 
-  return { stringifiedProducts, metadataIds, strippedProducts, lookUpProducts };
+  return { metadataIds, strippedProducts, lookUpProducts, formattedProductsWithUrls };
 };
 
 const getProductByIdYaml = async (store: string, product_id: string) => {
-  const data = (
-    await (
-      await createClient(store)
-    ).get<any>({
-      path: "products/" + product_id,
-    })
-  ).body;
+    const { data } = await supabase
+      .from("catalog")
+      .select("*")
+      .eq("store", store)
+      .eq("id", product_id)
+      .limit(1);
+    
+    if (!data || data.length !== 1) {
+      console.error(`No product found with id ${product_id} in store ${store}`)
+      throw new Error()
+    }
 
-  return yaml.dump(formatCatalogEntry(data?.product));
+  return yaml.dump(formatCatalogEntry(data[0]));
 };
 
 export const getProductById = async (store: string, product_id: string) => {
-  const data = (
-    await (
-      await createClient(store)
-    ).get<any>({
-      path: "products/" + product_id,
-    })
-  ).body;
+    const { data } = await supabase
+      .from("catalog")
+      .select("*")
+      .eq("store", store)
+      .eq("id", product_id)
+      .limit(1);
+    
+    if (!data || data.length !== 1) {
+      console.error(`No product found with id ${product_id} in store ${store}`)
+      throw new Error()
+    }
 
-  return formatCatalogEntry(data?.product);
+  return formatCatalogEntry(data[0]);
 };
 
 const getTwoWeekAgo = () => {

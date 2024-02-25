@@ -31,6 +31,9 @@ export const SUPABASE_EVENTS_CART_ITEMS_ENDPOINT = "cart-items";
 export const SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT = "viewed-products";
 export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
 
+// For Cron jobs
+export const SUPABASE_CRON_CATALOG = "refresh-catalog";
+
 export const OPENAI_PATH = "openai";
 export const HINTS_PATH = "hints";
 export const EXPERIMENT_PATH = "capture-posthog";

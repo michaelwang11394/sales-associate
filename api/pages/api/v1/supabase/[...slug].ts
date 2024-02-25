@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
-  createEmbeddings,
   getLastPixelEvent,
   getMessages,
   getProductsMentioned,
@@ -8,11 +7,10 @@ import {
   hasViewedProducts,
   insertMessage,
   isNewCustomer,
-  offerCoupon,
+  offerCoupon
 } from "../_helpers/supabase_queries";
 import {
   RECENTLY_VIEWED_PRODUCTS_COUNT,
-  SUPABASE_EMBEDDINGS_TABLE,
   SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
   SUPABASE_EVENTS_LAST_EVENT_ENDPOINT,
   SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
@@ -22,7 +20,7 @@ import {
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
-  SUPABASE_MESSAGES_TABLE,
+  SUPABASE_MESSAGES_TABLE
 } from "../constants";
 import { httpResponse } from "../http";
 
@@ -144,14 +142,6 @@ export default async function handler(
           "Operation does not exist for events table"
         );
     }
-  } else if (table === SUPABASE_EMBEDDINGS_TABLE) {
-    return httpResponse(
-      request,
-      response,
-      200,
-      "Embeddings completed",
-      await createEmbeddings(store)
-    );
   }
   return httpResponse(
     request,
