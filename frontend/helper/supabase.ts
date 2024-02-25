@@ -3,13 +3,12 @@ import {
   SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
   SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
   SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT,
-  SUPABASE_EVENTS_TABLE,
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
-  SUPABASE_MESSAGES_TABLE,
   SUPABASE_PATH,
+  SupabaseTables,
   V1
 } from "@/constants/constants";
 import type { ApiResponse } from "@/constants/types";
@@ -23,7 +22,7 @@ export const getMessages = async (clientId, limit) => {
       [
         V1,
         SUPABASE_PATH,
-        SUPABASE_MESSAGES_TABLE,
+        SupabaseTables.MESSAGES,
         SUPABASE_MESSAGES_HISTORY_ENDPOINT,
       ],
       { store: store, clientId: clientId, limit: String(limit) }
@@ -42,7 +41,7 @@ export const getMentionedProducts = async (clientId) => {
       [
         V1,
         SUPABASE_PATH,
-        SUPABASE_MESSAGES_TABLE,
+        SupabaseTables.MESSAGES,
         SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
       ],
       { store: store, clientId: clientId }
@@ -66,7 +65,7 @@ export const insertMessage = async (
     [
       V1,
       SUPABASE_PATH,
-      SUPABASE_MESSAGES_TABLE,
+      SupabaseTables.MESSAGES,
       SUPABASE_MESSAGES_INSERT_ENDPOINT,
     ],
     {
@@ -88,7 +87,7 @@ export const isNewCustomer = async (clientId) => {
       [
         V1,
         SUPABASE_PATH,
-        SUPABASE_EVENTS_TABLE,
+        SupabaseTables.EVENTS,
         SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
       ],
       { store: store, clientId: clientId }
@@ -107,7 +106,7 @@ export const hasItemsInCart = async (clientId) => {
       [
         V1,
         SUPABASE_PATH,
-        SUPABASE_EVENTS_TABLE,
+        SupabaseTables.EVENTS,
         SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
       ],
       { store: store, clientId: clientId }
@@ -126,7 +125,7 @@ export const hasViewedProducts = async (clientId, count: number) => {
       [
         V1,
         SUPABASE_PATH,
-        SUPABASE_EVENTS_TABLE,
+        SupabaseTables.EVENTS,
         SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
       ],
       { store: store, clientId: clientId, count: String(count) }
@@ -145,7 +144,7 @@ export const offerCoupon = async (clientId) => {
       [
         V1,
         SUPABASE_PATH,
-        SUPABASE_EVENTS_TABLE,
+        SupabaseTables.EVENTS,
         SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT,
       ],
       { store: store, clientId: clientId }

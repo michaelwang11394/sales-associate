@@ -1,6 +1,7 @@
 import { Session } from "@shopify/shopify-api";
 import type { SessionStorage } from "@shopify/shopify-app-session-storage";
 import { createClient } from "@supabase/supabase-js";
+import { SupabaseTables } from "../constants";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
@@ -10,7 +11,7 @@ export const supabase = createClient(supabaseUrl!, supabaseKey!);
 export class SupabaseSessionStorage implements SessionStorage {
   public async storeSession(session: Session): Promise<boolean> {
     const { error } = await supabase
-      .from("sessions")
+      .from(SupabaseTables.SESSIONS)
       .upsert([
         {
           id: session.id,
@@ -28,7 +29,7 @@ export class SupabaseSessionStorage implements SessionStorage {
 
   public async loadSession(id: string): Promise<Session | undefined> {
     const { data, error } = await supabase
-      .from("sessions")
+      .from(SupabaseTables.SESSIONS)
       .select("*")
       .eq("id", id);
 
@@ -42,18 +43,18 @@ export class SupabaseSessionStorage implements SessionStorage {
   }
 
   public async deleteSession(id: string): Promise<boolean> {
-    const { error } = await supabase.from("sessions").delete().eq("id", id);
+    const { error } = await supabase.from(SupabaseTables.SESSIONS).delete().eq("id", id);
     return !error;
   }
 
   public async deleteSessions(ids: string[]): Promise<boolean> {
-    const { error } = await supabase.from("sessions").delete().in("id", ids);
+    const { error } = await supabase.from(SupabaseTables.SESSIONS).delete().in("id", ids);
     return !error;
   }
 
   public async findSessionsByShop(shop: string): Promise<Session[]> {
     const { data, error } = await supabase
-      .from("sessions")
+      .from(SupabaseTables.SESSIONS)
       .select("*")
       .eq("shop", shop);
     if (error || !data) {

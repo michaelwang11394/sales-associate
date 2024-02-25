@@ -1,4 +1,5 @@
 import type { PostHog } from "posthog-node";
+import { SupabaseTables } from "../constants";
 import { supabase } from "./supabase_queries";
 
 export const captureEvent = async (
@@ -22,7 +23,7 @@ export const captureEvent = async (
     },
   });
 
-  const supabaseWritten = await supabase.from("events").insert([
+  const supabaseWritten = await supabase.from(SupabaseTables.EVENTS).insert([
     {
       id: id,
       timestamp: timestamp,

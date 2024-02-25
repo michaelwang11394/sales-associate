@@ -15,12 +15,11 @@ import {
   SUPABASE_EVENTS_LAST_EVENT_ENDPOINT,
   SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
   SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT,
-  SUPABASE_EVENTS_TABLE,
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
-  SUPABASE_MESSAGES_TABLE
+  SupabaseTables,
 } from "../constants";
 import { httpResponse } from "../http";
 
@@ -40,7 +39,7 @@ export default async function handler(
   const store = request.query.store as string; // TODO: Change this to domain
   const clientId = request.query.clientId as string;
 
-  if (table === SUPABASE_MESSAGES_TABLE) {
+  if (table === SupabaseTables.MESSAGES) {
     switch (queryType) {
       case SUPABASE_MESSAGES_HISTORY_ENDPOINT:
         return httpResponse(
@@ -86,7 +85,7 @@ export default async function handler(
           "Operation does not exist for messages table"
         );
     }
-  } else if (table === SUPABASE_EVENTS_TABLE) {
+  } else if (table === SupabaseTables.MESSAGES) {
     switch (queryType) {
       case SUPABASE_EVENTS_CART_ITEMS_ENDPOINT:
         return httpResponse(

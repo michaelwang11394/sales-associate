@@ -1,6 +1,6 @@
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { RETURN_TOP_N_SIMILARITY_DOCS } from "../../constants";
+import { RETURN_TOP_N_SIMILARITY_DOCS, SupabaseTables } from "../../constants";
 import { getProducts } from "../shopify";
 import { supabase } from "../supabase_queries";
 import { EMBEDDING_SMALL_MODEL } from "./constants";
@@ -18,7 +18,7 @@ export const runEmbeddingsAndSearch = async (store: string, query: string) => {
       }),
       {
         client: supabase,
-        tableName: "vector_catalog",
+        tableName: SupabaseTables.EMBEDDINGS,
         queryName: "match_documents",
         filter: (rpc) => rpc.filter("metadata", "eq", store),
       }
@@ -33,7 +33,7 @@ export const runEmbeddingsAndSearch = async (store: string, query: string) => {
       const { strippedProducts } = await getProducts(store);
       // Delete existing indices first
       const { error } = await supabase
-        .from("vector_catalog")
+        .from(SupabaseTables.EMBEDDINGS)
         .delete()
         .eq("metadata", store);
       if (error) {
@@ -49,7 +49,7 @@ export const runEmbeddingsAndSearch = async (store: string, query: string) => {
         }),
         {
           client: supabase,
-          tableName: "vector_catalog",
+          tableName: SupabaseTables.EMBEDDINGS,
           queryName: "match_documents",
         }
       );
