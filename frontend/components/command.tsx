@@ -10,7 +10,6 @@ import {
   type Product,
 } from "@/constants/types";
 import { callHints, callOpenai } from "@/helper/ai";
-import { toggleOverlayVisibility } from "@/helper/animations";
 import { getMostRecentEvent } from "@/helper/navigation";
 import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
@@ -30,6 +29,17 @@ export enum StructuredOutputStreamState {
   TEXT = 1,
   PRODUCT = 2,
 }
+
+const shopStyleConfig = {
+  headerBackgroundColor: "#efecec",
+  searchBackgroundColor: "#efecec",
+  convoBackgroundColor: "#efecec",
+  fontFamily: "Avenir",
+  hintBubbleColor: "#2a33ff",
+  specialColor: "#2a33ff", // airplane send logo and star ai logo
+  systemFontColor: "#000",
+  userFontColor: "#2a33ff",
+};
 
 export const formatDBMessage = (messageRow: DBMessage) => {
   const { id, type, content, sender } = messageRow;
@@ -586,173 +596,208 @@ export default function CommandPalette({ props }) {
   };
 
   return (
-    <div
-      id="overlay"
-      className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 rounded-lg shadow-lg overflow-auto">
-      <section
-        id={PALETTE_DIV_ID}
-        className="flex flex-grow overflow-hidden bg-cover w-full">
-        <div className="relative flex justify-center flex-grow flex-shrink h-full">
-          <div className="w-full mx-auto overflow-hidden transition-all bg-white backdrop-blur-[10px] rounded-lg flex flex-col flex-grow">
-            <div id="search bar" className="flex justify-between items-center">
-              <form onSubmit={handleSubmit} className="w-full m-2 flex mx-auto">
-                <input
-                  type="text"
-                  value={userInput}
-                  onChange={handleInputChange}
-                  className="flex-grow h-16 pr-4 text-black border-none rounded-t-lg pl-14 text-center focus:outline-none focus:shadow-none focus:border-none "
-                  placeholder={
-                    userInput === ""
-                      ? "Ask me anything! See the below hints as examples. I am not your typical search bar."
-                      : ""
-                  }
-                  onFocus={(e) => (e.target.placeholder = "")}
-                  onBlur={(e) =>
-                    (e.target.placeholder =
-                      "Ask me anything! See the below hints as examples. I am not your typical search bar.")
-                  }
-                  role="combobox"
-                  aria-expanded="false"
-                  aria-controls="options"
-                />
-                <button type="submit" disabled={loading} className="pr-6">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <g id="vuesax/bold/send">
-                      <g id="send">
-                        <path
-                          id="Vector"
-                          d="M18.07 8.50965L9.51002 4.22965C3.76002 1.34965 1.40002 3.70965 4.28002 9.45965L5.15002 11.1996C5.40002 11.7096 5.40002 12.2996 5.15002 12.8096L4.28002 14.5396C1.40002 20.2896 3.75002 22.6496 9.51002 19.7696L18.07 15.4896C21.91 13.5696 21.91 10.4296 18.07 8.50965ZM14.84 12.7496H9.44002C9.03002 12.7496 8.69002 12.4096 8.69002 11.9996C8.69002 11.5896 9.03002 11.2496 9.44002 11.2496H14.84C15.25 11.2496 15.59 11.5896 15.59 11.9996C15.59 12.4096 15.25 12.7496 14.84 12.7496Z"
-                          fill="#2A33FF"
-                        />
-                      </g>
-                    </g>
-                  </svg>
-                </button>
-              </form>
+    <>
+      <style jsx global>{`
+        ::-webkit-scrollbar-track {
+          background: ${shopStyleConfig.headerBackgroundColor};
+        }
+
+        ::-webkit-scrollbar-thumb {
+          border-radius: 6px;
+          border: 3px solid ${shopStyleConfig.headerBackgroundColor};
+        }
+
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: #dcdcdc ${shopStyleConfig.headerBackgroundColor}; //firefox
+        }
+      `}</style>
+      <div
+        id="overlay"
+        style={{
+          borderRadius: "20px",
+          fontFamily: shopStyleConfig.fontFamily || "Avenir",
+        }}
+        className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 shadow-lg overflow-auto">
+        <section
+          id={PALETTE_DIV_ID}
+          className="flex flex-grow overflow-hidden bg-cover w-full">
+          <div className="relative flex justify-center flex-grow flex-shrink h-full">
+            <div className="w-full mx-auto overflow-hidden transition-all backdrop-blur-[10px] rounded-lg flex flex-col flex-grow">
               <div
-                className="flex items-center pr-7 overlay-exit-button"
-                onClick={() => toggleOverlayVisibility(props.overlayDiv)}>
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <g id="Cancel">
-                    <path
-                      id="Vector"
-                      d="M5 5L12 12L5 19M19.5 19L12.5 12L19.5 5"
-                      stroke="#474B58"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </g>
-                </svg>
-              </div>
-            </div>
-            {variant == "test" && hints.length > 0 && (
-              <div
-                id="hints"
-                className="flex justify-center items-center rounded">
-                {hints.map((hint, index) => (
-                  <div
-                    key={index}
-                    className="hint-bubble border-2 justify-center items-center"
-                    onClick={async () => await callOpenaiWithInput(hint)}>
-                    <p className="text-custom">{hint}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Vertical Line Element */}
-            <div className="flex divider w-full h-1"></div>
-
-            <div
-              id="results and convo"
-              className="flex flex-grow border-tborder-gray-300 mobile-chat-column overflow-y-hidden h-full whitespace-normal">
-              {/* Product Column for control search only group*/}
-              {variant === "control"
-                ? renderControlProductColumn()
-                : // Product Column for test group that has AI chat
-                  !isMobile && (
-                    <div
-                      id="product-column"
-                      className="product-column min-w-0 p-6 overflow-y-auto p-4">
-                      <div className="font-bold mb-2 mt-2 text-center">
-                        {suggestions && suggestions.length > 0
-                          ? "You might like:"
-                          : "We're sorry, no results matches this search"}
-                      </div>
-
-                      {suggestions.length > 0 &&
-                        suggestions.slice(0, 6).map((product, index) => (
-                          <a
-                            key={index}
-                            href={`https://${host}/products/${product.handle}`}
-                            className="p-2"
-                            target="_blank"
-                            rel="noopener noreferrer">
-                            <div className="flex flex-grow product-card-shadow p-2 m-1">
-                              {/* Product Image */}
-                              <div className="w-1/3 h-40">
-                                <img
-                                  src={product.featured_image.url}
-                                  alt={product.featured_image.alt}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-
-                              {/* Product Details */}
-                              <div className="w-2/3 flex flex-grow flex-col space-y-1">
-                                {/* Product Name */}
-                                <div className="h-8 search-card-header flex-grow">
-                                  {product.title}
-                                </div>
-
-                                {/* Product Price */}
-                                <div>
-                                  {product.price ? "$" + product.price : ""}
-                                </div>
-                              </div>
-                            </div>
-                          </a>
-                        ))}
-                    </div>
-                  )}
-
-              {/* Vertical Line Element */}
-              {!isMobile && (
-                <div className="flex divider h-[calc(100vh)]"></div>
-              )}
-
-              {/* Chat Column*/}
-              {variant == "test" && (
+                id="header-container"
+                style={{
+                  backgroundColor:
+                    shopStyleConfig.headerBackgroundColor || "#fff",
+                }}>
                 <div
-                  id="chat-column"
-                  className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column">
-                  {messages
-                    .filter((message) => message.content !== undefined)
-                    .map((message, index) => (
-                      <ChatBubble
-                        key={index}
-                        type={message.type}
-                        isAISender={message.sender !== SenderType.USER}
-                        content={message.content}
-                        host={host}
-                      />
-                    ))}
+                  id="search bar"
+                  className="flex justify-between items-center">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="w-3/4 m-2 flex mx-auto relative">
+                    <input
+                      type="text"
+                      value={userInput}
+                      onChange={handleInputChange}
+                      className="flex-grow h-16 pr-12 pl-14 text-black border-none rounded-lg text-center focus:outline-none focus:shadow-none focus:border-none w-3/4 mx-auto"
+                      style={{
+                        backgroundColor:
+                          shopStyleConfig.headerBackgroundColor || "#fff",
+                        fontFamily: shopStyleConfig.fontFamily || "Avenir",
+                      }}
+                      placeholder={
+                        userInput === ""
+                          ? "Ask me anything! See the below hints as examples."
+                          : ""
+                      }
+                      onFocus={(e) => (e.target.placeholder = "")}
+                      onBlur={(e) =>
+                        (e.target.placeholder =
+                          "Ask me anything! See the below hints as examples.")
+                      }
+                      role="combobox"
+                      aria-expanded="false"
+                      aria-controls="options"
+                    />
+                    <button
+                      id="submit-button"
+                      type="submit"
+                      disabled={loading}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <g id="vuesax/bold/send">
+                          <g id="send">
+                            <path
+                              id="Vector"
+                              d="M18.07 8.50965L9.51002 4.22965C3.76002 1.34965 1.40002 3.70965 4.28002 9.45965L5.15002 11.1996C5.40002 11.7096 5.40002 12.2996 5.15002 12.8096L4.28002 14.5396C1.40002 20.2896 3.75002 22.6496 9.51002 19.7696L18.07 15.4896C21.91 13.5696 21.91 10.4296 18.07 8.50965ZM14.84 12.7496H9.44002C9.03002 12.7496 8.69002 12.4096 8.69002 11.9996C8.69002 11.5896 9.03002 11.2496 9.44002 11.2496H14.84C15.25 11.2496 15.59 11.5896 15.59 11.9996C15.59 12.4096 15.25 12.7496 14.84 12.7496Z"
+                              fill={shopStyleConfig.specialColor || "#2a33ff"}
+                            />
+                          </g>
+                        </g>
+                      </svg>
+                    </button>
+                  </form>
                 </div>
-              )}
+                {variant == "test" && hints.length > 0 && (
+                  <div
+                    id="hints"
+                    className="flex justify-center items-center rounded">
+                    {hints.map((hint, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          borderColor:
+                            shopStyleConfig.hintBubbleColor || "#000",
+                          color: shopStyleConfig.hintBubbleColor || "#000",
+                        }}
+                        className="hint-bubble border-2 justify-center items-center"
+                        onClick={async () => await callOpenaiWithInput(hint)}>
+                        <p className="text-custom">{hint}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Vertical Line Element */}
+              <div className="flex divider w-full h-1"></div>
+              <div
+                id="results and convo"
+                className="flex flex-grow border-tborder-gray-300 mobile-chat-column overflow-y-hidden h-full whitespace-normal"
+                style={{
+                  backgroundColor:
+                    shopStyleConfig.searchBackgroundColor || "#fff",
+                }}>
+                {/* Product Column for control search only group*/}
+                {variant === "control"
+                  ? renderControlProductColumn()
+                  : // Product Column for test group that has AI chat
+                    !isMobile && (
+                      <div
+                        id="product-column"
+                        className="product-column min-w-0 p-6 overflow-y-auto p-4">
+                        <div className="font-bold mb-2 mt-2 text-center">
+                          {suggestions && suggestions.length > 0
+                            ? "You might like:"
+                            : "We're sorry, no results matches this search"}
+                        </div>
+
+                        {suggestions.length > 0 &&
+                          suggestions.slice(0, 6).map((product, index) => (
+                            <a
+                              key={index}
+                              href={`https://${host}/products/${product.handle}`}
+                              className="p-2"
+                              target="_blank"
+                              rel="noopener noreferrer">
+                              <div className="flex flex-grow product-card-shadow p-2 m-1">
+                                {/* Product Image */}
+                                <div className="w-1/3 h-40">
+                                  <img
+                                    src={product.featured_image.url}
+                                    alt={product.featured_image.alt}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+
+                                {/* Product Details */}
+                                <div className="w-2/3 flex flex-grow flex-col space-y-1">
+                                  {/* Product Name */}
+                                  <div className="h-8 search-card-header flex-grow">
+                                    {product.title}
+                                  </div>
+
+                                  {/* Product Price */}
+                                  <div>
+                                    {product.price ? "$" + product.price : ""}
+                                  </div>
+                                </div>
+                              </div>
+                            </a>
+                          ))}
+                      </div>
+                    )}
+
+                {/* Vertical Line Element */}
+                {!isMobile && (
+                  <div className="flex divider h-[calc(100vh)]"></div>
+                )}
+
+                {/* Chat Column*/}
+                {variant == "test" && (
+                  <div
+                    id="chat-column"
+                    className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column"
+                    style={{
+                      backgroundColor:
+                        shopStyleConfig.convoBackgroundColor || "#fff",
+                    }}>
+                    {messages
+                      .filter((message) => message.content !== undefined)
+                      .map((message, index) => (
+                        <ChatBubble
+                          key={index}
+                          type={message.type}
+                          isAISender={message.sender !== SenderType.USER}
+                          content={message.content}
+                          host={host}
+                          specialColor={
+                            shopStyleConfig.specialColor || "#2a33ff"
+                          }
+                        />
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </>
   );
 }

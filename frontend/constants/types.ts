@@ -66,11 +66,13 @@ export interface ChatBubbleProps {
   isAISender: boolean;
   content: any;
   host: string;
+  specialColor: string;
 }
 
 export interface TextMessageProps {
   text: string;
   isAISender: boolean;
+  specialColor: string;
 }
 export interface ImageMessageProps {
   src: string;
