@@ -70,7 +70,7 @@ export const chatResponseSchema = z.object({
   plainText: z
     .string()
     .describe(
-      "The response directly displayed to user. Keep to less than 250 characters"
+      "The response directly displayed to user, should be summary of all the products. Keep to less than 250 characters"
     ),
   products: z
     .array(

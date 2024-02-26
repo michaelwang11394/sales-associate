@@ -60,6 +60,7 @@ export default function CommandPalette({ props }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [hints, setHints] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchText, setSearchText] = useState("");
   const posthog = usePostHog();
   const clientId = useRef(
     window.localStorage.getItem("webPixelShopifyClientId")
@@ -201,6 +202,7 @@ export default function CommandPalette({ props }) {
 
             setMentionedProducts(productList);
             setSuggestions(productList);
+            setSearchText("Mentioned products");
           }
         });
       }
@@ -264,8 +266,10 @@ export default function CommandPalette({ props }) {
       if (input !== "") {
         const newSuggestions = await getSuggestions(input);
         setSuggestions(newSuggestions); // Only set the new suggestions, don't mix with mentioned products
+        setSearchText("Search results");
       } else {
         setSuggestions(mentionedProducts); // If search is empty, show the mentioned products
+        setSearchText("Mentioned products");
       }
     }, 300);
 
@@ -471,11 +475,7 @@ export default function CommandPalette({ props }) {
         <div
           id="product-column-control"
           className="product-column min-w-0 p-6 overflow-y-auto">
-          <div className="font-bold mb-2 mt-2 text-center">
-            {suggestions.length > 0
-              ? "You might like:"
-              : "We're sorry, no results match this search"}
-          </div>
+          <div className="font-bold mb-2 mt-2 text-center">{searchText}</div>
           {/* First row */}
           <div className="flex justify-center items-center space-x-4 mb-4">
             {suggestions.slice(0, 3).map((product, index) => (
@@ -523,7 +523,7 @@ export default function CommandPalette({ props }) {
                     />
                   </div>
                   <div className="flex flex-col p-2">
-                    <div className=" h-16 text-center font-bold">
+                    <div className="h-16 text-center font-bold">
                       {product.title}
                     </div>
                     <div className="text-center mt-1">
@@ -550,11 +550,7 @@ export default function CommandPalette({ props }) {
     } else if (isMobile) {
       return (
         <div id="product-column-control-mobile" className="overflow-y-auto p-4">
-          <div className="font-bold mb-2 text-center">
-            {suggestions.length > 0
-              ? "You might like:"
-              : "We're sorry, no results match this search"}
-          </div>
+          <div className="font-bold mb-2 text-center">{searchText}</div>
           <div className="grid grid-cols-2 gap-4">
             {suggestions.map((product, index) => (
               <a
@@ -722,9 +718,7 @@ export default function CommandPalette({ props }) {
                         id="product-column"
                         className="product-column min-w-0 p-6 overflow-y-auto p-4">
                         <div className="font-bold mb-2 mt-2 text-center">
-                          {suggestions && suggestions.length > 0
-                            ? "You might like:"
-                            : "We're sorry, no results matches this search"}
+                          {searchText}
                         </div>
 
                         {suggestions.length > 0 &&
@@ -746,14 +740,14 @@ export default function CommandPalette({ props }) {
                                 </div>
 
                                 {/* Product Details */}
-                                <div className="w-2/3 flex flex-grow flex-col space-y-1">
+                                <div className="w-2/3 flex flex-grow flex-col justify-between">
                                   {/* Product Name */}
-                                  <div className="h-8 search-card-header flex-grow">
+                                  <div className="pl-2 search-card-header overflow-hidden text-ellipsis">
                                     {product.title}
                                   </div>
 
                                   {/* Product Price */}
-                                  <div>
+                                  <div className="pl-2 self-end">
                                     {product.price ? "$" + product.price : ""}
                                   </div>
                                 </div>

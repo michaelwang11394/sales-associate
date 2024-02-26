@@ -5,7 +5,7 @@ import type {
   TextMessageProps,
 } from "@/constants/types";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 
 const TextMessage: React.FC<TextMessageProps> = ({
   text,
@@ -47,108 +47,12 @@ const ImageMessage: React.FC<ImageMessageProps> = ({
   return <img src={src} className="w-40 h-40 rounded-lg object-cover" />;
 };
 
-/*
-const LinkMessage: React.FC<LinkMessageProps> = ({
-  name,
-  handle,
-  price,
-  image,
-  host,
-}): React.JSX.Element => {
-  return (
-    <div className="w-64">
-      <img src={image} alt={name} className="w-full h-48 object-cover" />
-      <div className="flex flex-col p-4">
-        <h3 className="text-xl font-semibold mb-2">{name}</h3>
-        <p className="text-lg font-medium text-gray-500 mb-4">
-          {price ? "$" + price : ""}
-        </p>
-        <a
-          href={`https://${host}/products/${handle}`}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center justify-center px-4 py-2 bg-white text-black font-semibold rounded-md shadow-md hover:bg-gray-600">
-          View Product
-        </a>
-      </div>
-    </div>
-  );
-};
-*/
-
 const LinkMessage: React.FC<LinkMessageProps> = ({
   key,
   host,
   content,
 }): React.JSX.Element => {
-  const minFontSize = 15;
-  const maxFontSize = 50;
-  const startFontSize = 20;
-  const overFlowAllowance = 1.05; // For resizing font
   const [active, setActive] = useState(0);
-
-  // For running binary search to find font size to match card
-  const [recFontSize, setRecFontSize] = useState(startFontSize);
-  const [min, setMin] = useState(minFontSize);
-  const [max, setMax] = useState(maxFontSize);
-  const recRef = useRef(null);
-  const cardRef = useRef(null);
-
-  // State to track the dimensions of recRef
-  const [recDimensions, setRecDimensions] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    setMin(minFontSize);
-    setMax(recFontSize); // We are changing on a growing recommendation text, we should only be shrinking
-  }, [content[active]?.recommendation, recFontSize]);
-
-  useEffect(() => {
-    setMin(minFontSize);
-    setMax(maxFontSize);
-  }, [active]);
-
-  useEffect(() => {
-    const recDiv = recRef.current;
-    if (recDiv) {
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          const { width, height } = entry.contentRect;
-          setRecDimensions({ width, height });
-        }
-      });
-      resizeObserver.observe(recDiv);
-      return () => resizeObserver.unobserve(recDiv);
-    }
-  }, [recRef]);
-
-  useEffect(() => {
-    const adjustFontSize = () => {
-      const recDiv = recRef.current;
-      const cardDiv = cardRef.current;
-      if (!recDiv || !cardDiv) return;
-
-      const recHeight = recDiv.clientHeight;
-      const cardHeight = cardDiv.clientHeight;
-
-      // Check if recHeight is within 110% of cardHeight
-      if (
-        recHeight <= cardHeight * overFlowAllowance &&
-        recHeight >= cardHeight
-      ) {
-        return;
-      }
-
-      if (recHeight > cardHeight * overFlowAllowance) {
-        setMax(recFontSize);
-        setRecFontSize((prevFontSize) => (min + prevFontSize) / 2);
-      } else {
-        setMin(recFontSize);
-        setRecFontSize((prevFontSize) => (max + prevFontSize) / 2);
-      }
-    };
-
-    adjustFontSize();
-  }, [recDimensions, recFontSize, min, max, recRef, cardRef]);
 
   const handleRightClick = () => {
     // Add your click handler logic here
@@ -158,6 +62,10 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   const handleLeftClick = () => {
     // Add your click handler logic here
     setActive(Math.max(active - 1, 0));
+  };
+
+  const handleImageClick = (url) => {
+    window.open(url, "_blank");
   };
 
   const renderDots = () => {
@@ -180,46 +88,33 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   };
 
   return (
-    <div>
-      <div className="w-full gap-4">
-        {/* Existing Element */}
-        <div id="card" className="w-1/2 float-right m-3">
-          {/* Card */}
-          {content[active] && (
-            <div
-              ref={cardRef}
-              className="product-card-shadow"
-              id="existing-element">
-              <a
-                href={`https://${host}/products/${content[active].handle}`}
-                target="_blank"
-                rel="noopener noreferrer">
-                <img
-                  src={content[active].image}
-                  alt={content[active].name}
-                  className="w-full object-cover"
-                />
-                <div className="flex flex-col p-3">
-                  <h2 className="text-xxl font-semibold">
-                    {content[active].name}
-                  </h2>
-                  <p className="text-lg font-medium text-gray-500 mb-4">
-                    {content[active].price ? "$" + content[active].price : ""}
-                  </p>
-                </div>
-              </a>
-            </div>
-          )}
-        </div>
-        <p
-          ref={recRef}
-          id="rec"
-          className="ai-grey-text leading-tight mb-4"
-          style={{
-            fontSize: `${recFontSize}px`,
-          }}>
-          {content[active]?.recommendation ?? ""}
-        </p>
+    <div
+      className="w-full gap-4"
+      style={{ paddingLeft: "50px", paddingRight: "10px" }}>
+      {/* Recommendations in a bulleted list */}
+      <ul className="list-disc mb-4">
+        {content.map((item, index) => (
+          <li key={index} className="ai-grey-text leading-tight">
+            {item.recommendation}
+          </li>
+        ))}
+      </ul>
+      {/* Images below the recommendations */}
+      <div className="flex flex-wrap justify-start gap-4">
+        {content.map((item, index) => (
+          <a
+            key={index}
+            onClick={() =>
+              handleImageClick(`https://${host}/products/${item.handle}`)
+            }
+            className="cursor-pointer">
+            <img
+              src={item.image}
+              alt={`Image ${index + 1}`}
+              className="w-30 h-60 rounded-lg"
+            />
+          </a>
+        ))}
       </div>
       {content.length > 1 && (
         <div className="w-full grid grid-cols-3 items-center">
