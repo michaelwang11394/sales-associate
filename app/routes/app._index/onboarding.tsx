@@ -48,7 +48,7 @@ export default function Index(props: OnboardingProps) {
         const { data } = await supabase
           .from("merchants")
           .update({ onboarding_completed: true })
-          .eq("domain", domain);
+          .eq("store", domain);
 
         console.log("data", data);
       } catch (error) {

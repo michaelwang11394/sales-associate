@@ -1,14 +1,86 @@
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { createClient } from "@supabase/supabase-js";
 import * as yaml from "js-yaml";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
+import { SupabaseTables } from "../constants";
 import { SenderType } from "../types";
+import { EMBEDDING_SMALL_MODEL } from "./ai/constants";
 import { getProducts } from "./shopify";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
+
+// TODO: quick followup
+export const clearUninstalled = async () => {
+
+}
+
+export const refreshAllStores = async () => {
+  const { data } = await supabase
+    .from(SupabaseTables.MERCHANTS)
+    .select("store");
+  if (!data || data.length === 0) {
+    console.error("No merchant installs of our app")
+    throw Error("No merchant installs of our app")
+  }
+  await Promise.all(data?.map(merchant => merchant.store).map(async store => {
+    try {
+      const { formattedProductsWithUrls, strippedProducts } = await getProducts(store, true);
+      const { data: oldEmbeddings } = await supabase
+        .from(SupabaseTables.EMBEDDINGS)
+        .select("id")
+        .eq("metadata", store);
+
+      await SupabaseVectorStore.fromTexts(
+        strippedProducts,
+        Array(strippedProducts.length).fill(store),
+        new OpenAIEmbeddings({
+          modelName: EMBEDDING_SMALL_MODEL,
+          openAIApiKey: process.env.OPENAI_KEY,
+        }),
+        {
+          client: supabase,
+          tableName: SupabaseTables.EMBEDDINGS,
+          queryName: "match_documents",
+        }
+      );
+
+      const { error: deleteOldEmbedding } = await supabase
+        .from(SupabaseTables.EMBEDDINGS)
+        .delete()
+        .in("id", oldEmbeddings!.map(embedding => embedding.id));
+      if (deleteOldEmbedding) {
+        throw new Error("error deleting old embed rows");
+      }
+
+      // Update catalog now
+      const timestamp = Date.now();
+      // Insert new catalog
+      const { error: catalogInsertError } = await supabase
+        .from(SupabaseTables.CATALOG)
+        .upsert(formattedProductsWithUrls.map((product: any) => ({...product, store, timestamp: timestamp})));
+      if (catalogInsertError) {
+        console.error(catalogInsertError)
+        throw new Error("Error inserting new catalog");
+      }
+
+      // Delete stale catalog entries
+      const { error } = await supabase
+        .from(SupabaseTables.CATALOG)
+        .delete()
+        .eq("store", store)
+        .neq("timestamp", timestamp)
+      if (error) {
+        throw new Error("error deleting old catalog rows");
+      }
+    } catch (e) {
+      console.error(`Catalog refresh for store ${store} failed with`, e)
+    }
+  }))
+  return Date.now()
+};
 
 export const getMessages = async (
   store: string,
@@ -18,7 +90,7 @@ export const getMessages = async (
 ) => {
   try {
     const { data, error } = await supabase
-      .from("messages")
+      .from(SupabaseTables.MESSAGES)
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
@@ -44,7 +116,7 @@ export const getLastSummaryMessage = async (
 ) => {
   try {
     const { data, error } = await supabase
-      .from("messages")
+      .from(SupabaseTables.MESSAGES)
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
@@ -66,7 +138,7 @@ export const getLastSummaryMessage = async (
 export const getProductsMentioned = async (store: string, clientId: string) => {
   try {
     const { data, error } = await supabase
-      .from("messages")
+      .from(SupabaseTables.MESSAGES)
       .select("content")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
@@ -93,7 +165,7 @@ export const getMessagesFromIds = async (
 ) => {
   try {
     const { data, error } = await supabase
-      .from("messages")
+      .from(SupabaseTables.MESSAGES)
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
@@ -120,7 +192,7 @@ export const insertMessage = async (
   requestUuid: string
 ) => {
   const { data, error } = await supabase
-    .from("messages")
+    .from(SupabaseTables.MESSAGES)
     .insert([
       {
         clientId,
@@ -143,7 +215,7 @@ export const insertMessage = async (
 export const getLastPixelEvent = async (store: string, clientId: string) => {
   try {
     const { data, error } = await supabase
-      .from("events")
+      .from(SupabaseTables.EVENTS)
       .select("*")
       .order("timestamp", { ascending: false })
       .eq("clientId", clientId)
@@ -168,7 +240,7 @@ export const isNewCustomer = async (store: string, clientId: string) => {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
     const { data, error } = await supabase
-      .from("events")
+      .from(SupabaseTables.EVENTS)
       .select("*")
       .eq("clientId", clientId)
       .eq("store", store)
@@ -195,7 +267,7 @@ export const isNewCustomer = async (store: string, clientId: string) => {
 export const hasItemsInCart = async (store: string, clientId: string) => {
   try {
     const { data, error } = await supabase
-      .from("events")
+      .from(SupabaseTables.EVENTS)
       .select("*")
       .eq("clientId", clientId)
       .eq("store", store)
@@ -244,7 +316,7 @@ export const hasViewedProducts = async (
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
     const { data, error } = await supabase
-      .from("events")
+      .from(SupabaseTables.EVENTS)
       .select("*")
       .eq("clientId", clientId)
       .eq("name", "product_viewed")
@@ -293,7 +365,7 @@ export const offerCoupon = async (store: string, clientId: string) => {
     thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
 
     const { data, error } = await supabase
-      .from("events")
+      .from(SupabaseTables.EVENTS)
       .select("*")
       .eq("store", store)
       .eq("clientId", clientId)
@@ -314,39 +386,9 @@ export const offerCoupon = async (store: string, clientId: string) => {
   }
 };
 
-export const createEmbeddings = async (store: string) => {
-  try {
-    const { strippedProducts } = await getProducts(store);
-    // Delete existing indices first
-    const { error } = await supabase
-      .from("vector_catalog")
-      .delete()
-      .eq("metadata", store);
-    if (strippedProducts.length === 0 || error) {
-      console.error("Store has no products");
-      return { succes: false };
-    }
-
-    const vectorStore = await SupabaseVectorStore.fromTexts(
-      strippedProducts,
-      Array(strippedProducts.length).fill(store),
-      new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_KEY }),
-      {
-        client: supabase,
-        tableName: "vector_catalog",
-        queryName: "match_documents",
-      }
-    );
-    return { success: true, vectorStore };
-  } catch (error) {
-    console.error("Error with creating product embedding:", error);
-    return { success: false };
-  }
-};
-
 export const getMerchants = async (store: string) => {
   const { data } = await supabase
-    .from("merchants")
+    .from(SupabaseTables.MERCHANTS)
     .select("*")
     .eq("domain", store);
 
@@ -357,7 +399,7 @@ export const getBestSellers = async (store: string) => {
   const oneDayAgo = new Date();
   oneDayAgo.setDate(oneDayAgo.getDay() - 1);
   const { data } = await supabase
-    .from("merchants")
+    .from(SupabaseTables.MERCHANTS)
     .select("best_sellers")
     .eq("store", store)
     .gte("best_seller_updated", oneDayAgo.toISOString());
@@ -375,7 +417,7 @@ export const setBestSellers = async (store: string, best_sellers: any[]) => {
   updatedMerchant.best_seller_updated = new Date().toISOString();
   updatedMerchant.best_sellers = best_sellers;
   const { error } = await supabase
-    .from("merchants")
+    .from(SupabaseTables.MERCHANTS)
     .upsert([updatedMerchant])
     .select();
   if (error) {
@@ -403,7 +445,7 @@ export type ModelLoggingFields = {
 };
 
 export const logModelRun = async (fields: ModelLoggingFields) => {
-  const { error, data } = await supabase.from("models").insert(fields).select();
+  const { error, data } = await supabase.from(SupabaseTables.MODELS).insert(fields).select();
   if (error) {
     console.error("Error during models insert:", error);
     return { success: false, data: data };

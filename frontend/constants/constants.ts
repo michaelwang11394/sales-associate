@@ -15,9 +15,15 @@ export const API_URL =
   HEROKU_URL;
 export const V1 = "api/v1";
 export const SUPABASE_PATH = "supabase";
-export const SUPABASE_MESSAGES_TABLE = "messages";
-export const SUPABASE_EVENTS_TABLE = "events";
-export const SUPABASE_EMBEDDINGS_TABLE = "vector_catalog";
+export enum SupabaseTables {
+  MESSAGES = "messages",
+  EVENTS = "events",
+  EMBEDDINGS = "vector_catalog",
+  MERCHANTS = "merchants",
+  CATALOG = "catalog",
+  POSTHOG = "posthog",
+  MODELS = "models",
+}
 
 export const SUPABASE_MESSAGES_HISTORY_ENDPOINT = "history";
 export const SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT =
@@ -36,3 +42,4 @@ export const OPENAI_PATH = "openai";
 export const HINTS_PATH = "hints";
 export const SUMMARIZE_PATH = "summarize";
 export const EXPERIMENT_PATH = "capture-posthog";
+export const UNINSTALL_CHECK = "uninstall-check";
