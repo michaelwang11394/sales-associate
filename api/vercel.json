@@ -17,7 +17,7 @@
     },
     {
       "path": "/api/v1/uninstall-check",
-      "schedule": "0 6/12 * * *"
+      "schedule": "0 6/12 */3 * *"
     }
   ]
 }

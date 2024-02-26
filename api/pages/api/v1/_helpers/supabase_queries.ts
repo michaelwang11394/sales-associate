@@ -18,6 +18,16 @@ export const clearUninstalled = async () => {
     .select("*");
 
   const deletedIds = await Promise.all((deleted || []).map(async deleted => {
+    // Parse the timestamp from the database
+    const deletedAt = new Date(deleted.created_at);
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    // Check if the deleted_at timestamp is more than 3 days old
+    if (deletedAt > threeDaysAgo) {
+      console.log(`${deleted.created_at} is within the last 3 days. Don't delete yet`);
+      return null;
+    }
     if (deleted.store) {
       const { error } = await supabase
         .from("sessions")
