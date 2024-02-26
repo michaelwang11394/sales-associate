@@ -19,13 +19,13 @@ export const clearUninstalled = async () => {
 
 export const refreshAllStores = async () => {
   const { data } = await supabase
-    .from(SupabaseTables.MERCHANTS)
-    .select("store");
+    .from(SupabaseTables.SESSIONS)
+    .select("shop");
   if (!data || data.length === 0) {
     console.error("No merchant installs of our app")
     throw Error("No merchant installs of our app")
   }
-  await Promise.all(data?.map(merchant => merchant.store).map(async store => {
+  await Promise.all(data?.map(merchant => merchant.shop).map(async store => {
     try {
       const { formattedProductsWithUrls, strippedProducts } = await getProducts(store, true);
       const { data: oldEmbeddings } = await supabase
