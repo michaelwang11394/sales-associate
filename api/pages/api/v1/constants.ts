@@ -26,8 +26,8 @@ export enum SupabaseTables {
   EMBEDDINGS = "vector_catalog",
   MERCHANTS = "merchants",
   CATALOG = "catalog",
-  POSTHOG = "posthog",
   MODELS = "models",
+  UNINSTALLED = "uninstalled"
 }
 
 // Corrected SupabaseTableStoreColumnName object definition
@@ -38,8 +38,8 @@ export const SupabaseTableStoreColumnName = {
   [SupabaseTables.EMBEDDINGS]: "metadata",
   [SupabaseTables.MERCHANTS]: "store",
   [SupabaseTables.CATALOG]: "store",
-  [SupabaseTables.POSTHOG]: "store",
   [SupabaseTables.MODELS]: "store",
+  [SupabaseTables.UNINSTALLED]: "store",
 };
 
 

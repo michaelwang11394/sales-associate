@@ -21,7 +21,6 @@ export enum SupabaseTables {
   EMBEDDINGS = "vector_catalog",
   MERCHANTS = "merchants",
   CATALOG = "catalog",
-  POSTHOG = "posthog",
   MODELS = "models",
 }
 
