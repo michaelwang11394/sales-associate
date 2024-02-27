@@ -1,6 +1,6 @@
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Page, Layout, Card, Button, TextContainer } from "@shopify/polaris";
+import { Button, Card, Layout, Page, TextContainer } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 import { supabase } from "~/utils/supabase";
 
@@ -17,13 +17,12 @@ export async function loader({ request }) {
 function SettingsPage() {
   const { domain } = useLoaderData();
   const handleDelete = async () => {
-    // Delete merchant row, and subsequently cascade away all data
-    const { data, error } = await supabase
-      .from("sessions")
-      .delete()
-      .eq("shop", domain);
-    if (error) console.error("Error deleting data", error);
-    console.log("All data deleted", data);
+    const { error } = await supabase
+      .from("uninstalled")
+      .upsert([{ store: domain }]);
+    if (error) {
+      console.error("Shop's deletion queueing failed");
+    }
   };
 
   return (

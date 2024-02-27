@@ -12,11 +12,10 @@ export const action = async ({ request }) => {
     case "APP_UNINSTALLED":
       if (session) {
         const { error } = await supabase
-          .from("sessions")
-          .delete()
-          .eq("shop", shop);
+          .from("uninstalled")
+          .upsert([{ store: shop }]);
         if (error) {
-          console.error("Shop's session deletion failed");
+          console.error("Shop's deletion queueing failed");
         }
       }
       break;
