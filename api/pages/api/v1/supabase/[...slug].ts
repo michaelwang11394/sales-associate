@@ -87,7 +87,7 @@ export default async function handler(
           "Operation does not exist for messages table"
         );
     }
-  } else if (table === SupabaseTables.MESSAGES) {
+  } else if (table === SupabaseTables.EVENTS) {
     switch (queryType) {
       case SUPABASE_EVENTS_CART_ITEMS_ENDPOINT:
         return httpResponse(

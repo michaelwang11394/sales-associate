@@ -58,7 +58,7 @@ body {
 /* CSS talk bubble */
 .talk-bubble {
   border-radius: 25px 25px 0px 25px;
-  border: 1px solid var(--Primary-accent, #2a33ff);
+  border: 1px solid var(--Primary-accent, #fe5000);
   background: var(--White, #fff);
   margin: 40px;
   position: relative;
@@ -358,7 +358,7 @@ body {
   line-height: 1.5em;
 }
 .talktext p {
-  color: var(--Primary-accent, #2a33ff);
+  color: var(--Primary-accent, #fe5000);
 
   /* Body-semibold */
   font-size: 16px;
