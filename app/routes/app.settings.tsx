@@ -80,8 +80,7 @@ function SettingsPage() {
 
   useEffect(() => {
     if (fetcher.data?.success) {
-      // Optionally, reset states to default or current saved values here
-      alert("Save was successfully executed"); // Or use a more sophisticated notification system
+      alert("Save was successfully executed");
     }
   }, [fetcher.data]);
 
@@ -94,7 +93,6 @@ function SettingsPage() {
     // Add more options as needed
   ];
 
-  // Handlers for new color states
   const handleColorChange = (name) => (event) => {
     setSettings((prevSettings) => ({
       ...prevSettings,
@@ -103,7 +101,6 @@ function SettingsPage() {
   };
 
   const handleDelete = async () => {
-    // Delete merchant row, and subsequently cascade away all data
     const { data, error } = await supabase
       .from("sessions")
       .delete()
@@ -124,7 +121,6 @@ function SettingsPage() {
           </Text>
           <fetcher.Form method="post">
             <BlockStack gap="200">
-              {/* Dynamically generate input fields based on the settings state */}
               {Object.entries(settings).map(([name, value]) =>
                 name !== "fontStyle" ? (
                   <div
