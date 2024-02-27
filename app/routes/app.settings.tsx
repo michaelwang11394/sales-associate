@@ -67,13 +67,13 @@ function SettingsPage() {
   const [modalActive, setModalActive] = useState(false);
 
   const [settings, setSettings] = useState({
-    headerBackgroundColor: initialSettings.headerBackgroundColor || "#000000",
-    searchBackgroundColor: initialSettings.searchBackgroundColor || "#000000",
-    convoBackgroundColor: initialSettings.convoBackgroundColor || "#000000",
+    headerBackgroundColor: initialSettings.headerBackgroundColor || "#ffffff",
+    searchBackgroundColor: initialSettings.searchBackgroundColor || "#ffffff",
+    convoBackgroundColor: initialSettings.convoBackgroundColor || "#ffffff",
     hintBubbleColor: initialSettings.hintBubbleColor || "#000000",
-    logoColor: initialSettings.logoColor || "#000000",
+    logoColor: initialSettings.logoColor || "#0004fa",
     systemFontColor: initialSettings.systemFontColor || "#000000",
-    userFontColor: initialSettings.userFontColor || "#000000",
+    userFontColor: initialSettings.userFontColor || "#0004fa",
     fontStyle: initialSettings.fontStyle || "Arial",
   });
 

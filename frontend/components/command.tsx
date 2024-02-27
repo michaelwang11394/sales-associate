@@ -61,14 +61,23 @@ export default function CommandPalette({ props }) {
 
   useEffect(() => {
     const fetchShopStyle = async () => {
-      // Attempt to retrieve shop style from localStorage first
       const localShopStyle = localStorage.getItem("shopStyle");
+      const oneWeekInMilliseconds = 7 * 24 * 60 * 60 * 1000; // 1 week
+      let isCacheValid = false;
+
       if (localShopStyle) {
         const parsedShopStyle = JSON.parse(localShopStyle);
-        setShopStyle(parsedShopStyle);
-      } else {
-        // If not in localStorage, fetch from Supabase
+        const now = new Date().getTime();
+        isCacheValid = now - parsedShopStyle.timestamp < oneWeekInMilliseconds;
+        if (isCacheValid) {
+          setShopStyle(parsedShopStyle.data);
+        }
+      }
+
+      if (!localShopStyle || !isCacheValid) {
+        // If not in localStorage or cache is expired, fetch from Supabase
         const data = await getShopStyle(host);
+        console.log("Shop style data from Supabase", data);
         if (data) {
           const newShopStyle = {
             headerBackgroundColor: data[0].shop_style.headerBackgroundColor,
@@ -80,9 +89,12 @@ export default function CommandPalette({ props }) {
             systemFontColor: data[0].shop_style.systemFontColor,
             userFontColor: data[0].shop_style.userFontColor,
           };
+          const shopStyleToSave = {
+            data: newShopStyle,
+            timestamp: new Date().getTime(),
+          };
+          localStorage.setItem("shopStyle", JSON.stringify(shopStyleToSave));
           setShopStyle(newShopStyle);
-          // Save the new shop style to localStorage
-          localStorage.setItem("shopStyle", JSON.stringify(newShopStyle));
         } else {
           console.error("Shop style could not be fetched from Supabase");
         }
