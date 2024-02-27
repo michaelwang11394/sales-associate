@@ -36,7 +36,7 @@
     "@shopify/app": "^3.55.1",
     "@shopify/app-bridge-types": "^0.0.3",
     "@shopify/cli": "^3.55.1",
-    "@shopify/polaris": "^12.6.0",
+    "@shopify/polaris": "^12.18.0",
     "@shopify/shopify-app-remix": "^1.3.0",
     "@shopify/shopify-app-session-storage-prisma": "^2.0.2",
     "@shopify/web-pixels-extension": "^0.4.20",

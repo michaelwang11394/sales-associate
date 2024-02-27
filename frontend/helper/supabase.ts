@@ -4,12 +4,13 @@ import {
   SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
   SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT,
   SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT,
+  SUPABASE_MERCHANT_STYLE_ENDPOINT,
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
   SUPABASE_PATH,
   SupabaseTables,
-  V1
+  V1,
 } from "@/constants/constants";
 import type { ApiResponse } from "@/constants/types";
 import { HTTPHelper } from "./http";
@@ -153,5 +154,24 @@ export const offerCoupon = async (clientId) => {
   } catch (error) {
     console.error("Error", error);
     return { offerCoupon: false, message: "An unexpected error occurred." };
+  }
+};
+
+export const getShopStyle = async (store) => {
+  try {
+    const res = await HTTPHelper.get<ApiResponse>(
+      API_URL,
+      [
+        V1,
+        SUPABASE_PATH,
+        SupabaseTables.MERCHANTS,
+        SUPABASE_MERCHANT_STYLE_ENDPOINT,
+      ],
+      { store: store }
+    );
+    return res.body;
+  } catch (error) {
+    console.error("Error", error);
+    return { success: false, message: "An unexpected error occurred." };
   }
 };

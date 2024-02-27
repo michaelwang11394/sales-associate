@@ -16,7 +16,7 @@ CAUTION: KEEP THIS SECTION IN SYNC WITH frontend/constants/constants.ts
 */
 export const V1 = "api/v1";
 
-export const SUPABASE_PATH = "supabase"
+export const SUPABASE_PATH = "supabase";
 
 // All tables
 export enum SupabaseTables {
@@ -42,7 +42,6 @@ export const SupabaseTableStoreColumnName = {
   [SupabaseTables.UNINSTALLED]: "store",
 };
 
-
 export const SUPABASE_MESSAGES_HISTORY_ENDPOINT = "history";
 export const SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT =
   "products-mentioned";
@@ -53,6 +52,7 @@ export const SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT = "new-customer";
 export const SUPABASE_EVENTS_CART_ITEMS_ENDPOINT = "cart-items";
 export const SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT = "viewed-products";
 export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
+export const SUPABASE_MERCHANT_STYLE_ENDPOINT = "style";
 
 // For Cron jobs
 export const SUPABASE_CRON_CATALOG = "refresh-catalog";
@@ -70,7 +70,9 @@ function verifySupabaseTableMappings(): boolean {
       return false; // or throw new Error(`Missing mapping for table: ${table}`);
     }
   }
-  console.log("All SupabaseTables have corresponding entries in SupabaseTableStoreColumnName.");
+  console.log(
+    "All SupabaseTables have corresponding entries in SupabaseTableStoreColumnName."
+  );
   return true;
 }
 

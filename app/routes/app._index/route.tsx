@@ -63,9 +63,34 @@ export async function loader({ request }) {
           onboarding_completed: false,
         },
       ]);
+    refreshCatalog();
+
+    // Refresh embeddings and catalog
   }
 
   return json({ shopData, domain, onboardingState, merchant });
+}
+
+async function refreshCatalog() {
+  try {
+    const response = await fetch(
+      "https://sales-associate-backend.vercel.app/api/v1/refresh-catalog",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Add any required headers here
+        },
+      }
+    );
+    if (!response.ok) {
+      throw new Error("Failed to refresh catalog");
+    }
+    const data = await response.json();
+    console.log("Catalog refreshed successfully", data);
+  } catch (error) {
+    console.error("Error refreshing catalog:", error);
+  }
 }
 
 export default function Index() {

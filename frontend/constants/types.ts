@@ -66,11 +66,15 @@ export interface ChatBubbleProps {
   isAISender: boolean;
   content: any;
   host: string;
+  specialColor: string;
+  systemFontColor: string;
+  userFontColor: string;
 }
 
 export interface TextMessageProps {
   text: string;
   isAISender: boolean;
+  specialColor: string;
 }
 export interface ImageMessageProps {
   src: string;
@@ -97,3 +101,14 @@ interface ImportMetaEnv {
 export interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+export type ShopStyle = {
+  headerBackgroundColor: string;
+  searchBackgroundColor: string;
+  convoBackgroundColor: string;
+  fontFamily: string;
+  hintBubbleColor: string;
+  specialColor: string;
+  systemFontColor: string;
+  userFontColor: string;
+};

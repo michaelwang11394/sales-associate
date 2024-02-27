@@ -1,7 +1,6 @@
 /* General CSS Setup */
 body {
   background-color: lightblue;
-  font-family: "Avenir", "Lucida Sans", helvetica, sans;
 }
 
 /* container */
@@ -45,9 +44,7 @@ body {
   width: 50%;
 }
 .hint-bubble {
-  border-color: #2a33ff;
   border-radius: 15px;
-  color: #2a33ff;
   margin: 0px 3px 8px 3px;
   padding: 5px 10px 5px 10px;
   cursor: pointer;
@@ -90,10 +87,9 @@ body {
   -moz-border-radius: 30px;
 }
 .ai-grey-text {
-  color: var(--Secondary-grey, #474b58);
+  /* color: var(--Secondary-grey, #474b58); */
 
   /* Body-semibold */
-  font-family: Avenir;
   font-style: normal;
   font-weight: 500;
   line-height: 26px; /* 162.5% */
@@ -101,8 +97,6 @@ body {
 .user-input-text {
   border-radius: 0px 25px 25px 25px;
   background: var(--Background-grey, #d9dce2);
-  color: var(--Primary-accent, #2a33ff);
-  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 800;
@@ -112,7 +106,6 @@ body {
   color: #000;
 
   /* Body-semibold */
-  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
@@ -135,7 +128,6 @@ body {
   border-radius: 10px;
   background: var(--Background-grey, #2a33ff);
   color: var(--Primary-accent, #ffffff);
-  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
@@ -369,7 +361,6 @@ body {
   color: var(--Primary-accent, #2a33ff);
 
   /* Body-semibold */
-  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;

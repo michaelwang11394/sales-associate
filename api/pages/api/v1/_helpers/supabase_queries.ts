@@ -17,111 +17,138 @@ export const clearUninstalled = async () => {
     .from(SupabaseTables.UNINSTALLED)
     .select("*");
 
-  const deletedIds = await Promise.all((deleted || []).map(async deleted => {
-    // Parse the timestamp from the database
-    const deletedAt = new Date(deleted.created_at);
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const deletedIds = await Promise.all(
+    (deleted || []).map(async (deleted) => {
+      // Parse the timestamp from the database
+      const deletedAt = new Date(deleted.created_at);
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-    // Check if the deleted_at timestamp is more than 3 days old
-    if (deletedAt > threeDaysAgo) {
-      console.log(`${deleted.created_at} is within the last 3 days. Don't delete yet`);
-      return null;
-    }
-    if (deleted.store) {
-      const { error } = await supabase
-        .from("sessions")
-        .delete().eq("shop", deleted.store);
-      if (error) {
-        console.error(`session deletion failed for shop ${deleted.store}`);
+      // Check if the deleted_at timestamp is more than 3 days old
+      if (deletedAt > threeDaysAgo) {
+        console.log(
+          `${deleted.created_at} is within the last 3 days. Don't delete yet`
+        );
+        return null;
       }
-      return deleted.id
-    } else if (deleted.session_id) {
-      const { error } = await supabase
-        .from("sessions")
-        .delete().eq("id", deleted.session_id);
-      if (error) {
-        console.error(`session deletion failed for session id ${deleted.session_id}`);
+      if (deleted.store) {
+        const { error } = await supabase
+          .from("sessions")
+          .delete()
+          .eq("shop", deleted.store);
+        if (error) {
+          console.error(`session deletion failed for shop ${deleted.store}`);
+        }
+        return deleted.id;
+      } else if (deleted.session_id) {
+        const { error } = await supabase
+          .from("sessions")
+          .delete()
+          .eq("id", deleted.session_id);
+        if (error) {
+          console.error(
+            `session deletion failed for session id ${deleted.session_id}`
+          );
+        }
+        return deleted.id;
+      } else {
+        console.error(
+          `Session deletion failed for id ${deleted.id} as session id and store are null`
+        );
+        return null;
       }
-      return deleted.id
-    } else {
-      console.error(`Session deletion failed for id ${deleted.id} as session id and store are null`);
-      return null
-    }
-  }))
+    })
+  );
 
-  const {error} = await supabase
-    .from(SupabaseTables.UNINSTALLED).delete().in("id", deletedIds.filter(id => id !== null))
+  const { error } = await supabase
+    .from(SupabaseTables.UNINSTALLED)
+    .delete()
+    .in(
+      "id",
+      deletedIds.filter((id) => id !== null)
+    );
   if (error) {
-    console.log("Error clearing uninstall table", error)
+    console.log("Error clearing uninstall table", error);
   }
 
-  return !error && !deletedIds.includes(null)
-}
+  return !error && !deletedIds.includes(null);
+};
 
 export const refreshAllStores = async () => {
-  const { data } = await supabase
-    .from(SupabaseTables.SESSIONS)
-    .select("shop");
+  const { data } = await supabase.from(SupabaseTables.SESSIONS).select("shop");
   if (!data || data.length === 0) {
-    console.error("No merchant installs of our app")
-    throw Error("No merchant installs of our app")
+    console.error("No merchant installs of our app");
+    throw Error("No merchant installs of our app");
   }
-  await Promise.all(data?.map(merchant => merchant.shop).map(async store => {
-    try {
-      const { formattedProductsWithUrls, strippedProducts } = await getProducts(store, true);
-      const { data: oldEmbeddings } = await supabase
-        .from(SupabaseTables.EMBEDDINGS)
-        .select("id")
-        .eq("metadata", store);
+  await Promise.all(
+    data
+      ?.map((merchant) => merchant.shop)
+      .map(async (store) => {
+        try {
+          const { formattedProductsWithUrls, strippedProducts } =
+            await getProducts(store, true);
+          const { data: oldEmbeddings } = await supabase
+            .from(SupabaseTables.EMBEDDINGS)
+            .select("id")
+            .eq("metadata", store);
 
-      await SupabaseVectorStore.fromTexts(
-        strippedProducts,
-        Array(strippedProducts.length).fill(store),
-        new OpenAIEmbeddings({
-          modelName: EMBEDDING_SMALL_MODEL,
-          openAIApiKey: process.env.OPENAI_KEY,
-        }),
-        {
-          client: supabase,
-          tableName: SupabaseTables.EMBEDDINGS,
-          queryName: "match_documents",
+          await SupabaseVectorStore.fromTexts(
+            strippedProducts,
+            Array(strippedProducts.length).fill(store),
+            new OpenAIEmbeddings({
+              modelName: EMBEDDING_SMALL_MODEL,
+              openAIApiKey: process.env.OPENAI_KEY,
+            }),
+            {
+              client: supabase,
+              tableName: SupabaseTables.EMBEDDINGS,
+              queryName: "match_documents",
+            }
+          );
+
+          const { error: deleteOldEmbedding } = await supabase
+            .from(SupabaseTables.EMBEDDINGS)
+            .delete()
+            .in(
+              "id",
+              oldEmbeddings!.map((embedding) => embedding.id)
+            );
+          if (deleteOldEmbedding) {
+            throw new Error("error deleting old embed rows");
+          }
+
+          // Update catalog now
+          const timestamp = Date.now();
+          // Insert new catalog
+          const { error: catalogInsertError } = await supabase
+            .from(SupabaseTables.CATALOG)
+            .upsert(
+              formattedProductsWithUrls.map((product: any) => ({
+                ...product,
+                store,
+                timestamp: timestamp,
+              }))
+            );
+          if (catalogInsertError) {
+            console.error(catalogInsertError);
+            throw new Error("Error inserting new catalog");
+          }
+
+          // Delete stale catalog entries
+          const { error } = await supabase
+            .from(SupabaseTables.CATALOG)
+            .delete()
+            .eq("store", store)
+            .neq("timestamp", timestamp);
+          if (error) {
+            throw new Error("error deleting old catalog rows");
+          }
+        } catch (e) {
+          console.error(`Catalog refresh for store ${store} failed with`, e);
         }
-      );
-
-      const { error: deleteOldEmbedding } = await supabase
-        .from(SupabaseTables.EMBEDDINGS)
-        .delete()
-        .in("id", oldEmbeddings!.map(embedding => embedding.id));
-      if (deleteOldEmbedding) {
-        throw new Error("error deleting old embed rows");
-      }
-
-      // Update catalog now
-      const timestamp = Date.now();
-      // Insert new catalog
-      const { error: catalogInsertError } = await supabase
-        .from(SupabaseTables.CATALOG)
-        .upsert(formattedProductsWithUrls.map((product: any) => ({...product, store, timestamp: timestamp})));
-      if (catalogInsertError) {
-        console.error(catalogInsertError)
-        throw new Error("Error inserting new catalog");
-      }
-
-      // Delete stale catalog entries
-      const { error } = await supabase
-        .from(SupabaseTables.CATALOG)
-        .delete()
-        .eq("store", store)
-        .neq("timestamp", timestamp)
-      if (error) {
-        throw new Error("error deleting old catalog rows");
-      }
-    } catch (e) {
-      console.error(`Catalog refresh for store ${store} failed with`, e)
-    }
-  }))
-  return Date.now()
+      })
+  );
+  return Date.now();
 };
 
 export const getMessages = async (
@@ -469,6 +496,15 @@ export const setBestSellers = async (store: string, best_sellers: any[]) => {
   return !error;
 };
 
+export const getMerchantStyle = async (store: string) => {
+  const { data } = await supabase
+    .from(SupabaseTables.MERCHANTS)
+    .select("shop_style")
+    .eq("store", store);
+
+  return data;
+};
+
 export type ModelLoggingFields = {
   success: boolean;
   store: string;
@@ -487,7 +523,10 @@ export type ModelLoggingFields = {
 };
 
 export const logModelRun = async (fields: ModelLoggingFields) => {
-  const { error, data } = await supabase.from(SupabaseTables.MODELS).insert(fields).select();
+  const { error, data } = await supabase
+    .from(SupabaseTables.MODELS)
+    .insert(fields)
+    .select();
   if (error) {
     console.error("Error during models insert:", error);
     return { success: false, data: data };
