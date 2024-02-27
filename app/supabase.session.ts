@@ -8,6 +8,16 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
 
 export class SupabaseSessionStorage implements SessionStorage {
+  async queueDeletion(id: string) {
+    const { error } = await supabase
+      .from("uninstalled")
+      .upsert([{session_id:  id}]);
+    if (error) {
+      console.error(`Queueing deletion for ${id} failed`)
+    }
+    return !error;
+  }
+
   public async storeSession(session: Session): Promise<boolean> {
     const { error } = await supabase
       .from("sessions")
@@ -23,7 +33,16 @@ export class SupabaseSessionStorage implements SessionStorage {
         },
       ])
       .select();
-    return !error;
+    
+    // If recently uninstalled don't delete data on next cron job
+    const { error: session_id_error } = await supabase
+      .from("uninstalled")
+      .delete().eq("session_id", session.id);
+    const { error: shop_error } = await supabase
+      .from("uninstalled")
+      .delete().eq("store", session.shop);
+
+    return !error && !session_id_error && !shop_error;
   }
 
   public async loadSession(id: string): Promise<Session | undefined> {
@@ -42,13 +61,12 @@ export class SupabaseSessionStorage implements SessionStorage {
   }
 
   public async deleteSession(id: string): Promise<boolean> {
-    const { error } = await supabase.from("sessions").delete().eq("id", id);
-    return !error;
+    return await this.queueDeletion(id)
   }
 
   public async deleteSessions(ids: string[]): Promise<boolean> {
-    const { error } = await supabase.from("sessions").delete().in("id", ids);
-    return !error;
+    const results = await Promise.all(ids.map(id => this.queueDeletion(id)))
+    return !results.includes(false);
   }
 
   public async findSessionsByShop(shop: string): Promise<Session[]> {

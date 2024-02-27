@@ -12,8 +12,67 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
 
-// TODO: quick followup
-export const clearUninstalled = async () => {};
+export const clearUninstalled = async () => {
+  const { data: deleted } = await supabase
+    .from(SupabaseTables.UNINSTALLED)
+    .select("*");
+
+  const deletedIds = await Promise.all(
+    (deleted || []).map(async (deleted) => {
+      // Parse the timestamp from the database
+      const deletedAt = new Date(deleted.created_at);
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+      // Check if the deleted_at timestamp is more than 3 days old
+      if (deletedAt > threeDaysAgo) {
+        console.log(
+          `${deleted.created_at} is within the last 3 days. Don't delete yet`
+        );
+        return null;
+      }
+      if (deleted.store) {
+        const { error } = await supabase
+          .from("sessions")
+          .delete()
+          .eq("shop", deleted.store);
+        if (error) {
+          console.error(`session deletion failed for shop ${deleted.store}`);
+        }
+        return deleted.id;
+      } else if (deleted.session_id) {
+        const { error } = await supabase
+          .from("sessions")
+          .delete()
+          .eq("id", deleted.session_id);
+        if (error) {
+          console.error(
+            `session deletion failed for session id ${deleted.session_id}`
+          );
+        }
+        return deleted.id;
+      } else {
+        console.error(
+          `Session deletion failed for id ${deleted.id} as session id and store are null`
+        );
+        return null;
+      }
+    })
+  );
+
+  const { error } = await supabase
+    .from(SupabaseTables.UNINSTALLED)
+    .delete()
+    .in(
+      "id",
+      deletedIds.filter((id) => id !== null)
+    );
+  if (error) {
+    console.log("Error clearing uninstall table", error);
+  }
+
+  return !error && !deletedIds.includes(null);
+};
 
 export const refreshAllStores = async () => {
   const { data } = await supabase.from(SupabaseTables.SESSIONS).select("shop");

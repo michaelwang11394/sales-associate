@@ -18,7 +18,6 @@ import { supabase } from "~/utils/supabase";
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const shopId = formData.get("shopId");
-  console.log("shopId", shopId);
   const settings = {
     headerBackgroundColor: formData.get("headerBackgroundColor"),
     searchBackgroundColor: formData.get("searchBackgroundColor"),
@@ -101,13 +100,12 @@ function SettingsPage() {
   };
 
   const handleDelete = async () => {
-    const { data, error } = await supabase
-      .from("sessions")
-      .delete()
-      .eq("shop", merchantData[0].store);
-    if (error) console.error("Error deleting data", error);
-    else console.log("All data deleted", data);
-    setModalActive(false); // Close the modal after deletion
+    const { error } = await supabase
+      .from("uninstalled")
+      .upsert([{ store: merchantData[0].store }]);
+    if (error) {
+      console.error("Shop's deletion queueing failed");
+    }
   };
 
   const toggleModal = () => setModalActive(!modalActive);
