@@ -4,7 +4,7 @@ import type {
   LinkMessageProps,
   TextMessageProps,
 } from "@/constants/types";
-
+import { addToCart } from "@/helper/shopify";
 import React, { useEffect, useRef, useState } from "react";
 
 const TextMessage: React.FC<TextMessageProps> = ({
@@ -85,6 +85,9 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   const startFontSize = 20;
   const overFlowAllowance = 1.05; // For resizing font
   const [active, setActive] = useState(0);
+  const [productName, setProductName] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showVariantsDropdown, setShowVariantsDropdown] = useState(false);
 
   // For running binary search to find font size to match card
   const [recFontSize, setRecFontSize] = useState(startFontSize);
@@ -149,6 +152,21 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
     adjustFontSize();
   }, [recDimensions, recFontSize, min, max, recRef, cardRef]);
 
+  // Function to handle adding a variant to the cart
+  const handleAddToCart = async (variantId: string) => {
+    const result = await addToCart(variantId, 1);
+    if (result !== null) {
+      setProductName(content[active].name); // Store the product name
+      setShowSuccessModal(true); // Show the modal on successful addition
+      setShowVariantsDropdown(false); // Close the dropdown
+    }
+  };
+
+  // Function to toggle the visibility of the variants dropdown
+  const toggleVariantsDropdown = () => {
+    setShowVariantsDropdown(!showVariantsDropdown);
+  };
+
   const handleRightClick = () => {
     // Add your click handler logic here
     setActive(Math.min(active + 1, content.length - 1));
@@ -178,6 +196,56 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
     });
   };
 
+  const SuccessModal = ({ onClose, productName }) => {
+    const [visible, setVisible] = useState(false); // Controls rendering in the DOM
+    const [opacity, setOpacity] = useState(0); // Initially invisible
+
+    useEffect(() => {
+      if (!visible) {
+        const timer = setTimeout(() => {
+          setVisible(true);
+          setOpacity(1);
+        }, 200); // This should match the CSS transition duration
+
+        return () => clearTimeout(timer);
+      }
+    }, [productName]);
+
+    useEffect(() => {
+      if (opacity === 0 && visible) {
+        // Wait for the fade-out animation to finish before removing the modal from the DOM
+        const timer = setTimeout(() => {
+          setVisible(false);
+          onClose(); // Call onClose to potentially clean up any modal-related state
+        }, 200); // This should match the CSS transition duration
+
+        return () => clearTimeout(timer);
+      }
+    }, [opacity, visible, onClose]);
+
+    const modalStyle: React.CSSProperties = {
+      transition: "opacity 0.2s ease, visibility 0.2s ease",
+      opacity: opacity,
+      visibility: visible ? "visible" : "hidden",
+    };
+
+    return (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+        style={modalStyle}>
+        <div className="bg-white p-4 rounded-lg shadow-lg">
+          <p>{productName} added to cart successfully.</p>
+          <div className="text-right">
+            <button
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+              onClick={() => setOpacity(0)}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
   return (
     <div>
       <div className="w-full gap-4">
@@ -187,7 +255,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
           {content[active] && (
             <div
               ref={cardRef}
-              className="product-card-shadow"
+              className="product-card-shadow relative"
               id="existing-element">
               <a
                 href={`https://${host}/products/${content[active].handle}`}
@@ -207,6 +275,49 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
                   </p>
                 </div>
               </a>
+              <svg
+                onClick={async () => {
+                  if (content[active].variants.length === 1) {
+                    const result = await addToCart(
+                      content[active].variants[0].id,
+                      1
+                    );
+                    if (result !== null) {
+                      setShowSuccessModal(true);
+                      setProductName(content[active].name);
+                    }
+                  } else {
+                    toggleVariantsDropdown();
+                  }
+                }}
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12 absolute bottom-2 right-2 cursor-pointer hover:text-blue-500"
+                fill="none"
+                viewBox="0 0 40 40"
+                stroke="currentColor">
+                <path
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  d="M20.5 6.5a4.75 4.75 0 00-4.75 4.75v.56h-3.16l-.77 11.6a5 5 0 004.99 5.34h7.38a5 5 0 004.99-5.33l-.77-11.6h-3.16v-.57A4.75 4.75 0 0020.5 6.5zm3.75 5.31v-.56a3.75 3.75 0 10-7.5 0v.56h7.5zm-7.5 1h7.5v.56a3.75 3.75 0 11-7.5 0v-.56zm-1 0v.56a4.75 4.75 0 109.5 0v-.56h2.22l.71 10.67a4 4 0 01-3.99 4.27h-7.38a4 4 0 01-4-4.27l.72-10.67h2.22z"
+                />
+              </svg>
+              {showVariantsDropdown && (
+                <div className="absolute bottom-14 right-2 bg-white shadow-lg rounded-lg">
+                  <ul className="list-none">
+                    {content[active].variants.map((variant, index, array) => (
+                      <>
+                        <li
+                          key={variant.id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleAddToCart(variant.id)}>
+                          {variant.title}
+                        </li>
+                        {/* Update this line for the black divider */}
+                      </>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -266,6 +377,12 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
             </svg>
           </div>
         </div>
+      )}
+      {showSuccessModal && (
+        <SuccessModal
+          onClose={() => setShowSuccessModal(false)}
+          productName={productName}
+        />
       )}
     </div>
   );
