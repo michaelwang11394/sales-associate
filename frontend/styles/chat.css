@@ -55,6 +55,15 @@ body {
   background-color: #f0f3f8; /* Change to desired hover background color */
 }
 
+/* Add this to your CSS file */
+.button-close {
+  background-color: #fe5000;
+}
+
+.button-close:hover {
+  background-color: #ff6a33;
+}
+
 /* CSS talk bubble */
 .talk-bubble {
   border-radius: 25px 25px 0px 25px;

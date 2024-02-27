@@ -236,9 +236,19 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
         style={modalStyle}>
         <div className="bg-white p-4 rounded-lg shadow-lg">
           <p>{productName} added to cart successfully.</p>
-          <div className="text-right">
+          <div className="text-right space-x-2">
             <button
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+              className="mt-4 px-4 py-2 text-white bg-orange-500 rounded hover:bg-orange-600"
+              onClick={() => (window.location.href = "/checkout")}>
+              Checkout
+            </button>
+            <button
+              className="mt-4 px-4 py-2 text-white bg-black rounded hover:bg-gray-800"
+              onClick={() => (window.location.href = "/cart")}>
+              Go to Cart
+            </button>
+            <button
+              className="mt-4 px-4 py-2 text-black bg-gray-300 rounded hover:bg-gray-400 button-close"
               onClick={() => setOpacity(0)}>
               Close
             </button>
