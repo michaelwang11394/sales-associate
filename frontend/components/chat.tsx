@@ -267,7 +267,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
                   alt={content[active].name}
                   className="w-full object-cover"
                 />
-                <div className="flex flex-col p-3">
+                <div className="flex flex-col p-3 pr-5">
                   <h2 className="text-xxl font-semibold">
                     {content[active].name}
                   </h2>
