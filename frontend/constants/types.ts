@@ -101,3 +101,14 @@ interface ImportMetaEnv {
 export interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+export type ShopStyle = {
+  headerBackgroundColor: string;
+  searchBackgroundColor: string;
+  convoBackgroundColor: string;
+  fontFamily: string;
+  hintBubbleColor: string;
+  specialColor: string;
+  systemFontColor: string;
+  userFontColor: string;
+};

@@ -1,6 +1,7 @@
 import {
   PALETTE_DIV_ID,
   SUPABASE_MESSAGES_RETRIEVED,
+  shopStyleConfigDefault,
 } from "@/constants/constants";
 import {
   MessageSource,
@@ -8,6 +9,7 @@ import {
   type DBMessage,
   type FormattedMessage,
   type Product,
+  type ShopStyle,
 } from "@/constants/types";
 import { callHints, callOpenai } from "@/helper/ai";
 import { getMostRecentEvent } from "@/helper/navigation";
@@ -15,6 +17,7 @@ import { getGreetingMessage, getSuggestions } from "@/helper/shopify";
 import {
   getMentionedProducts,
   getMessages,
+  getShopStyle,
   insertMessage,
 } from "@/helper/supabase";
 import { debounce } from "lodash";
@@ -29,18 +32,6 @@ export enum StructuredOutputStreamState {
   TEXT = 1,
   PRODUCT = 2,
 }
-
-const shopStyleConfig = {
-  headerBackgroundColor: "#efecec",
-  searchBackgroundColor: "#efecec",
-  convoBackgroundColor: "#efecec",
-  fontFamily: "Avenir",
-  hintBubbleColor: "#2a33ff",
-  specialColor: "#2a33ff", // airplane send logo and star ai logo
-  systemFontColor: "#000",
-  userFontColor: "#2a33ff",
-};
-
 export const formatDBMessage = (messageRow: DBMessage) => {
   const { id, type, content, sender } = messageRow;
 
@@ -53,6 +44,7 @@ export const formatDBMessage = (messageRow: DBMessage) => {
   return message;
 };
 export default function CommandPalette({ props }) {
+  const [shopStyle, setShopStyle] = useState<ShopStyle>(shopStyleConfigDefault);
   const [userInput, setUserInput] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [mentionedProducts, setMentionedProducts] = useState<Product[]>([]);
@@ -66,6 +58,40 @@ export default function CommandPalette({ props }) {
   );
   const host = window.location.host;
   const variant = useFeatureFlagVariantKey("enabled");
+
+  useEffect(() => {
+    const fetchShopStyle = async () => {
+      // Attempt to retrieve shop style from localStorage first
+      const localShopStyle = localStorage.getItem("shopStyle");
+      if (localShopStyle) {
+        const parsedShopStyle = JSON.parse(localShopStyle);
+        setShopStyle(parsedShopStyle);
+      } else {
+        // If not in localStorage, fetch from Supabase
+        const data = await getShopStyle(host);
+        if (data) {
+          const newShopStyle = {
+            headerBackgroundColor: data[0].shop_style.headerBackgroundColor,
+            searchBackgroundColor: data[0].shop_style.searchBackgroundColor,
+            convoBackgroundColor: data[0].shop_style.convoBackgroundColor,
+            fontFamily: data[0].shop_style.fontFamily,
+            hintBubbleColor: data[0].shop_style.hintBubbleColor,
+            specialColor: data[0].shop_style.logoColor,
+            systemFontColor: data[0].shop_style.systemFontColor,
+            userFontColor: data[0].shop_style.userFontColor,
+          };
+          setShopStyle(newShopStyle);
+          // Save the new shop style to localStorage
+          localStorage.setItem("shopStyle", JSON.stringify(newShopStyle));
+          console.log("Shop style saved to localStorage", newShopStyle);
+        } else {
+          console.error("Shop style could not be fetched from Supabase");
+        }
+      }
+    };
+    fetchShopStyle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [host]);
 
   useEffect(() => {
     // @ts-ignore
@@ -87,6 +113,7 @@ export default function CommandPalette({ props }) {
       // If we're in the control group, avoid any unnecessary supabase or openai calls
       return;
     }
+
     getMessages(clientId.current, SUPABASE_MESSAGES_RETRIEVED).then((data) => {
       if (!data) {
         console.error("Message history could not be fetched");
@@ -127,6 +154,7 @@ export default function CommandPalette({ props }) {
             }
             let chunk = new TextDecoder("utf-8").decode(value);
             full += chunk;
+            // eslint-disable-next-line no-loop-func
             setMessages((prevMessages) =>
               prevMessages.map((msg) => {
                 if (msg === newResponseMessage) {
@@ -599,24 +627,24 @@ export default function CommandPalette({ props }) {
     <>
       <style jsx global>{`
         ::-webkit-scrollbar-track {
-          background: ${shopStyleConfig.headerBackgroundColor};
+          background: ${shopStyle.headerBackgroundColor};
         }
 
         ::-webkit-scrollbar-thumb {
           border-radius: 6px;
-          border: 3px solid ${shopStyleConfig.headerBackgroundColor};
+          border: 3px solid ${shopStyle.headerBackgroundColor};
         }
 
         * {
           scrollbar-width: thin;
-          scrollbar-color: #dcdcdc ${shopStyleConfig.headerBackgroundColor}; //firefox
+          scrollbar-color: #dcdcdc ${shopStyle.headerBackgroundColor}; //firefox
         }
       `}</style>
       <div
         id="overlay"
         style={{
           borderRadius: "20px",
-          fontFamily: shopStyleConfig.fontFamily || "Avenir",
+          fontFamily: shopStyle.fontFamily || "Avenir",
         }}
         className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 shadow-lg overflow-auto">
         <section
@@ -627,8 +655,7 @@ export default function CommandPalette({ props }) {
               <div
                 id="header-container"
                 style={{
-                  backgroundColor:
-                    shopStyleConfig.headerBackgroundColor || "#fff",
+                  backgroundColor: shopStyle.headerBackgroundColor || "#fff",
                 }}>
                 <div
                   id="search bar"
@@ -643,8 +670,8 @@ export default function CommandPalette({ props }) {
                       className="flex-grow h-16 pr-12 pl-14 text-black border-none rounded-lg text-center focus:outline-none focus:shadow-none focus:border-none w-3/4 mx-auto"
                       style={{
                         backgroundColor:
-                          shopStyleConfig.headerBackgroundColor || "#fff",
-                        fontFamily: shopStyleConfig.fontFamily || "Avenir",
+                          shopStyle.headerBackgroundColor || "#fff",
+                        fontFamily: shopStyle.fontFamily || "Avenir",
                       }}
                       placeholder={
                         userInput === ""
@@ -676,7 +703,7 @@ export default function CommandPalette({ props }) {
                             <path
                               id="Vector"
                               d="M18.07 8.50965L9.51002 4.22965C3.76002 1.34965 1.40002 3.70965 4.28002 9.45965L5.15002 11.1996C5.40002 11.7096 5.40002 12.2996 5.15002 12.8096L4.28002 14.5396C1.40002 20.2896 3.75002 22.6496 9.51002 19.7696L18.07 15.4896C21.91 13.5696 21.91 10.4296 18.07 8.50965ZM14.84 12.7496H9.44002C9.03002 12.7496 8.69002 12.4096 8.69002 11.9996C8.69002 11.5896 9.03002 11.2496 9.44002 11.2496H14.84C15.25 11.2496 15.59 11.5896 15.59 11.9996C15.59 12.4096 15.25 12.7496 14.84 12.7496Z"
-                              fill={shopStyleConfig.specialColor || "#2a33ff"}
+                              fill={shopStyle.specialColor || "#2a33ff"}
                             />
                           </g>
                         </g>
@@ -692,9 +719,8 @@ export default function CommandPalette({ props }) {
                       <div
                         key={index}
                         style={{
-                          borderColor:
-                            shopStyleConfig.hintBubbleColor || "#000",
-                          color: shopStyleConfig.hintBubbleColor || "#000",
+                          borderColor: shopStyle.hintBubbleColor || "#000",
+                          color: shopStyle.hintBubbleColor || "#000",
                         }}
                         className="hint-bubble border-2 justify-center items-center"
                         onClick={async () => await callOpenaiWithInput(hint)}>
@@ -710,8 +736,7 @@ export default function CommandPalette({ props }) {
                 id="results and convo"
                 className="flex flex-grow border-tborder-gray-300 mobile-chat-column overflow-y-hidden h-full whitespace-normal"
                 style={{
-                  backgroundColor:
-                    shopStyleConfig.searchBackgroundColor || "#fff",
+                  backgroundColor: shopStyle.searchBackgroundColor || "#fff",
                 }}>
                 {/* Product Column for control search only group*/}
                 {variant === "control"
@@ -774,8 +799,7 @@ export default function CommandPalette({ props }) {
                     id="chat-column"
                     className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column"
                     style={{
-                      backgroundColor:
-                        shopStyleConfig.convoBackgroundColor || "#fff",
+                      backgroundColor: shopStyle.convoBackgroundColor || "#fff",
                     }}>
                     {messages
                       .filter((message) => message.content !== undefined)
@@ -786,15 +810,9 @@ export default function CommandPalette({ props }) {
                           isAISender={message.sender !== SenderType.USER}
                           content={message.content}
                           host={host}
-                          specialColor={
-                            shopStyleConfig.specialColor || "#2a33ff"
-                          }
-                          systemFontColor={
-                            shopStyleConfig.systemFontColor || "#000"
-                          }
-                          userFontColor={
-                            shopStyleConfig.userFontColor || "#2a33ff"
-                          }
+                          specialColor={shopStyle.specialColor || "#2a33ff"}
+                          systemFontColor={shopStyle.systemFontColor || "#000"}
+                          userFontColor={shopStyle.userFontColor || "#2a33ff"}
                         />
                       ))}
                   </div>

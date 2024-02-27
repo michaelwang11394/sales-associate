@@ -37,9 +37,21 @@ export const SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT = "viewed-products";
 export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
 
 export const SUPABASE_EMBEDDINGS_CREATE_ENDPOINT = "create";
+export const SUPABASE_MERCHANT_STYLE_ENDPOINT = "style";
 
 export const OPENAI_PATH = "openai";
 export const HINTS_PATH = "hints";
 export const SUMMARIZE_PATH = "summarize";
 export const EXPERIMENT_PATH = "capture-posthog";
 export const UNINSTALL_CHECK = "uninstall-check";
+
+export const shopStyleConfigDefault = {
+  headerBackgroundColor: "#efecec",
+  searchBackgroundColor: "#efecec",
+  convoBackgroundColor: "#efecec",
+  fontFamily: "Avenir",
+  hintBubbleColor: "#2a33ff",
+  specialColor: "#2a33ff", // airplane send logo and star ai logo
+  systemFontColor: "#000",
+  userFontColor: "#2a33ff",
+};
