@@ -1,5 +1,5 @@
-import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { ActionFunction, json } from "@remix-run/node";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import {
   BlockStack,
   Button,
@@ -11,9 +11,36 @@ import {
   Text,
   TextContainer,
 } from "@shopify/polaris";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authenticate } from "~/shopify.server";
 import { supabase } from "~/utils/supabase";
+
+export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData();
+  const shopId = formData.get("shopId");
+  console.log("shopId", shopId);
+  const settings = {
+    headerBackgroundColor: formData.get("headerBackgroundColor"),
+    searchBackgroundColor: formData.get("searchBackgroundColor"),
+    convoBackgroundColor: formData.get("convoBackgroundColor"),
+    hintBubbleColor: formData.get("hintBubbleColor"),
+    logoColor: formData.get("logoColor"),
+    systemFontColor: formData.get("systemFontColor"),
+    userFontColor: formData.get("userFontColor"),
+    fontStyle: formData.get("fontStyle"),
+  };
+  console.log("settings", settings);
+
+  const { error } = await supabase
+    .from("merchants")
+    .update({ shop_style: settings })
+    .eq("id", shopId);
+  if (error) {
+    throw new Error(`Failed to save settings: ${error.message}`);
+  }
+
+  return json({ success: true });
+};
 
 export async function loader({ request }) {
   const { admin, session } = await authenticate.admin(request);
@@ -22,25 +49,42 @@ export async function loader({ request }) {
   });
 
   //supabase request to check if merchant exists and has completed onboarding
-  const { data: merchant } = await supabase
+  const { data: merchantData, error } = await supabase
     .from("merchants")
     .select("*")
     .eq("id", shopData.data[0].id);
 
-  return json({ merchant });
+  if (error) {
+    throw new Error(`Failed to fetch merchant data: ${error.message}`);
+  }
+
+  return json({ merchantData });
 }
 function SettingsPage() {
-  const { merchant } = useLoaderData();
+  const { merchantData } = useLoaderData();
+  const fetcher = useFetcher();
+  const initialSettings = merchantData[0].shop_style;
+
   const [modalActive, setModalActive] = useState(false);
 
-  const [headerBackgroundColor, setHeaderBackgroundColor] = useState("#000000");
-  const [searchBackgroundColor, setSearchBackgroundColor] = useState("#000000");
-  const [convoBackgroundColor, setConvoBackgroundColor] = useState("#000000");
-  const [hintBubbleColor, setHintBubbleColor] = useState("#000000");
-  const [logoColor, setLogoColor] = useState("#000000");
-  const [systemFontColor, setSystemFontColor] = useState("#000000");
-  const [userFontColor, setUserFontColor] = useState("#000000");
-  const [fontStyle, setFontStyle] = useState("Arial");
+  const [settings, setSettings] = useState({
+    headerBackgroundColor: initialSettings.headerBackgroundColor || "#000000",
+    searchBackgroundColor: initialSettings.searchBackgroundColor || "#000000",
+    convoBackgroundColor: initialSettings.convoBackgroundColor || "#000000",
+    hintBubbleColor: initialSettings.hintBubbleColor || "#000000",
+    logoColor: initialSettings.logoColor || "#000000",
+    systemFontColor: initialSettings.systemFontColor || "#000000",
+    userFontColor: initialSettings.userFontColor || "#000000",
+    fontStyle: initialSettings.fontStyle || "Arial",
+  });
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      // Optionally, reset states to default or current saved values here
+      alert("Save was successfully executed"); // Or use a more sophisticated notification system
+    }
+  }, [fetcher.data]);
+
   const fontStyleOptions = [
     { label: "Arial", value: "Arial" },
     { label: "Helvetica", value: "Helvetica" },
@@ -49,15 +93,21 @@ function SettingsPage() {
     { label: "Verdana", value: "Verdana" },
     // Add more options as needed
   ];
+
   // Handlers for new color states
-  const handleColorChange = (setter) => (event) => setter(event.target.value);
+  const handleColorChange = (name) => (event) => {
+    setSettings((prevSettings) => ({
+      ...prevSettings,
+      [name]: event.target.value,
+    }));
+  };
 
   const handleDelete = async () => {
     // Delete merchant row, and subsequently cascade away all data
     const { data, error } = await supabase
       .from("sessions")
       .delete()
-      .eq("shop", merchant[0].store);
+      .eq("shop", merchantData[0].store);
     if (error) console.error("Error deleting data", error);
     else console.log("All data deleted", data);
     setModalActive(false); // Close the modal after deletion
@@ -69,100 +119,57 @@ function SettingsPage() {
     <Page title="Settings">
       <Layout.Section>
         <Card>
-          <Text variant="heading2xl" as="h3">
+          <Text variant="headingXl" as="h3">
             Command Palette Visual Settings
           </Text>
-          <BlockStack gap="200">
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "1rem",
-              }}>
-              <label
-                htmlFor="headerColorPicker"
-                style={{ marginRight: "1rem" }}>
-                Header Background Color:
-              </label>
-              <input
-                type="color"
-                id="headerColorPicker"
-                value={headerBackgroundColor}
-                onChange={handleColorChange(setHeaderBackgroundColor)}
-              />
-            </div>
-            {/* Repeat the pattern for the new color states */}
-            {[
-              {
-                label: "Search Background Color:",
-                id: "searchColorPicker",
-                value: searchBackgroundColor,
-                setter: setSearchBackgroundColor,
-              },
-              {
-                label: "Conversation Background Color:",
-                id: "convoColorPicker",
-                value: convoBackgroundColor,
-                setter: setConvoBackgroundColor,
-              },
-              {
-                label: "Hint Bubble Color:",
-                id: "hintColorPicker",
-                value: hintBubbleColor,
-                setter: setHintBubbleColor,
-              },
-              {
-                label: "Logo Color:",
-                id: "logoColorPicker",
-                value: logoColor,
-                setter: setLogoColor,
-              },
-              {
-                label: "System Font Color:",
-                id: "systemFontColorPicker",
-                value: systemFontColor,
-                setter: setSystemFontColor,
-              },
-              {
-                label: "User Font Color:",
-                id: "userFontColorPicker",
-                value: userFontColor,
-                setter: setUserFontColor,
-              },
-            ].map(({ label, id, value, setter }) => (
-              <div
-                key={id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: "1rem",
-                }}>
-                <label htmlFor={id} style={{ marginRight: "1rem" }}>
-                  {label}
-                </label>
-                <input
-                  type="color"
-                  id={id}
-                  value={value}
-                  onChange={handleColorChange(setter)}
-                />
-              </div>
-            ))}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "1rem",
-              }}>
-              <label style={{ marginRight: "1rem" }}>Font Style</label>
-              <Select
-                label=""
-                options={fontStyleOptions}
-                onChange={setFontStyle}
-                value={fontStyle}
-              />
-            </div>
-          </BlockStack>
+          <fetcher.Form method="post">
+            <BlockStack gap="200">
+              {/* Dynamically generate input fields based on the settings state */}
+              {Object.entries(settings).map(([name, value]) =>
+                name !== "fontStyle" ? (
+                  <div
+                    key={name}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "1rem",
+                    }}>
+                    <label htmlFor={name} style={{ marginRight: "1rem" }}>
+                      {name}:
+                    </label>
+                    <input
+                      type="color"
+                      id={name}
+                      name={name}
+                      value={value}
+                      onChange={handleColorChange(name)}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    key={name}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "1rem",
+                    }}>
+                    <label style={{ marginRight: "1rem" }}>Font Style</label>
+                    <Select
+                      label=""
+                      options={fontStyleOptions}
+                      name={name}
+                      onChange={(e) =>
+                        handleColorChange(name)({ target: { value: e } })
+                      }
+                      value={value}
+                    />
+                  </div>
+                )
+              )}
+            </BlockStack>
+            <input type="hidden" name="shopId" value={merchantData[0].id} />
+            <Button submit>Save</Button>
+          </fetcher.Form>
         </Card>
       </Layout.Section>
       <Layout.Section>
