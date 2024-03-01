@@ -1,13 +1,13 @@
 import { isNewCustomer, offerCoupon } from "./supabase"; // Updated reference to refactored supabase functions
 
 export const MERCHANT_CONFIG = {
-  store_name: "Sales Associate Demo Store",
-  store_type: "jewelry",
+  store_name: "Adapted Nutrition",
+  store_type: "Health and Wellness",
   offer_coupon: false,
   cart_tactics:
-    "If they have an item in their cart, encourage them to join the store's membership program as well where they can get 5% off on all future purchases",
+    "If they have an item in their cart, remind them that they can get free shipping for orderes $35 and up. For example: 'Great selection! Let me know if you need any help with your purchase. Remember, you get free shipping on orders $35 and up.'",
   product_tactics: [
-    "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
+    "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'The summer is fast approaching! Now is a great time to begin your fitness journey with our products.'",
     "Offer them a 30 day money back guarantee. For example: 'We offer a 30 day money back guarantee, so you can try it out risk free.'",
   ],
 };
@@ -150,7 +150,7 @@ export const getEventSpecificMessage = async (event) => {
       if (newCustomer.isNew) {
         return `This is the customers's first time visiting the ${merchantConfig["store_type"]} store called ${merchantConfig["store_name"]}. Your goal is to welcome them and ask them if they have any questions. If they have products in their cart or have viewed a product recently, mention the product to them. \nHere is an example of a potential good response:\n"Welcome to the store! Let me know if you have any questions about our products."`;
       } else {
-        return `This customer has visited the ${merchantConfig["store_type"]} store called ${merchantConfig["store_name"]} before. Your goal is to welcome them back and ask if they have any questions. If they have items in their cart, encourage them to check out or ask them if they have any questions about the products in their cart. If they have viewed a product recently, ask them if they have any questions about that product. \nHere are a few examples of potential good response:\n"Welcome back to the store! Any questions on <product in cart>?"`;
+        return `This customer has visited the ${merchantConfig["store_type"]} store called ${merchantConfig["store_name"]} before. Your goal is to welcome them back and ask if they have any questions. If they have items in their cart, encourage them to check out or ask them if they have any questions about the products in their cart. If they have viewed a product recently, ask them if they have any questions about that product. \nHere are a few examples of potential good response:\n"Welcome back to the store!"`;
       }
     /* 
       Cart Viewed Intent:
