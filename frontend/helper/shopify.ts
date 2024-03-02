@@ -1,14 +1,13 @@
 import { isNewCustomer, offerCoupon } from "./supabase"; // Updated reference to refactored supabase functions
 
 export const MERCHANT_CONFIG = {
-  store_name: "Sales Associate Demo Store",
+  store_name: "Lotus Haus",
   store_type: "jewelry",
   offer_coupon: false,
   cart_tactics:
-    "If they have an item in their cart, encourage them to join the store's membership program as well where they can get 5% off on all future purchases",
+    "If they have items in their card, encourage them to sign up for the newsletter",
   product_tactics: [
-    "Use holidays and other approaching deadlines to create pressure on the customer. For example: 'Valentine's Day is coming up, and this would make a great gift for your loved one.",
-    "Offer them a 30 day money back guarantee. For example: 'We offer a 30 day money back guarantee, so you can try it out risk free.'",
+    "Here are some general selling tactics to remember: (1) Emphasize that all products are hypoallergenic. (2) Many companies will say their products are 'jade' when they're not. Our products are made from aventurine which is much more affordable.",
   ],
 };
 
