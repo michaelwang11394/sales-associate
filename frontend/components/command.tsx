@@ -83,7 +83,8 @@ export default function CommandPalette({ props }) {
             headerBackgroundColor: data[0].shop_style.headerBackgroundColor,
             searchBackgroundColor: data[0].shop_style.searchBackgroundColor,
             convoBackgroundColor: data[0].shop_style.convoBackgroundColor,
-            fontFamily: data[0].shop_style.fontFamily,
+            // fontFamily: data[0].shop_style.fontFamily,
+            fontFamily: "IBM Plex monospace",
             hintBubbleColor: data[0].shop_style.hintBubbleColor,
             specialColor: data[0].shop_style.logoColor,
             systemFontColor: data[0].shop_style.systemFontColor,
@@ -655,7 +656,7 @@ export default function CommandPalette({ props }) {
         id="overlay"
         style={{
           borderRadius: "20px",
-          fontFamily: shopStyle.fontFamily || "Avenir",
+          fontFamily: shopStyle.fontFamily || "IBM PlEX MONO",
         }}
         className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 shadow-lg overflow-auto">
         <section
@@ -667,6 +668,7 @@ export default function CommandPalette({ props }) {
                 id="header-container"
                 style={{
                   backgroundColor: shopStyle.headerBackgroundColor || "#fff",
+                  marginBottom: "1px",
                 }}>
                 <div
                   id="search bar"
@@ -733,7 +735,7 @@ export default function CommandPalette({ props }) {
                           borderColor: shopStyle.hintBubbleColor || "#000",
                           color: shopStyle.hintBubbleColor || "#000",
                         }}
-                        className="hint-bubble border-2 justify-center items-center"
+                        className="hint-bubble border border-1 justify-center items-center"
                         onClick={async () => await callOpenaiWithInput(hint)}>
                         <p className="text-custom">{hint}</p>
                       </div>
