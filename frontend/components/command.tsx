@@ -84,7 +84,7 @@ export default function CommandPalette({ props }) {
             searchBackgroundColor: data[0].shop_style.searchBackgroundColor,
             convoBackgroundColor: data[0].shop_style.convoBackgroundColor,
             // fontFamily: data[0].shop_style.fontFamily,
-            fontFamily: "IBM PLEX MONO",
+            fontFamily: "IBM plex monospace",
             hintBubbleColor: data[0].shop_style.hintBubbleColor,
             specialColor: data[0].shop_style.logoColor,
             systemFontColor: data[0].shop_style.systemFontColor,
@@ -656,9 +656,8 @@ export default function CommandPalette({ props }) {
         id="overlay"
         style={{
           borderRadius: "20px",
-          fontFamily: shopStyle.fontFamily || "IBM PlEX MONO",
         }}
-        className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 shadow-lg overflow-auto">
+        className=" flex flex-col ibm fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 shadow-lg overflow-auto">
         <section
           id={PALETTE_DIV_ID}
           className="flex flex-grow overflow-hidden bg-cover w-full">
@@ -684,7 +683,8 @@ export default function CommandPalette({ props }) {
                       style={{
                         backgroundColor:
                           shopStyle.headerBackgroundColor || "#fff",
-                        fontFamily: shopStyle.fontFamily || "Avenir",
+                        fontFamily:
+                          shopStyle.fontFamily || "IBM plex monospace",
                       }}
                       placeholder={
                         userInput === ""

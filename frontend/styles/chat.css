@@ -2,7 +2,11 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap');
 body {
   background-color: lightblue;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'IBM plex monospace', monospace;
+}
+
+.ibm {
+  font-family: "IBM plex monospace";
 }
 
 /* container */
