@@ -10,7 +10,7 @@ export default async function handler(
     return response.status(200).send("ok");
   }
 
-  const store = request.query.store as string;
+  const store = (request.query.store as string) === "lotushaus.studio" ? "lotushausstudio.myshopify.com" : request.query.store as string;
   const clientId = request.query.clientId as string;
   const requestUuid = request.query.requestUuid as string;
 
