@@ -84,7 +84,7 @@ export default function CommandPalette({ props }) {
             searchBackgroundColor: data[0].shop_style.searchBackgroundColor,
             convoBackgroundColor: data[0].shop_style.convoBackgroundColor,
             // fontFamily: data[0].shop_style.fontFamily,
-            fontFamily: "IBM plex monospace",
+            fontFamily: "IBM Plex Mono",
             hintBubbleColor: data[0].shop_style.hintBubbleColor,
             specialColor: data[0].shop_style.logoColor,
             systemFontColor: data[0].shop_style.systemFontColor,
@@ -683,8 +683,7 @@ export default function CommandPalette({ props }) {
                       style={{
                         backgroundColor:
                           shopStyle.headerBackgroundColor || "#fff",
-                        fontFamily:
-                          shopStyle.fontFamily || "IBM plex monospace",
+                        fontFamily: shopStyle.fontFamily || "IBM Plex Mono",
                       }}
                       placeholder={
                         userInput === ""
