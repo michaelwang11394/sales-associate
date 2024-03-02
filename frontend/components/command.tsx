@@ -84,7 +84,7 @@ export default function CommandPalette({ props }) {
             searchBackgroundColor: data[0].shop_style.searchBackgroundColor,
             convoBackgroundColor: data[0].shop_style.convoBackgroundColor,
             // fontFamily: data[0].shop_style.fontFamily,
-            fontFamily: "IBM Plex monospace",
+            fontFamily: "IBM PLEX MONO",
             hintBubbleColor: data[0].shop_style.hintBubbleColor,
             specialColor: data[0].shop_style.logoColor,
             systemFontColor: data[0].shop_style.systemFontColor,
