@@ -433,7 +433,7 @@ export const ChatBubble = ({
   return isAISender ? (
     <div className={`items-end justify-start py-1 mb-2`}>
       <div
-        className={`px-4 py-3 min-h-[25px] ai-grey-text mr-2`}
+        className={`px-4 py-5 min-h-[25px] ai-grey-text mr-2`}
         style={{ color: systemFontColor }}>
         <div className="message">{renderMessage()}</div>
       </div>
@@ -441,7 +441,7 @@ export const ChatBubble = ({
   ) : (
     <div className={`flex items-end justify-start py-1 mb-2`}>
       <div
-        className={`px-4 py-3 min-h-[25px] user-input-text`}
+        className={`px-4 py-5 min-h-[25px] user-input-text`}
         style={{ color: userFontColor }}>
         <div className="message">{renderMessage()}</div>
       </div>

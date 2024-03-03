@@ -727,7 +727,7 @@ export default function CommandPalette({ props }) {
                 {variant == "test" && hints.length > 0 && (
                   <div
                     id="hints"
-                    className="flex justify-center items-center rounded">
+                    className="flex justify-center items-center rounded p-4">
                     {hints.map((hint, index) => (
                       <div
                         key={index}
