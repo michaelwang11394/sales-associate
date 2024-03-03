@@ -49,8 +49,8 @@ export const shopStyleConfigDefault = {
   searchBackgroundColor: "#efecec",
   convoBackgroundColor: "#efecec",
   fontFamily: "IBM Plex Mono",
-  hintBubbleColor: "#2a33ff",
-  specialColor: "#2a33ff", // airplane send logo and star ai logo
+  hintBubbleColor: "#00A86B",
+  specialColor: "#00A86B", // airplane send logo and star ai logo
   systemFontColor: "#000",
-  userFontColor: "#2a33ff",
+  userFontColor: "#00A86B",
 };

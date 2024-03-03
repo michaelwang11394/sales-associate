@@ -97,6 +97,7 @@ export default function CommandPalette({ props }) {
           localStorage.setItem("shopStyle", JSON.stringify(shopStyleToSave));
           setShopStyle(newShopStyle);
         } else {
+          setShopStyle(shopStyleConfigDefault);
           console.error("Shop style could not be fetched from Supabase");
         }
       }
