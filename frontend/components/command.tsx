@@ -722,9 +722,13 @@ export default function CommandPalette({ props }) {
                 {variant == "test" && hints.length > 0 && (
                   <div
                     id="hints"
-                    className="flex flex-col justify-center items-center rounded p-8"
+                    className={`flex ${
+                      isMobile ? "flex-col" : ""
+                    } justify-center items-center rounded ${
+                      isMobile ? "p-8" : ""
+                    }`}
                     style={{
-                      flexDirection: "column",
+                      flexDirection: isMobile ? "column" : "",
                     }}>
                     {hints.map((hint, index) => (
                       <div
@@ -732,12 +736,14 @@ export default function CommandPalette({ props }) {
                         style={{
                           borderColor: shopStyle.hintBubbleColor || "#000",
                           color: shopStyle.hintBubbleColor || "#000",
-                          width: "100%", // Set the width to be 100% of the parent container
-                          maxWidth: "300px", // Set a maximum width to ensure consistency
-                          whiteSpace: "normal", // Allow text to wrap
-                          wordWrap: "break-word", // Ensure long words do not overflow
+                          width: isMobile ? "100%" : "", // Set the width to be 100% of the parent container for mobile
+                          maxWidth: isMobile ? "300px" : "", // Set a maximum width for mobile to ensure consistency
+                          whiteSpace: isMobile ? "normal" : "", // Allow text to wrap for mobile
+                          wordWrap: isMobile ? "break-word" : "", // Ensure long words do not overflow for mobile
                         }}
-                        className="hint-bubble border border-1 justify-center items-center mb-2 p-2" // Added p-2 for padding inside the bubble
+                        className={`hint-bubble border border-1 justify-center items-center ${
+                          isMobile ? "mb-2 p-2" : ""
+                        }`} // Added p-2 for padding inside the bubble for mobile
                         onClick={async () => await callOpenaiWithInput(hint)}>
                         <p className="text-custom">{hint}</p>
                       </div>
