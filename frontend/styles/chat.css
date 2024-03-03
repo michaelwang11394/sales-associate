@@ -1,9 +1,5 @@
 /* General CSS Setup */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap');
-body {
-  background-color: lightblue;
-  font-family: IBM Plex Mono;
-}
+
 
 .ibm {
   font-family: Avenir;
