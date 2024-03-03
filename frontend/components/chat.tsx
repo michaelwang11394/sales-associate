@@ -82,7 +82,7 @@ const LinkMessage: React.FC<LinkMessageProps> = ({
   content,
 }): React.JSX.Element => {
   const minFontSize = 15;
-  const maxFontSize = 50;
+  const maxFontSize = 30;
   const startFontSize = 20;
   const overFlowAllowance = 1.05; // For resizing font
   const [active, setActive] = useState(0);
