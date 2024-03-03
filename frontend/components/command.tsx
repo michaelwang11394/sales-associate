@@ -84,11 +84,11 @@ export default function CommandPalette({ props }) {
             searchBackgroundColor: data[0].shop_style.searchBackgroundColor,
             convoBackgroundColor: data[0].shop_style.convoBackgroundColor,
             // fontFamily: data[0].shop_style.fontFamily,
-            fontFamily: "IBM Plex Mono",
-            hintBubbleColor: data[0].shop_style.hintBubbleColor,
-            specialColor: data[0].shop_style.logoColor,
+            fontFamily: "Avenir",
+            hintBubbleColor: "#D10000",
+            specialColor: "#D10000",
             systemFontColor: data[0].shop_style.systemFontColor,
-            userFontColor: data[0].shop_style.userFontColor,
+            userFontColor: "#D10000",
           };
           const shopStyleToSave = {
             data: newShopStyle,
@@ -191,7 +191,6 @@ export default function CommandPalette({ props }) {
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
     setIsMobile(/iphone|ipad|ipod|android/i.test(userAgent));
-
     // Other useEffect code
   }, []);
 
@@ -684,13 +683,9 @@ export default function CommandPalette({ props }) {
                       style={{
                         backgroundColor:
                           shopStyle.headerBackgroundColor || "#fff",
-                        fontFamily: shopStyle.fontFamily || "IBM Plex Mono",
+                        fontFamily: shopStyle.fontFamily || "Avenir",
                       }}
-                      placeholder={
-                        userInput === ""
-                          ? "Ask me anything! See the below hints as examples."
-                          : ""
-                      }
+                      placeholder={userInput === "" ? "Ask me anything!" : ""}
                       onFocus={(e) => (e.target.placeholder = "")}
                       onBlur={(e) =>
                         (e.target.placeholder =
@@ -727,15 +722,22 @@ export default function CommandPalette({ props }) {
                 {variant == "test" && hints.length > 0 && (
                   <div
                     id="hints"
-                    className="flex justify-center items-center rounded p-4">
+                    className="flex flex-col justify-center items-center rounded p-8"
+                    style={{
+                      flexDirection: "column",
+                    }}>
                     {hints.map((hint, index) => (
                       <div
                         key={index}
                         style={{
                           borderColor: shopStyle.hintBubbleColor || "#000",
                           color: shopStyle.hintBubbleColor || "#000",
+                          width: "100%", // Set the width to be 100% of the parent container
+                          maxWidth: "300px", // Set a maximum width to ensure consistency
+                          whiteSpace: "normal", // Allow text to wrap
+                          wordWrap: "break-word", // Ensure long words do not overflow
                         }}
-                        className="hint-bubble border border-1 justify-center items-center"
+                        className="hint-bubble border border-1 justify-center items-center mb-2 p-2" // Added p-2 for padding inside the bubble
                         onClick={async () => await callOpenaiWithInput(hint)}>
                         <p className="text-custom">{hint}</p>
                       </div>

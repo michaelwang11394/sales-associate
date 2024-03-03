@@ -1,7 +1,7 @@
 /* General CSS Setup */
 body {
   background-color: lightblue;
-  font-family: IBM Plex Mono, Lucida Sans, helvetica, sans;
+  font-family: Avenir, Lucida Sans, helvetica, sans;
 }
 
 /* container */
@@ -93,7 +93,7 @@ body {
   color: var(--Secondary-grey, #474b58);
 
   /* Body-semibold */
-  font-family: IBM Plex Mono;
+  font-family: Avenir;
   font-style: normal;
   font-weight: 500;
   line-height: 26px; /* 162.5% */
@@ -102,7 +102,7 @@ body {
   border-radius: 0px 25px 25px 25px;
   background: var(--Background-grey, #d9dce2);
   color: var(--Primary-accent, #2a33ff);
-  font-family: IBM Plex Mono;
+  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 800;
@@ -112,7 +112,7 @@ body {
   color: #000;
 
   /* Body-semibold */
-  font-family: IBM Plex Mono;
+  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
@@ -135,7 +135,7 @@ body {
   border-radius: 10px;
   background: var(--Background-grey, #2a33ff);
   color: var(--Primary-accent, #ffffff);
-  font-family: IBM Plex Mono;
+  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
@@ -369,7 +369,7 @@ body {
   color: var(--Primary-accent, #2a33ff);
 
   /* Body-semibold */
-  font-family: IBM Plex Mono;
+  font-family: Avenir;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;

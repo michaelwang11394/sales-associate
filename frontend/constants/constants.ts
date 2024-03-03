@@ -45,12 +45,12 @@ export const EXPERIMENT_PATH = "capture-posthog";
 export const UNINSTALL_CHECK = "uninstall-check";
 
 export const shopStyleConfigDefault = {
-  headerBackgroundColor: "#efecec",
-  searchBackgroundColor: "#efecec",
-  convoBackgroundColor: "#efecec",
+  headerBackgroundColor: "#ffffff",
+  searchBackgroundColor: "#ffffff",
+  convoBackgroundColor: "#ffffff",
   fontFamily: "IBM Plex Mono",
-  hintBubbleColor: "#00A86B",
-  specialColor: "#00A86B", // airplane send logo and star ai logo
+  hintBubbleColor: "#D10000",
+  specialColor: "#D10000", // airplane send logo and star ai logo
   systemFontColor: "#000",
-  userFontColor: "#00A86B",
+  userFontColor: "#D10000",
 };

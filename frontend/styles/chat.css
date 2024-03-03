@@ -6,7 +6,7 @@ body {
 }
 
 .ibm {
-  font-family: IBM Plex Mono;
+  font-family: Avenir;
 }
 
 /* container */
@@ -94,7 +94,7 @@ body {
   cursor: pointer;
 }
 .border {
-  border: 8px solid #666;
+  border: 1px solid #666;
 }
 .round {
   border-radius: 30px;
