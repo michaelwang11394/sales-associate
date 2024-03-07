@@ -12,7 +12,7 @@ export default async function handler(
   }
 
   const client = new PostHog(process.env.POSTHOG_KEY!);
-  const store = (request.query.store as string) === "lotushaus.studio" ? "lotushausstudio.myshopify.com" : request.query.store as string;
+  const store = request.query.store as string;
   const clientId = request.query.clientId as string;
   const propertiesBlob = JSON.parse(request.query.properties as string);
 
