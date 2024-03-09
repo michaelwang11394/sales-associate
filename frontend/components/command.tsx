@@ -21,7 +21,7 @@ import {
   insertMessage,
 } from "@/helper/supabase";
 import { debounce } from "lodash";
-import { useFeatureFlagVariantKey, usePostHog } from "posthog-js/react";
+import { usePostHog } from "posthog-js/react";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ChatBubble } from "./chat";
@@ -52,12 +52,12 @@ export default function CommandPalette({ props }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [hints, setHints] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [variant, setVariant] = useState("control");
   const posthog = usePostHog();
   const clientId = useRef(
     window.localStorage.getItem("webPixelShopifyClientId")
   );
   const host = window.location.host;
-  const variant = useFeatureFlagVariantKey("enabled");
 
   useEffect(() => {
     const fetchShopStyle = async () => {
@@ -118,10 +118,19 @@ export default function CommandPalette({ props }) {
         // @ts-ignore
         enabled: import.meta.env.VITE_POSTHOG_FORCE_FLAG,
       });
+      setVariant(import.meta.env.VITE_POSTHOG_FORCE_FLAG);
     }
     if (clientId.current) {
       posthog?.identify(clientId.current, { store: window.location.host });
+      posthog?.reloadFeatureFlags();
     }
+    posthog.onFeatureFlags(function () {
+      const flagValue = posthog.getFeatureFlag("enabled");
+      // Ensure the value is a string; use 'control' as a default if flagValue is undefined or convert boolean to string
+      setVariant(
+        typeof flagValue === "string" ? flagValue.toString() : "control"
+      );
+    });
     if (!variant || variant === "control") {
       // If we're in the control group, avoid any unnecessary supabase or openai calls
       return;
