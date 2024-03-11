@@ -58,6 +58,11 @@ export default function CommandPalette({ props }) {
     window.localStorage.getItem("webPixelShopifyClientId")
   );
   const host = window.location.host;
+  // Somewhere in your application, possibly in a different component
+  props.eventEmitter.on("searchSubmitted", async (data) => {
+    console.log("Opening from expanded search bar");
+    await callOpenaiWithInput(data.input);
+  });
 
   useEffect(() => {
     const fetchShopStyle = async () => {
@@ -322,6 +327,10 @@ export default function CommandPalette({ props }) {
   };
 
   const callOpenaiWithInput = async (input) => {
+    if (loading) {
+      // If message is loading don't allow double queries
+      return;
+    }
     setLoading(true);
     const newUserMessage: FormattedMessage = {
       type: "text",
