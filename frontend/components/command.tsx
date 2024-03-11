@@ -58,11 +58,6 @@ export default function CommandPalette({ props }) {
     window.localStorage.getItem("webPixelShopifyClientId")
   );
   const host = window.location.host;
-  // Somewhere in your application, possibly in a different component
-  props.eventEmitter.on("searchSubmitted", async (data) => {
-    console.log("Opening from expanded search bar");
-    await callOpenaiWithInput(data.input);
-  });
 
   useEffect(() => {
     const fetchShopStyle = async () => {
@@ -149,11 +144,21 @@ export default function CommandPalette({ props }) {
           formatDBMessage(messageRow)
         );
         setMessages((prevMessages) => messages.concat(prevMessages));
+        const handleSearchSubmitted = async (data) => {
+          await callOpenaiWithInput(data.input);
+        };
+
+        props.eventEmitter.on("searchSubmitted", handleSearchSubmitted);
+
+        // Cleanup function to remove the event listener when the component unmounts
+        return () => {
+          props.eventEmitter.off("searchSubmitted", handleSearchSubmitted);
+        };
         refreshHints();
       }
     });
     getMostRecentEvent(window, host).then(async (event) => {
-      if (!event) return;
+      if (!event || props.eventEmitter) return;
       const greetingPrompt = await getGreetingMessage(event);
       const uuid = uuidv4();
       const newResponseMessage: FormattedMessage = {
@@ -200,7 +205,7 @@ export default function CommandPalette({ props }) {
           console.error(err);
         });
     });
-  }, [posthog, clientId, variant]);
+  }, [posthog, clientId, variant, props.eventEmitter]);
 
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
@@ -338,7 +343,9 @@ export default function CommandPalette({ props }) {
       content: [input],
     };
     const uuid = uuidv4();
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    setMessages((prevMessages) => {
+      return [...prevMessages, newUserMessage];
+    });
     await handleNewMessage(clientId.current, newUserMessage, uuid);
     const newResponseMessage: FormattedMessage = {
       type: "text",

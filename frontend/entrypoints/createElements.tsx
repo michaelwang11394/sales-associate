@@ -88,17 +88,32 @@ export function createOverlayDiv() {
     overlayDiv.className = "overlay";
   }
 
-  // Simple event emitter
   const eventEmitter = {
     events: {},
+    queue: {},
     emit: function (eventName, data) {
+      // If there are listeners, invoke them with the data
       if (this.events[eventName]) {
         this.events[eventName].forEach(function (callback) {
           callback(data);
         });
+      } else {
+        // If no listeners, queue the data
+        if (!this.queue[eventName]) {
+          this.queue[eventName] = [];
+        }
+        this.queue[eventName].push(data);
       }
     },
     on: function (eventName, callback) {
+      // If there's something in the queue for this event, immediately consume it with the callback
+      if (this.queue[eventName] && this.queue[eventName].length > 0) {
+        while (this.queue[eventName].length > 0) {
+          const data = this.queue[eventName].shift();
+          callback(data);
+        }
+      }
+      // Register the listener for future emits
       if (!this.events[eventName]) {
         this.events[eventName] = [];
       }

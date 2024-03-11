@@ -51,10 +51,10 @@ export default function SearchBar({ props }) {
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    props.eventEmitter.emit("searchSubmitted", { input: userInput });
     const overlayDiv = props.overlayDiv;
     props.mountOverlay();
     // Inside CommandPalette component
-    props.eventEmitter.emit("searchSubmitted", { input: userInput });
     setUserInput("");
     toggleOverlayVisibility(overlayDiv);
   };
