@@ -6,6 +6,7 @@ import {
   V1,
 } from "@/constants/constants";
 import { HTTPHelper } from "./http";
+import { getCartItems } from "./shopify";
 
 export const callOpenai = async (
   input: string,
@@ -19,6 +20,7 @@ export const callOpenai = async (
     clientId: clientId,
     requestUuid: requestUuid,
     source: source,
+    cart: await getCartItems()
   });
   // make a POST call to our api route
   let res = await fetch(url, {
@@ -39,6 +41,7 @@ export const callHints = async (
     clientId: clientId,
     requestUuid: requestUuid,
     source: source,
+    cart: await getCartItems()
   });
   return res?.body;
 };

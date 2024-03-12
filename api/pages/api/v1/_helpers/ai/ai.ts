@@ -11,10 +11,9 @@ import { MessageSource, SenderType } from "../../types";
 import { getProducts } from "../shopify";
 import {
   getMessages,
-  hasItemsInCart,
   hasViewedProducts,
   insertMessage,
-  isNewCustomer,
+  isNewCustomer
 } from "../supabase_queries";
 import { runEmbeddingsAndSearch } from "./embeddings";
 import { LLMConfig, summarizeHistoryModelConfig } from "./llmConfig";
@@ -77,6 +76,7 @@ export const callOpenai = async (
   clientId: string,
   requestUuid: string,
   source: MessageSource,
+  cartContent: string,
   streamWriter?: EventEmitter
 ) => {
   /* CUSTOMER INFORMATION CONTEXT */
@@ -88,7 +88,6 @@ export const callOpenai = async (
 
   // If customer is not new, check their cart history and product_viewed history. Add relevant links
   if (newCustomer.isNew === false) {
-    const itemsInCart = await hasItemsInCart(store, clientId);
     const productsViewed = await hasViewedProducts(
       store,
       clientId,
@@ -96,9 +95,8 @@ export const callOpenai = async (
     );
 
     // Check if the customer has items in their cart
-    if (itemsInCart.hasItems === true) {
-      customerContext.push(itemsInCart.message);
-      customerContext.push(itemsInCart.cartURL!);
+    if (cartContent.length > 0) {
+      customerContext.push("User currently has the following items in cart: ", cartContent);
     }
 
     // Check if the customer has viewed any products
@@ -130,8 +128,11 @@ export const callOpenai = async (
     customerContext,
     llmConfig,
     data?.length && data?.length > 0
-      ? data.map((msg) => msg.content).map(content => {
-          const parsed = JSON.parse(content);
+      ? data.map(msg => {
+          if (msg.type === 'text') {
+            return JSON.parse(msg.content)
+          }
+          const parsed = JSON.parse(msg.content);
           // Exclude image URL
           return parsed.map((card: { name: string; variants: any; recommendation: string; }) => 
             JSON.stringify({name: card.name, variants: card.variants, recommendation: card.recommendation})

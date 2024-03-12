@@ -185,3 +185,8 @@ export const getEventSpecificMessage = async (event) => {
       return `Welcome user to store`;
   }
 };
+
+export const getCartItems = async() => {
+  const cart = await shopifyRestQuery('cart.js')
+  return cart.items?.map((item: any) => item.title).join(",")
+}

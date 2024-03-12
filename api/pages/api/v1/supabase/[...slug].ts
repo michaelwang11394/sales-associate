@@ -4,7 +4,6 @@ import {
   getMerchantStyle,
   getMessages,
   getProductsMentioned,
-  hasItemsInCart,
   hasViewedProducts,
   insertMessage,
   isNewCustomer,
@@ -12,7 +11,6 @@ import {
 } from "../_helpers/supabase_queries";
 import {
   RECENTLY_VIEWED_PRODUCTS_COUNT,
-  SUPABASE_EVENTS_CART_ITEMS_ENDPOINT,
   SUPABASE_EVENTS_LAST_EVENT_ENDPOINT,
   SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT,
   SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT,
@@ -21,7 +19,7 @@ import {
   SUPABASE_MESSAGES_HISTORY_ENDPOINT,
   SUPABASE_MESSAGES_INSERT_ENDPOINT,
   SUPABASE_MESSAGES_PRODUCTS_MENTIONED_ENDPOINT,
-  SupabaseTables,
+  SupabaseTables
 } from "../constants";
 import { httpResponse } from "../http";
 
@@ -89,14 +87,6 @@ export default async function handler(
     }
   } else if (table === SupabaseTables.EVENTS) {
     switch (queryType) {
-      case SUPABASE_EVENTS_CART_ITEMS_ENDPOINT:
-        return httpResponse(
-          request,
-          response,
-          200,
-          "Events cart items query completed",
-          await hasItemsInCart(store, clientId)
-        );
       case SUPABASE_EVENTS_LAST_EVENT_ENDPOINT:
         return httpResponse(
           request,

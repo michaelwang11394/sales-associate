@@ -16,12 +16,13 @@ export default async function handler(
   const clientId = request.query.clientId as string;
   const requestUuid = request.query.requestUuid as string;
   const source = request.query.source as MessageSource;
+  const cart = request.query.cart as string;
 
   return httpResponse(
     request,
     response,
     200,
     "Hints returned successfully",
-    await callOpenai(input, store, clientId, requestUuid, source)
+    await callOpenai(input, store, clientId, requestUuid, source, cart)
   );
 }
