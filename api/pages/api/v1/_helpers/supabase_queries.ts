@@ -333,48 +333,6 @@ export const isNewCustomer = async (store: string, clientId: string) => {
   }
 };
 
-export const hasItemsInCart = async (store: string, clientId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from(SupabaseTables.EVENTS)
-      .select("*")
-      .eq("clientId", clientId)
-      .eq("store", store)
-      .eq("name", "cart_viewed")
-      .order("timestamp", { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error("Error", error);
-      return { hasItems: false, message: "Error checking cart items." };
-    }
-
-    if (data.length > 0 && data[0]?.detail?.cart) {
-      const cartProductTitles = data[0].detail.cart.lines.map(
-        (line: any) => line.merchandise.product.title
-      );
-
-      const cartURL = data[0].context.document.location.href;
-
-      return {
-        hasItems: true,
-        message: `This customer has the following items in their cart: ${cartProductTitles.join(
-          ", "
-        )}`,
-        cartURL: `The customer can go to their cart by clicking this link: ${cartURL}`,
-      };
-    } else {
-      return {
-        hasItems: false,
-        message: "This customer does not have items in their cart.",
-      };
-    }
-  } catch (error) {
-    console.error("Error", error);
-    return { hasItems: false, message: "An unexpected error occurred." };
-  }
-};
-
 export const hasViewedProducts = async (
   store: string,
   clientId: string,

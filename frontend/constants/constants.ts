@@ -31,7 +31,6 @@ export const SUPABASE_MESSAGES_INSERT_ENDPOINT = "insert";
 
 export const SUPABASE_EVENTS_LAST_EVENT_ENDPOINT = "last";
 export const SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT = "new-customer";
-export const SUPABASE_EVENTS_CART_ITEMS_ENDPOINT = "cart-items";
 export const SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT = "viewed-products";
 export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
 
