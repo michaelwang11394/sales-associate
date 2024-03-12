@@ -1,3 +1,4 @@
+import { toggleOverlayVisibility } from "@/helper/animations";
 import posthog from "posthog-js";
 import "vite/modulepreload-polyfill";
 import { createIcon, createOverlayDiv } from "./createElements";
@@ -28,6 +29,25 @@ if (clientId) {
     if (!iconCreated && isEnabledTest) {
       createIcon(embed_home, "embed", overlayDiv, mountOverlay, 100);
       iconCreated = true; // Prevent future calls from creating the icon again
+
+      const shownPopup = window.localStorage.getItem("salesAssociatePopup");
+      const currentDate = new Date();
+      const lastPopupDate = shownPopup ? new Date(shownPopup) : null;
+      const daysSinceLastPopup = lastPopupDate
+        ? (currentDate.getTime() - lastPopupDate.getTime()) / (1000 * 60 * 60)
+        : null;
+
+      if (
+        posthog.getFeatureFlag("enabled") === "popup" &&
+        (!lastPopupDate || daysSinceLastPopup! >= 3)
+      ) {
+        mountOverlay();
+        toggleOverlayVisibility(overlayDiv);
+        window.localStorage.setItem(
+          "salesAssociatePopup",
+          currentDate.toISOString()
+        );
+      }
     }
   });
 }

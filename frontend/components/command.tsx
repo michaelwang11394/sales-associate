@@ -149,12 +149,12 @@ export default function CommandPalette({ props }) {
         };
 
         props.eventEmitter.on("searchSubmitted", handleSearchSubmitted);
+        refreshHints();
 
         // Cleanup function to remove the event listener when the component unmounts
         return () => {
           props.eventEmitter.off("searchSubmitted", handleSearchSubmitted);
         };
-        refreshHints();
       }
     });
     getMostRecentEvent(window, host).then(async (event) => {
@@ -744,7 +744,7 @@ export default function CommandPalette({ props }) {
                     </button>
                   </form>
                 </div>
-                {variant == "test" && hints.length > 0 && (
+                {variant !== "control" && hints.length > 0 && (
                   <div
                     id="hints"
                     className={`flex ${
@@ -840,7 +840,7 @@ export default function CommandPalette({ props }) {
                 )}
 
                 {/* Chat Column*/}
-                {variant == "test" && (
+                {variant !== "control" && (
                   <div
                     id="chat-column"
                     className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column"
