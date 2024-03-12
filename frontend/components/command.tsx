@@ -150,12 +150,12 @@ export default function CommandPalette({ props }) {
         };
 
         props.eventEmitter.on("searchSubmitted", handleSearchSubmitted);
+        refreshHints();
 
         // Cleanup function to remove the event listener when the component unmounts
         return () => {
           props.eventEmitter.off("searchSubmitted", handleSearchSubmitted);
         };
-        refreshHints();
       }
     });
     getMostRecentEvent(window, host).then(async (event) => {
@@ -540,7 +540,9 @@ export default function CommandPalette({ props }) {
           <div className="font-bold mb-2 mt-2 text-center">
             {suggestions.length > 0
               ? "You might like:"
-              : "We're sorry, no results match this search"}
+              : userInput.length > 0
+              ? "We're sorry, no results match this search"
+              : "Type anything to start your search!"}
           </div>
           {/* First row */}
           <div className="flex justify-center items-center space-x-4 mb-4">
@@ -619,7 +621,9 @@ export default function CommandPalette({ props }) {
           <div className="font-bold mb-2 text-center">
             {suggestions.length > 0
               ? "You might like:"
-              : "We're sorry, no results match this search"}
+              : userInput.length > 0
+              ? "We're sorry, no results match this search"
+              : "Type anything to start your search!"}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {suggestions.map((product, index) => (
@@ -745,7 +749,7 @@ export default function CommandPalette({ props }) {
                     </button>
                   </form>
                 </div>
-                {variant == "test" && hints.length > 0 && (
+                {variant !== "control" && hints.length > 0 && (
                   <div
                     id="hints"
                     className={`flex ${
@@ -796,7 +800,9 @@ export default function CommandPalette({ props }) {
                         <div className="font-bold mb-2 mt-2 text-center">
                           {suggestions && suggestions.length > 0
                             ? "You might like:"
-                            : "We're sorry, no results matches this search"}
+                            : userInput.length > 0
+                            ? "We're sorry, no results match this search"
+                            : "Type anything to start your search!"}
                         </div>
 
                         {suggestions.length > 0 &&
@@ -841,7 +847,7 @@ export default function CommandPalette({ props }) {
                 )}
 
                 {/* Chat Column*/}
-                {variant == "test" && (
+                {variant !== "control" && (
                   <div
                     id="chat-column"
                     className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column"
