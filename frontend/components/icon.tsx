@@ -61,33 +61,35 @@ export default function Icon({ props }) {
           if (!event) return;
           const uuid = uuidv4();
           const greetingPrompt = await getGreetingMessage(event);
-          callOpenai(
-            greetingPrompt,
-            clientId.current!,
-            uuid,
-            isHomePage ? MessageSource.EMBED_HOME : MessageSource.EMBED
-          )
-            .then(async (reader) => {
-              let full = "";
-              while (true) {
-                const { done, value } = await reader!.read();
-                if (done) {
-                  reader!.cancel();
-                  break;
+          if (greetingPrompt) {
+            callOpenai(
+              greetingPrompt,
+              clientId.current!,
+              uuid,
+              isHomePage ? MessageSource.EMBED_HOME : MessageSource.EMBED
+            )
+              .then(async (reader) => {
+                let full = "";
+                while (true) {
+                  const { done, value } = await reader!.read();
+                  if (done) {
+                    reader!.cancel();
+                    break;
+                  }
+                  let chunk = new TextDecoder("utf-8").decode(value);
+                  full += chunk;
+                  setGreeting(full);
                 }
-                let chunk = new TextDecoder("utf-8").decode(value);
-                full += chunk;
-                setGreeting(full);
-              }
-              await insertMessage(
-                clientId.current,
-                "text",
-                SenderType.SYSTEM,
-                JSON.stringify([full]),
-                uuid
-              );
-            })
-            .catch((err) => console.error(err));
+                await insertMessage(
+                  clientId.current,
+                  "text",
+                  SenderType.SYSTEM,
+                  JSON.stringify([full]),
+                  uuid
+                );
+              })
+              .catch((err) => console.error(err));
+          }
         });
       } else if (retryCount < 5) {
         // Limit the number of retries to prevent infinite loop

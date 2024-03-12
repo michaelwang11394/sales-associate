@@ -1,4 +1,3 @@
-import { isNewCustomer, offerCoupon } from "./supabase"; // Updated reference to refactored supabase functions
 
 export const MERCHANT_CONFIG = {
   store_name: "Lotus Haus",
@@ -128,29 +127,7 @@ export const getGreetingMessage = async (event) => {
 
 export const getEventSpecificMessage = async (event) => {
   // Check if the customer has viewed their cart multiple times in the past 30 minutes
-  // Check if the customer is new
-  const newCustomer = await isNewCustomer(event.clientId);
-  const isOfferCoupon = await offerCoupon(event.clientId);
   switch (event.name) {
-    /* 
-      Welcome Intent
-
-      Notes regarding approach for the prompts:
-      - Experimenting here with specifically identifying yourself as a sales associate. Build a c connection. 
-      - Identify 2 basic capabilities of ways to use SA: answering questions about products and helping find something. As we build more capabilities, we can add them here. 
-      
-      Other Ideas: 
-      - Consider adding more examples. This intent is pretty straight forward, and adding additional tokens contributes to cost.
-      - For welcome back, consider linking directly here to a product that the customer has viewed before or already even has in the cart.  
-      - Consider adding a emoji to the end of the message.
-
-    */
-    case "page_viewed":
-      if (newCustomer.isNew) {
-        return `This is the customers's first time visiting the ${merchantConfig["store_type"]} store called ${merchantConfig["store_name"]}. Your goal is to welcome them and ask them if they have any questions. If they have products in their cart or have viewed a product recently, mention the product to them. \nHere is an example of a potential good response:\n"Welcome to the store! Let me know if you have any questions about our products."`;
-      } else {
-        return `This customer has visited the ${merchantConfig["store_type"]} store called ${merchantConfig["store_name"]} before. Your goal is to welcome them back and ask if they have any questions. If they have items in their cart, encourage them to check out or ask them if they have any questions about the products in their cart. If they have viewed a product recently, ask them if they have any questions about that product. \nHere are a few examples of potential good response:\n"Welcome back to the store! Any questions on <product in cart>?"`;
-      }
     /* 
       Cart Viewed Intent:
       Notes:
@@ -160,14 +137,7 @@ export const getEventSpecificMessage = async (event) => {
       - Get products in their cart 
     */
     case "cart_viewed":
-      if (
-        isOfferCoupon.offerCoupon === true &&
-        merchantConfig["offer_coupon"] === true
-      ) {
-        return "User is looking through cart page. Encourage them to checkout by offering a coupon.";
-      } else {
-        return `The customer is on the cart page where they can purchase their items. Your goal is to compliment them on their excellent product taste and encourage user to checkout. Here is an example of a good response:\n"Great selection! Let me know if you need any help with your purchase. Here are some other goals to accomplish:\n${merchantConfig["cart_tactics"]}`;
-      }
+      return `The customer is on the cart page where they can purchase their items. Your goal is to compliment them on their excellent product taste and encourage user to checkout. Here is an example of a good response:\n"Great selection! Let me know if you need any help with your purchase. Here are some other goals to accomplish:\n${merchantConfig["cart_tactics"]}`;
     /*
       Product Viewed Intent
 
@@ -182,7 +152,7 @@ export const getEventSpecificMessage = async (event) => {
       const product = event.detail.productVariant.product.title;
       return `User is considering purchasing ${product}. Your goal is to have the user add the item to cart and complete checkout. Here are ways you can accomplish this\nLet the customer know that this product is a best seller and running low on stock. For example: "${product} is one of our best sellers and is running low on stock."\nIf the customer has viewed this product before, let them know that you noticed and ask if they have any questions about it. For example: "I see you've been looking at ${product}. Do you have any questions about it?"\n${merchantConfig["product_tactics"]}`;
     default:
-      return `Welcome user to store`;
+      return null;
   }
 };
 
