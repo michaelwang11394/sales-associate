@@ -70,7 +70,7 @@ export default function SearchBar({ props }) {
               type="text"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              className="flex-grow h-16 pr-12 pl-14 text-black border-none rounded-lg text-center focus:outline-none focus:shadow-none focus:border-none w-3/4 mx-auto"
+              className="flex-grow h-16 pr-12 pl-14 text-black border border-gray-300 rounded-lg text-center focus:outline-none focus:shadow-none focus:border-none w-3/4 mx-auto shadow-sm"
               style={{
                 backgroundColor: "#fff",
                 fontFamily: "Avenir",
@@ -93,7 +93,7 @@ export default function SearchBar({ props }) {
               id="submit-button"
               type="submit"
               disabled={userInput === ""}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 pt-2">
               <svg
                 width="24"
                 height="24"

@@ -145,6 +145,7 @@ export default function CommandPalette({ props }) {
         );
         setMessages((prevMessages) => messages.concat(prevMessages));
         const handleSearchSubmitted = async (data) => {
+          scrollToBottom();
           await callOpenaiWithInput(data.input);
         };
 
@@ -724,7 +725,7 @@ export default function CommandPalette({ props }) {
                       id="submit-button"
                       type="submit"
                       disabled={loading}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 pt-2">
                       <svg
                         width="24"
                         height="24"
