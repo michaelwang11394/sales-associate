@@ -12,16 +12,17 @@ export default async function handler(
   }
 
   const input = request.query.input as string;
-  const store = request.query.store as string;
+  const store = (request.query.store as string) === "lotushaus.studio" ? "lotushausstudio.myshopify.com" : request.query.store as string;
   const clientId = request.query.clientId as string;
   const requestUuid = request.query.requestUuid as string;
   const source = request.query.source as MessageSource;
+  const cart = request.query.cart as string;
 
   return httpResponse(
     request,
     response,
     200,
     "Hints returned successfully",
-    await callOpenai(input, store, clientId, requestUuid, source)
+    await callOpenai(input, store, clientId, requestUuid, source, cart)
   );
 }

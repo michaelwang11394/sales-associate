@@ -21,7 +21,7 @@ import {
   insertMessage,
 } from "@/helper/supabase";
 import { debounce } from "lodash";
-import { useFeatureFlagVariantKey, usePostHog } from "posthog-js/react";
+import { usePostHog } from "posthog-js/react";
 import { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ChatBubble } from "./chat";
@@ -52,12 +52,12 @@ export default function CommandPalette({ props }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [hints, setHints] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [variant, setVariant] = useState("control");
   const posthog = usePostHog();
   const clientId = useRef(
     window.localStorage.getItem("webPixelShopifyClientId")
   );
   const host = window.location.host;
-  const variant = useFeatureFlagVariantKey("enabled");
 
   useEffect(() => {
     const fetchShopStyle = async () => {
@@ -83,11 +83,12 @@ export default function CommandPalette({ props }) {
             headerBackgroundColor: data[0].shop_style.headerBackgroundColor,
             searchBackgroundColor: data[0].shop_style.searchBackgroundColor,
             convoBackgroundColor: data[0].shop_style.convoBackgroundColor,
-            fontFamily: data[0].shop_style.fontFamily,
-            hintBubbleColor: data[0].shop_style.hintBubbleColor,
-            specialColor: data[0].shop_style.logoColor,
+            // fontFamily: data[0].shop_style.fontFamily,
+            fontFamily: "Avenir",
+            hintBubbleColor: "#D10000",
+            specialColor: "#D10000",
             systemFontColor: data[0].shop_style.systemFontColor,
-            userFontColor: data[0].shop_style.userFontColor,
+            userFontColor: "#D10000",
           };
           const shopStyleToSave = {
             data: newShopStyle,
@@ -96,6 +97,7 @@ export default function CommandPalette({ props }) {
           localStorage.setItem("shopStyle", JSON.stringify(shopStyleToSave));
           setShopStyle(newShopStyle);
         } else {
+          setShopStyle(shopStyleConfigDefault);
           console.error("Shop style could not be fetched from Supabase");
         }
       }
@@ -116,10 +118,19 @@ export default function CommandPalette({ props }) {
         // @ts-ignore
         enabled: import.meta.env.VITE_POSTHOG_FORCE_FLAG,
       });
+      setVariant(import.meta.env.VITE_POSTHOG_FORCE_FLAG);
     }
     if (clientId.current) {
       posthog?.identify(clientId.current, { store: window.location.host });
+      posthog?.reloadFeatureFlags();
     }
+    posthog.onFeatureFlags(function () {
+      const flagValue = posthog.getFeatureFlag("enabled");
+      // Ensure the value is a string; use 'control' as a default if flagValue is undefined or convert boolean to string
+      setVariant(
+        typeof flagValue === "string" ? flagValue.toString() : "control"
+      );
+    });
     if (!variant || variant === "control") {
       // If we're in the control group, avoid any unnecessary supabase or openai calls
       return;
@@ -133,11 +144,22 @@ export default function CommandPalette({ props }) {
           formatDBMessage(messageRow)
         );
         setMessages((prevMessages) => messages.concat(prevMessages));
+        const handleSearchSubmitted = async (data) => {
+          scrollToBottom();
+          await callOpenaiWithInput(data.input);
+        };
+
+        props.eventEmitter.on("searchSubmitted", handleSearchSubmitted);
         refreshHints();
+
+        // Cleanup function to remove the event listener when the component unmounts
+        return () => {
+          props.eventEmitter.off("searchSubmitted", handleSearchSubmitted);
+        };
       }
     });
     getMostRecentEvent(window, host).then(async (event) => {
-      if (!event) return;
+      if (!event || props.eventEmitter) return;
       const greetingPrompt = await getGreetingMessage(event);
       const uuid = uuidv4();
       const newResponseMessage: FormattedMessage = {
@@ -184,12 +206,11 @@ export default function CommandPalette({ props }) {
           console.error(err);
         });
     });
-  }, [posthog, clientId, variant]);
+  }, [posthog, clientId, variant, props.eventEmitter]);
 
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
     setIsMobile(/iphone|ipad|ipod|android/i.test(userAgent));
-
     // Other useEffect code
   }, []);
 
@@ -312,6 +333,10 @@ export default function CommandPalette({ props }) {
   };
 
   const callOpenaiWithInput = async (input) => {
+    if (loading) {
+      // If message is loading don't allow double queries
+      return;
+    }
     setLoading(true);
     const newUserMessage: FormattedMessage = {
       type: "text",
@@ -319,7 +344,9 @@ export default function CommandPalette({ props }) {
       content: [input],
     };
     const uuid = uuidv4();
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    setMessages((prevMessages) => {
+      return [...prevMessages, newUserMessage];
+    });
     await handleNewMessage(clientId.current, newUserMessage, uuid);
     const newResponseMessage: FormattedMessage = {
       type: "text",
@@ -513,7 +540,9 @@ export default function CommandPalette({ props }) {
           <div className="font-bold mb-2 mt-2 text-center">
             {suggestions.length > 0
               ? "You might like:"
-              : "We're sorry, no results match this search"}
+              : userInput.length > 0
+              ? "We're sorry, no results match this search"
+              : "Type anything to start your search!"}
           </div>
           {/* First row */}
           <div className="flex justify-center items-center space-x-4 mb-4">
@@ -592,7 +621,9 @@ export default function CommandPalette({ props }) {
           <div className="font-bold mb-2 text-center">
             {suggestions.length > 0
               ? "You might like:"
-              : "We're sorry, no results match this search"}
+              : userInput.length > 0
+              ? "We're sorry, no results match this search"
+              : "Type anything to start your search!"}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {suggestions.map((product, index) => (
@@ -655,9 +686,8 @@ export default function CommandPalette({ props }) {
         id="overlay"
         style={{
           borderRadius: "20px",
-          fontFamily: shopStyle.fontFamily || "Avenir",
         }}
-        className=" flex flex-col fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 shadow-lg overflow-auto">
+        className=" flex flex-col ibm fixed top-0 left-0 right-0 bottom-0 items-center justify-center h-[80vh] w-[80vw] max-h-[65rem] max-w-[80rem] m-auto bg-gray-200 shadow-lg overflow-auto">
         <section
           id={PALETTE_DIV_ID}
           className="flex flex-grow overflow-hidden bg-cover w-full">
@@ -667,6 +697,7 @@ export default function CommandPalette({ props }) {
                 id="header-container"
                 style={{
                   backgroundColor: shopStyle.headerBackgroundColor || "#fff",
+                  marginBottom: "1px",
                 }}>
                 <div
                   id="search bar"
@@ -684,11 +715,7 @@ export default function CommandPalette({ props }) {
                           shopStyle.headerBackgroundColor || "#fff",
                         fontFamily: shopStyle.fontFamily || "Avenir",
                       }}
-                      placeholder={
-                        userInput === ""
-                          ? "Ask me anything! See the below hints as examples."
-                          : ""
-                      }
+                      placeholder={userInput === "" ? "Ask me anything!" : ""}
                       onFocus={(e) => (e.target.placeholder = "")}
                       onBlur={(e) =>
                         (e.target.placeholder =
@@ -702,7 +729,7 @@ export default function CommandPalette({ props }) {
                       id="submit-button"
                       type="submit"
                       disabled={loading}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 pt-2">
                       <svg
                         width="24"
                         height="24"
@@ -722,18 +749,31 @@ export default function CommandPalette({ props }) {
                     </button>
                   </form>
                 </div>
-                {variant == "test" && hints.length > 0 && (
+                {variant !== "control" && hints.length > 0 && (
                   <div
                     id="hints"
-                    className="flex justify-center items-center rounded">
+                    className={`flex ${
+                      isMobile ? "flex-col" : ""
+                    } justify-center items-center rounded ${
+                      isMobile ? "p-8" : ""
+                    }`}
+                    style={{
+                      flexDirection: isMobile ? "column" : "",
+                    }}>
                     {hints.map((hint, index) => (
                       <div
                         key={index}
                         style={{
                           borderColor: shopStyle.hintBubbleColor || "#000",
                           color: shopStyle.hintBubbleColor || "#000",
+                          width: isMobile ? "100%" : "", // Set the width to be 100% of the parent container for mobile
+                          maxWidth: isMobile ? "300px" : "", // Set a maximum width for mobile to ensure consistency
+                          whiteSpace: isMobile ? "normal" : "", // Allow text to wrap for mobile
+                          wordWrap: isMobile ? "break-word" : "", // Ensure long words do not overflow for mobile
                         }}
-                        className="hint-bubble border-2 justify-center items-center"
+                        className={`hint-bubble border border-1 justify-center items-center ${
+                          isMobile ? "mb-2 p-2" : ""
+                        }`} // Added p-2 for padding inside the bubble for mobile
                         onClick={async () => await callOpenaiWithInput(hint)}>
                         <p className="text-custom">{hint}</p>
                       </div>
@@ -760,7 +800,9 @@ export default function CommandPalette({ props }) {
                         <div className="font-bold mb-2 mt-2 text-center">
                           {suggestions && suggestions.length > 0
                             ? "You might like:"
-                            : "We're sorry, no results matches this search"}
+                            : userInput.length > 0
+                            ? "We're sorry, no results match this search"
+                            : "Type anything to start your search!"}
                         </div>
 
                         {suggestions.length > 0 &&
@@ -805,7 +847,7 @@ export default function CommandPalette({ props }) {
                 )}
 
                 {/* Chat Column*/}
-                {variant == "test" && (
+                {variant !== "control" && (
                   <div
                     id="chat-column"
                     className="chat-column min-w-0 p-6 overflow-y-auto p-4 mobile-chat-column"

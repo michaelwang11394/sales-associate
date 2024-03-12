@@ -31,7 +31,6 @@ export const SUPABASE_MESSAGES_INSERT_ENDPOINT = "insert";
 
 export const SUPABASE_EVENTS_LAST_EVENT_ENDPOINT = "last";
 export const SUPABASE_EVENTS_NEW_CUSTOMER_ENDPOINT = "new-customer";
-export const SUPABASE_EVENTS_CART_ITEMS_ENDPOINT = "cart-items";
 export const SUPABASE_EVENTS_VIEWED_PRODUCTS_ENDPOINT = "viewed-products";
 export const SUPABASE_EVENTS_OFFER_COUPON_ENDPOINT = "offer-coupon";
 
@@ -45,12 +44,12 @@ export const EXPERIMENT_PATH = "capture-posthog";
 export const UNINSTALL_CHECK = "uninstall-check";
 
 export const shopStyleConfigDefault = {
-  headerBackgroundColor: "#efecec",
-  searchBackgroundColor: "#efecec",
-  convoBackgroundColor: "#efecec",
-  fontFamily: "Avenir",
-  hintBubbleColor: "#2a33ff",
-  specialColor: "#2a33ff", // airplane send logo and star ai logo
+  headerBackgroundColor: "#ffffff",
+  searchBackgroundColor: "#ffffff",
+  convoBackgroundColor: "#ffffff",
+  fontFamily: "IBM Plex Mono",
+  hintBubbleColor: "#D10000",
+  specialColor: "#D10000", // airplane send logo and star ai logo
   systemFontColor: "#000",
-  userFontColor: "#2a33ff",
+  userFontColor: "#D10000",
 };

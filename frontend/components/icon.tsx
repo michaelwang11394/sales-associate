@@ -120,7 +120,7 @@ export default function Icon({ props }) {
         {/* Icon */}
         <div ref={iconRef}>
           <img
-            src="https://cdn.shopify.com/s/files/1/0862/8217/4752/files/icon_orange.png?v=1709061882"
+            src="https://cdn.shopify.com/s/files/1/0581/3387/2834/files/icons8-search-50_dfaec584-5ebe-4540-b7c5-ea1fa1dfae5e.png?v=1709439442"
             alt="Chat Icon"
             width={iconSize + "px"}
             style={{
