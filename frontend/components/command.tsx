@@ -539,7 +539,9 @@ export default function CommandPalette({ props }) {
           <div className="font-bold mb-2 mt-2 text-center">
             {suggestions.length > 0
               ? "You might like:"
-              : "We're sorry, no results match this search"}
+              : userInput.length > 0
+              ? "We're sorry, no results match this search"
+              : "Type anything to start your search!"}
           </div>
           {/* First row */}
           <div className="flex justify-center items-center space-x-4 mb-4">
@@ -618,7 +620,9 @@ export default function CommandPalette({ props }) {
           <div className="font-bold mb-2 text-center">
             {suggestions.length > 0
               ? "You might like:"
-              : "We're sorry, no results match this search"}
+              : userInput.length > 0
+              ? "We're sorry, no results match this search"
+              : "Type anything to start your search!"}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {suggestions.map((product, index) => (
@@ -795,7 +799,9 @@ export default function CommandPalette({ props }) {
                         <div className="font-bold mb-2 mt-2 text-center">
                           {suggestions && suggestions.length > 0
                             ? "You might like:"
-                            : "We're sorry, no results matches this search"}
+                            : userInput.length > 0
+                            ? "We're sorry, no results match this search"
+                            : "Type anything to start your search!"}
                         </div>
 
                         {suggestions.length > 0 &&
